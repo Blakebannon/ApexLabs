@@ -52,8 +52,8 @@
   "dataset_references": [
     {
       "dataset_id": "synthetic-mechanics-demo",
-      "fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
-      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9",
+      "fingerprint": "533a660c2d8d8e496d8fc5f1081a03affbc40e1d92ef80d0e7689f44038360de",
+      "normalized_manifest_sha256": "57213467d6a69ae5184a274457b39f17f18d359f82b85cf7aefae6994909b26f",
       "records_sha256": "de125c35b2f1b62b31b82cd4044fc438a4289135d005fc8aea9c6a9a19a39832",
       "synthetic": true
     }
@@ -62,17 +62,17 @@
     "experiment_id": "synthetic-mechanics-demo-protocol",
     "version": "1.0.0",
     "freeze_id": "synthetic-mechanics-demo-protocol.freeze",
-    "freeze_sha256": "29bc942f4c7a24e38b28212a7b850e1487048a1b128c8077c13b74f9af2a8d0f"
+    "freeze_sha256": "34fc34030e5518dd4d9530cfd05a530f9a4718002c5cc2b8cfadae286ccef175"
   },
   "preprocessing": {
     "pipeline_id": "tabular-csv-normalization",
     "pipeline_version": "1.1.0",
     "normalization_version": "1.1.0",
     "configuration": {
-      "normalized_dataset_fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
-      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9"
+      "normalized_dataset_fingerprint": "533a660c2d8d8e496d8fc5f1081a03affbc40e1d92ef80d0e7689f44038360de",
+      "normalized_manifest_sha256": "57213467d6a69ae5184a274457b39f17f18d359f82b85cf7aefae6994909b26f"
     },
-    "configuration_sha256": "1835ea6edff1a1561260712afb3ece5050234194e710705595732d4c5c91f9b9"
+    "configuration_sha256": "49932bc82e4e952ca9922cb9b922cdbe06228d83002d2eaba2374e2293420f66"
   },
   "analysis": {
     "algorithm_id": "demo-record-count",
@@ -84,9 +84,9 @@
   },
   "analysis_code_identity": {
     "package_version": "0.1.1",
-    "git_commit": "UNCOMMITTED",
-    "git_state": "uncommitted",
-    "code_and_schema_sha256": "a71b0dbe4e5e0acef78d6bd34f63137ad6b805cf5b03ca7f6e9c9237f34ae5b8"
+    "git_commit": "5b873bd18889c8438e3c6d461c1e846db96b0629",
+    "git_state": "clean",
+    "code_and_schema_sha256": "daf04af72a4d4008f691a03a926a43ba232732bdbd5f75eb19430c157eb0e44b"
   },
   "limitations": [
     "All values were hand-authored and synthetic.",
@@ -108,6 +108,6 @@
     "Replace UNCOMMITTED with an Apex Labs source commit for every real finding."
   ],
   "created_at": "2026-08-19T00:00:00Z",
-  "apex_labs_source_commit": "UNCOMMITTED",
+  "apex_labs_source_commit": "5b873bd18889c8438e3c6d461c1e846db96b0629",
   "synthetic": true
 }

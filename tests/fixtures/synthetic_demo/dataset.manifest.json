@@ -91,9 +91,9 @@
   "collection_context": {
     "protocol_snapshot": {
       "path": "protocol.freeze.json",
-      "file_sha256": "f1803fab4c79fb041cd805b1975b41f4dd6ebbf5e9ba66a2d910a94351a3f8e1",
+      "file_sha256": "afefe81e86398b870826aceaefbe2ea1241e8a9744cdbc7e5ba4245ebfaab3bd",
       "freeze_id": "synthetic-mechanics-demo-protocol.freeze",
-      "freeze_sha256": "29bc942f4c7a24e38b28212a7b850e1487048a1b128c8077c13b74f9af2a8d0f",
+      "freeze_sha256": "34fc34030e5518dd4d9530cfd05a530f9a4718002c5cc2b8cfadae286ccef175",
       "experiment_id": "synthetic-mechanics-demo-protocol",
       "experiment_version": "1.0.0",
       "schedule_id": "not-applicable",
@@ -120,7 +120,7 @@
       "media_type": "application/json",
       "path": "protocol.freeze.json",
       "role": "protocol",
-      "sha256": "f1803fab4c79fb041cd805b1975b41f4dd6ebbf5e9ba66a2d910a94351a3f8e1"
+      "sha256": "afefe81e86398b870826aceaefbe2ea1241e8a9744cdbc7e5ba4245ebfaab3bd"
     }
   ],
   "synthetic": true,
