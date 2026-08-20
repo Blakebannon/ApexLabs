@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/apex-research-session-export.schema.json",
+  "title": "Future Apex Sim Coach Research-build session export manifest",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "session", "timing", "channels", "events", "collection", "privacy", "storage", "files", "build_boundary"],
+  "properties": {
+    "schema_version": {"const": "apex-research-session-export/1.0.0"},
+    "session": {
+      "type": "object", "additionalProperties": false,
+      "required": ["session_id", "participant_pseudonym", "simulator", "car", "track", "start_utc", "end_utc"],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/id"}, "participant_pseudonym": {"$ref": "#/$defs/id"},
+        "simulator": {"type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": {"id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
+        "car": {"type": "object", "additionalProperties": false, "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}},
+        "track": {"type": "object", "additionalProperties": false, "required": ["id", "layout"], "properties": {"id": {"type": "string", "minLength": 1}, "layout": {"type": "string", "minLength": 1}}},
+        "start_utc": {"type": "string", "format": "date-time"}, "end_utc": {"type": "string", "format": "date-time"}
+      }
+    },
+    "timing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["timestamped_samples", "utc_session_timing", "utc_lap_timing", "source_clock", "nominal_frequency_hz", "resolution_seconds", "reset_behavior", "lap_elapsed_time", "lap_distance", "gaps_dropped_frames_and_backpressure_recorded"],
+      "properties": {
+        "timestamped_samples": {"const": true}, "utc_session_timing": {"const": true}, "utc_lap_timing": {"const": true}, "source_clock": {"type": "string", "minLength": 1},
+        "nominal_frequency_hz": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "resolution_seconds": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "reset_behavior": {"type": "string", "minLength": 1}, "lap_elapsed_time": {"const": true},
+        "lap_distance": {"const": true}, "gaps_dropped_frames_and_backpressure_recorded": {"const": true}
+      }
+    },
+    "channels": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "availability", "provenance", "unit", "axis_and_sign", "missing_value"],
+        "properties": {
+          "name": {"$ref": "#/$defs/id"}, "availability": {"enum": ["available", "unavailable"]},
+          "provenance": {"enum": ["measured", "derived", "estimated", "unavailable"]},
+          "unit": {"type": ["string", "null"]}, "axis_and_sign": {"type": ["string", "null"]},
+          "missing_value": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "events": {
+      "type": "object", "additionalProperties": false,
+      "required": ["incidents", "pit_transitions", "lap_validity", "session_state", "coaching_cue_authorization_and_delivery_receipts", "experimental_block_and_condition_markers"],
+      "properties": {
+        "incidents": {"type": "boolean"}, "pit_transitions": {"type": "boolean"},
+        "lap_validity": {"type": "boolean"}, "session_state": {"type": "boolean"},
+        "coaching_cue_authorization_and_delivery_receipts": {"type": "boolean"},
+        "experimental_block_and_condition_markers": {"type": "boolean"}
+      }
+    },
+    "collection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol_identity", "configuration_setup_hash", "coaching_disabled_research_mode"],
+      "properties": {"protocol_identity": {"$ref": "#/$defs/id"}, "configuration_setup_hash": {"$ref": "#/$defs/sha256"}, "coaching_disabled_research_mode": {"const": true}}
+    },
+    "privacy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "direct_identifiers_present", "pseudonymization_supported"],
+      "properties": {"classification": {"enum": ["synthetic", "private", "sanitized"]}, "direct_identifiers_present": {"const": false}, "pseudonymization_supported": {"type": "boolean"}}
+    },
+    "storage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["local_only", "retention_declaration", "complete_marker_required", "truncation_and_corruption_behavior"],
+      "properties": {"local_only": {"const": true}, "retention_declaration": {"type": "string", "minLength": 1}, "complete_marker_required": {"const": true}, "truncation_and_corruption_behavior": {"type": "string", "minLength": 1}}
+    },
+    "files": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "size_bytes", "sha256", "role"],
+        "properties": {"path": {"type": "string", "minLength": 1}, "size_bytes": {"type": "integer", "minimum": 0}, "sha256": {"$ref": "#/$defs/sha256"}, "role": {"type": "string", "minLength": 1}}
+      }
+    },
+    "build_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["shared_codebase", "isolated_research_capture_module", "research_build_capability", "production_capture_proven_absent", "public_research_ui", "production_high_resolution_artifacts", "local_only_recording", "bounded_streaming_to_disk", "disk_space_preflight", "low_disk_fail_safe", "configurable_output_location", "explicit_activation", "visible_recording_state", "automatic_upload"],
+      "properties": {
+        "shared_codebase": {"const": true}, "isolated_research_capture_module": {"const": true},
+        "research_build_capability": {"const": true}, "production_capture_proven_absent": {"const": true},
+        "public_research_ui": {"const": false}, "production_high_resolution_artifacts": {"const": false},
+        "local_only_recording": {"const": true}, "bounded_streaming_to_disk": {"const": true},
+        "disk_space_preflight": {"const": true}, "low_disk_fail_safe": {"const": true},
+        "configurable_output_location": {"const": true}, "explicit_activation": {"const": true},
+        "visible_recording_state": {"const": true}, "automatic_upload": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

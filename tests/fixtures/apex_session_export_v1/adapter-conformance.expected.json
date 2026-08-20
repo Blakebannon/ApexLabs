@@ -1,0 +1,26 @@
+{
+  "schema_version": "apex-labs.adapter-conformance/v1",
+  "source_schema_version": "apex-session-export/1.0.0",
+  "adapter": {"id": "apex-session-export", "version": "1.0.0"},
+  "available": ["session_identity", "lap_time", "lap_distance", "sample_count", "coverage"],
+  "aggregated": {
+    "brake": "one_metre_bin_maximum",
+    "throttle": "one_metre_bin_arithmetic_mean",
+    "steering_angle": "one_metre_bin_arithmetic_mean_authoritative_radians",
+    "speed": "one_metre_bin_arithmetic_mean_authoritative_metres_per_second"
+  },
+  "product_derived_annotations": ["lap_validity", "lap_exclusions", "reference_selection", "incident_on_lap", "finding_regions", "findings_and_explanations"],
+  "ambiguous": {
+    "lap_fraction_denominator": "source_values_match_distance_m/integer_total_bins_with_six_decimal_rounding",
+    "layout_identity": "not_present_in_customer_bundle"
+  },
+  "unavailable": ["timestamps", "source_clock", "acceleration", "yaw_rate", "gear", "rpm", "wheel_state", "tire_state", "fuel", "setup", "assists", "damage", "traffic", "flags", "weather", "track_conditions", "raw_frame_order", "recorder_gap_timing"],
+  "limitations": [
+    "Telemetry is one-metre distance-binned aggregate data, not timestamped raw simulator frames.",
+    "Brake is a bin maximum; throttle, steering_rad, and speed_ms are bin arithmetic means.",
+    "Time-domain, acceleration, yaw, wheel/tire, fuel, setup, traffic, weather, and track-condition channels are unavailable.",
+    "Lap validity, exclusions, references, incidents, and finding regions are Apex Sim Coach product-derived classifications.",
+    "Product findings and explanations are annotations only and are not scientific evidence or ground truth.",
+    "trackLengthMeters and the apparent integer-total-bin lap_fraction denominator differ; exported lap_fraction is preserved."
+  ]
+}

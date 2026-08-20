@@ -21,6 +21,9 @@ class NormalizedIntegrityTracker:
         self.last_sample_index: dict[str, int] = {}
         self.last_timestamp: dict[str, float] = {}
         self.last_lap_distance: dict[str, float] = {}
+        self.last_distance_bin_index: dict[str, int] = {}
+        self.last_distance_bin_start: dict[str, float] = {}
+        self.saw_distance_bins = False
         self.counts: Counter[str] = Counter()
         self.quality_counts: Counter[str] = Counter()
         self.expected_sequence = 0
@@ -114,6 +117,27 @@ class NormalizedIntegrityTracker:
             self._flag(record, "lap_distance_regression")
         self.last_lap_distance[lap_id] = lap_distance
 
+    def _distance_bin_invariants(self, record: dict[str, Any]) -> None:
+        if record["record_type"] != "distance_bin":
+            return
+        self.saw_distance_bins = True
+        lap_id = record["lap_id"]
+        index = record["distance_bin_index"]
+        start = float(record["distance_start_m"])
+        end = float(record["distance_end_m"])
+        if end <= start:
+            raise IntegrityError(f"Distance bin {record['record_id']} has a non-positive width")
+        previous_index = self.last_distance_bin_index.get(lap_id)
+        if previous_index is None and index != 0:
+            raise IntegrityError(f"Distance-bin indices must begin at zero in {lap_id}")
+        if previous_index is not None and index != previous_index + 1:
+            raise IntegrityError(f"Distance-bin indices are not contiguous in {lap_id}")
+        previous_start = self.last_distance_bin_start.get(lap_id)
+        if previous_start is not None and start <= previous_start:
+            raise IntegrityError(f"Distance-bin positions are not strictly increasing in {lap_id}")
+        self.last_distance_bin_index[lap_id] = index
+        self.last_distance_bin_start[lap_id] = start
+
     def add(self, record: dict[str, Any]) -> None:
         if record["dataset_id"] != self.dataset_id:
             raise IntegrityError(f"Record {record['record_id']} has a different dataset_id")
@@ -130,6 +154,7 @@ class NormalizedIntegrityTracker:
             self.quality_counts[flag] += 1
         self._parent_invariants(record)
         self._temporal_invariants(record)
+        self._distance_bin_invariants(record)
         self.counts[record["record_type"]] += 1
 
     def finalize(self) -> dict[str, Any]:
@@ -142,6 +167,9 @@ class NormalizedIntegrityTracker:
             "quality_flag_counts": dict(sorted(self.quality_counts.items())),
             "interpolation": self.policy["interpolation"],
             "gap_detection": (
+                "distance_coverage_evaluated"
+                if self.saw_distance_bins
+                else
                 "evaluated"
                 if self.policy["expected_sample_period_seconds"] is not None
                 and self.policy["gap_tolerance_seconds"] is not None

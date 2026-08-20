@@ -7,7 +7,7 @@
   "required": ["schema_version", "record_type", "dataset_id", "session_id", "record_id", "sequence_index", "source_provenance", "fields"],
   "properties": {
     "schema_version": {"const": "apex-labs.normalized-record/v1"},
-    "record_type": {"enum": ["session", "lap", "segment", "telemetry_sample", "driver_input_event"]},
+    "record_type": {"enum": ["session", "lap", "segment", "telemetry_sample", "distance_bin", "driver_input_event"]},
     "dataset_id": {"$ref": "#/$defs/id"},
     "session_id": {"$ref": "#/$defs/id"},
     "record_id": {"$ref": "#/$defs/id"},
@@ -16,6 +16,29 @@
     "lap_id": {"$ref": "#/$defs/id"},
     "lap_number": {"type": "integer", "minimum": 0},
     "sample_index": {"type": "integer", "minimum": 0},
+    "distance_bin_index": {"type": "integer", "minimum": 0},
+    "distance_start_m": {"type": "number", "minimum": 0},
+    "distance_end_m": {"type": "number", "exclusiveMinimum": 0},
+    "sample_count": {"type": "integer", "minimum": 0},
+    "has_sample": {"type": "boolean"},
+    "aggregation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_semantics", "distance_bin_width_m", "channel_methods"],
+      "properties": {
+        "source_semantics": {"const": "distance_binned_aggregate"},
+        "distance_bin_width_m": {"type": "number", "exclusiveMinimum": 0},
+        "channel_methods": {
+          "type": "object", "additionalProperties": false,
+          "required": ["brake", "throttle", "steering_angle", "speed"],
+          "properties": {
+            "brake": {"const": "maximum"},
+            "throttle": {"const": "arithmetic_mean"},
+            "steering_angle": {"const": "arithmetic_mean"},
+            "speed": {"const": "arithmetic_mean"}
+          }
+        }
+      }
+    },
     "segment_id": {"$ref": "#/$defs/id"},
     "segment_kind": {"enum": ["corner", "straight", "custom"]},
     "label": {"type": "string", "minLength": 1},
@@ -42,7 +65,7 @@
     },
     "fields": {
       "type": "object",
-      "propertyNames": {"enum": ["timestamp", "lap_time", "lap_valid", "lap_distance", "track_position_x", "track_position_y", "track_position_z", "speed", "longitudinal_acceleration", "lateral_acceleration", "vertical_acceleration", "yaw_rate", "steering_angle", "steering_input", "throttle", "brake", "clutch", "gear", "rpm", "wheel_speed_front_left", "wheel_speed_front_right", "wheel_speed_rear_left", "wheel_speed_rear_right", "tire_pressure_front_left", "tire_pressure_front_right", "tire_pressure_rear_left", "tire_pressure_rear_right", "tire_temperature_front_left", "tire_temperature_front_right", "tire_temperature_rear_left", "tire_temperature_rear_right", "abs_active", "traction_control_active", "fuel_mass", "session_state", "incident_state", "off_track_state", "air_temperature", "track_temperature", "track_wetness"]},
+      "propertyNames": {"enum": ["timestamp", "lap_time", "lap_valid", "lap_distance", "lap_fraction", "track_position_x", "track_position_y", "track_position_z", "speed", "longitudinal_acceleration", "lateral_acceleration", "vertical_acceleration", "yaw_rate", "steering_angle", "steering_input", "throttle", "brake", "clutch", "gear", "rpm", "wheel_speed_front_left", "wheel_speed_front_right", "wheel_speed_rear_left", "wheel_speed_rear_right", "tire_pressure_front_left", "tire_pressure_front_right", "tire_pressure_rear_left", "tire_pressure_rear_right", "tire_temperature_front_left", "tire_temperature_front_right", "tire_temperature_rear_left", "tire_temperature_rear_right", "abs_active", "traction_control_active", "fuel_mass", "session_state", "incident_state", "off_track_state", "air_temperature", "track_temperature", "track_wetness"]},
       "additionalProperties": {"$ref": "#/$defs/qualified_value"}
     }
   },
@@ -51,6 +74,7 @@
     {"if": {"properties": {"record_type": {"const": "lap"}}}, "then": {"required": ["lap_id", "lap_number"]}},
     {"if": {"properties": {"record_type": {"const": "segment"}}}, "then": {"required": ["lap_id", "segment_id", "segment_kind", "label"]}},
     {"if": {"properties": {"record_type": {"const": "telemetry_sample"}}}, "then": {"required": ["lap_id", "sample_index"]}},
+    {"if": {"properties": {"record_type": {"const": "distance_bin"}}}, "then": {"required": ["lap_id", "distance_bin_index", "distance_start_m", "distance_end_m", "sample_count", "has_sample", "aggregation"]}},
     {"if": {"properties": {"record_type": {"const": "driver_input_event"}}}, "then": {"required": ["lap_id", "event_type"]}}
   ],
   "$defs": {

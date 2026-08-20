@@ -5,11 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
+import zipfile
 
 from apex_labs.errors import IntegrityError
 from apex_labs.exports import generate_product_export
 from apex_labs.findings import finding_hash, validate_finding_with_artifact
-from apex_labs.ingestion import ingest_dataset, inspect_dataset
+from apex_labs.ingestion import (
+    ingest_apex_session_bundle,
+    ingest_dataset,
+    inspect_apex_session_bundle,
+    inspect_dataset,
+)
 from apex_labs.io import canonical_json_bytes, read_json, write_json
 from apex_labs.provenance import sha256_bytes, sha256_file
 
@@ -20,6 +26,21 @@ def _file_inventory(root: Path) -> dict[str, bytes]:
         for path in root.rglob("*")
         if path.is_file()
     }
+
+
+def _build_apex_session_fixture(source: Path, destination: Path) -> None:
+    """Build the checked-in unzipped fixture without platform-dependent metadata."""
+    order = [
+        "README.md", "session-summary.md", "analysis-prompt.md", "data-dictionary.md",
+        "findings.json", "laps.csv", "telemetry.csv", "manifest.json",
+    ]
+    with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_STORED) as archive:
+        for name in order:
+            info = zipfile.ZipInfo(name, (2000, 1, 1, 0, 0, 0))
+            info.create_system = 0
+            info.compress_type = zipfile.ZIP_STORED
+            info.external_attr = 0
+            archive.writestr(info, (source / name).read_bytes())
 
 
 def verify_synthetic_demo(root: Path) -> dict[str, Any]:
@@ -114,6 +135,32 @@ def verify_synthetic_demo(root: Path) -> dict[str, Any]:
         generate_product_export(dynamic_definition, second_export, handoff_root)
         if _file_inventory(first_export) != _file_inventory(second_export):
             raise IntegrityError("Synthetic product exports are not byte deterministic")
+
+        apex_fixture = root / "tests" / "fixtures" / "apex_session_export_v1"
+        first_bundle = temporary / "apex-first.zip"
+        second_bundle = temporary / "apex-second.zip"
+        _build_apex_session_fixture(apex_fixture / "bundle", first_bundle)
+        _build_apex_session_fixture(apex_fixture / "bundle", second_bundle)
+        if first_bundle.read_bytes() != second_bundle.read_bytes():
+            raise IntegrityError("Synthetic Apex customer bundles are not byte deterministic")
+        bundle_report = inspect_apex_session_bundle(first_bundle)
+        first_apex_normalized = temporary / "apex-normalized-first"
+        second_apex_normalized = temporary / "apex-normalized-second"
+        first_apex_manifest = ingest_apex_session_bundle(
+            first_bundle, first_apex_normalized, apex_fixture / "collection-record.json", project_root=root
+        )
+        second_apex_manifest = ingest_apex_session_bundle(
+            second_bundle, second_apex_normalized, apex_fixture / "collection-record.json", project_root=root
+        )
+        if _file_inventory(first_apex_normalized) != _file_inventory(second_apex_normalized):
+            raise IntegrityError("Synthetic Apex native normalization is not byte deterministic")
+        inspect_dataset(first_apex_normalized / "manifest.json")
+        if first_apex_manifest["research_eligibility"] != {
+            "classification": "synthetic_demo",
+            "scientific_promotion_eligible": False,
+            "reason": "Synthetic mechanics cannot support scientific promotion.",
+        }:
+            raise IntegrityError("Synthetic Apex fixture acquired impermissible research eligibility")
     return {
         "ok": True,
         "classification": "synthetic_demo_only_not_racing_research",
@@ -125,4 +172,11 @@ def verify_synthetic_demo(root: Path) -> dict[str, Any]:
         "product_action": finding["recommended_product_action"],
         "deterministic_normalization": True,
         "deterministic_export": True,
+        "native_apex_session_adapter": {
+            "source_schema_version": bundle_report["source_schema_version"],
+            "record_counts": first_apex_manifest["record_counts"],
+            "distance_binned_not_raw_frames": True,
+            "scientific_promotion_eligible": False,
+            "deterministic_normalization": True,
+        },
     }

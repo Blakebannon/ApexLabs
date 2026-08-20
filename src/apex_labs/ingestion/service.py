@@ -25,7 +25,14 @@ from apex_labs.provenance import (
     snapshot_source_files,
     verify_source_files,
 )
-from apex_labs.schemas import validate_dataset_manifest, validate_normalized_manifest, validate_normalized_record
+from apex_labs.schemas import (
+    validate_collection_record,
+    validate_adapter_conformance,
+    validate_dataset_manifest,
+    validate_normalized_manifest,
+    validate_normalized_record,
+    validate_product_annotations,
+)
 from apex_labs.schemas.versions import NORMALIZATION_VERSION, NORMALIZED_MANIFEST
 
 
@@ -163,6 +170,20 @@ def inspect_dataset(manifest_path: Path, *, validate_records: bool = True) -> di
         )
         if expected_fingerprint != manifest["dataset_fingerprint"]:
             raise IntegrityError("Normalized dataset fingerprint does not match its provenance/content basis")
+        native_validators = {
+            "collection_record": validate_collection_record,
+            "product_annotations": validate_product_annotations,
+            "adapter_conformance": validate_adapter_conformance,
+        }
+        for field, validator in native_validators.items():
+            if field not in manifest:
+                continue
+            reference = manifest[field]
+            artifact_path = resolve_relative_file(manifest_path.parent, reference["path"])
+            if sha256_file(artifact_path) != reference["sha256"]:
+                raise IntegrityError(f"Normalized {field} hash mismatch")
+            if validator is not None:
+                validator(read_json(artifact_path))
         tracker = NormalizedIntegrityTracker(manifest["dataset_id"], manifest["temporal_policy"])
         actual_counts: Counter[str] = Counter()
         for index, record in enumerate(iter_json_lines(records_path)):

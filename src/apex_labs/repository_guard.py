@@ -18,7 +18,7 @@ from apex_labs.schemas import validate_dataset_manifest
 PROHIBITED_EXTENSIONS = {
     ".ibt", ".ld", ".ldx", ".bin", ".parquet", ".feather", ".h5", ".hdf5",
     ".db", ".sqlite", ".sqlite3", ".mdb", ".accdb", ".p12", ".pfx", ".pem",
-    ".key", ".cer", ".crt",
+    ".key", ".cer", ".crt", ".zip",
 }
 MAX_REPOSITORY_FILE_BYTES = 5 * 1024 * 1024
 MAX_SYNTHETIC_FIXTURE_FILE_BYTES = 1 * 1024 * 1024
@@ -90,6 +90,16 @@ def _synthetic_dataset_root(root: Path, path: Path) -> Path | None:
 
 
 def _fixture_classification(fixture_root: Path) -> tuple[bool, str]:
+    collection_path = fixture_root / "collection-record.json"
+    if collection_path.is_file():
+        try:
+            from apex_labs.schemas import validate_collection_record
+
+            collection = validate_collection_record(read_json(collection_path))
+            if collection["synthetic"] and collection["privacy"]["classification"] == "synthetic":
+                return True, "synthetic"
+        except Exception:
+            pass
     manifests = sorted(fixture_root.glob("*manifest*.json"))
     for manifest_path in manifests:
         try:

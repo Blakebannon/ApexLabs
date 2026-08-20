@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apex-labs"
-version = "0.1.1"
+version = "0.2.0"
 description = "Reproducible motorsport-performance and telemetry research infrastructure"
 readme = "README.md"
 requires-python = ">=3.11"

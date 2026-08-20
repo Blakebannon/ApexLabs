@@ -1,6 +1,9 @@
 # Data and contract model
 
-Runtime validation in `src/apex_labs/schemas/validation.py` is authoritative for this release. Contract examples and external JSON Schemas live under `contracts/v1/`. Canonical JSON uses UTF-8, sorted keys, compact separators, finite numbers only, and one trailing newline.
+Runtime validation under `src/apex_labs/schemas/` is authoritative for this
+release. Contract examples and external JSON Schemas live under `contracts/`.
+Canonical JSON uses UTF-8, sorted keys, compact separators, finite numbers only,
+and one trailing newline.
 
 ## Source dataset manifest
 
@@ -43,6 +46,9 @@ All record types contain dataset/session/record IDs and source provenance.
 - `lap`: stable lap ID/number and lap-level fields.
 - `segment`: corner, straight, or custom segment linked to a lap.
 - `telemetry_sample`: sample index and timestamp plus available telemetry fields.
+- `distance_bin`: a source aggregate over a declared distance interval, with
+  represented-frame count, per-channel aggregation methods, and explicit
+  sampled/missing state. It is not a raw frame and requires no timestamp.
 - `driver_input_event`: a versioned event type and timestamp plus event fields.
 
 Record IDs, session IDs, lap IDs, and segment IDs are unique in their relevant namespace. The canonical stream uses contiguous `sequence_index` values with parents before children. Every lap belongs to its session; every segment/sample/event belongs to its declared lap and optional segment. The record stream may omit levels that cannot be produced honestly. For example, ingestion must not fabricate corners when no trusted segmentation exists. A later preprocessing stage can create derived segment/event records while naming its version and derivation.
@@ -55,9 +61,15 @@ Canonical v1 values use SI-oriented units and a right-handed vehicle frame (`x` 
 
 The v1 vocabulary includes time, lap timing/validity/distance, position, speed, acceleration, yaw, steering, pedals, gear/RPM, per-wheel speeds, tire pressures/temperatures, ABS/TC, fuel, session/incident/off-track state, and air/track conditions. The manifest capability matrix enumerates every concept, including unavailable concepts. New concepts require review for definition, unit/reference-frame semantics, and compatibility.
 
-## Optimal future Apex Sim Coach export
+## Apex Sim Coach exports
 
-No current production export format is assumed. For high-fidelity research, a future versioned export should ideally provide:
+The supported customer `apex-session-export/1.0.0` format and its limitations
+are documented in [apex-session-export-adapter.md](apex-session-export-adapter.md).
+Its one-metre aggregate rows normalize as `distance_bin` records; empty channels
+are unavailable, and source fractions are preserved without silently choosing a
+denominator.
+
+For high-fidelity research, the future versioned Research export should provide:
 
 - Stable export, dataset, session, driver-pseudonym, car, track, and layout identifiers.
 - Export schema/version and simulator/build/plugin versions.

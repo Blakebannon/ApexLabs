@@ -54,6 +54,7 @@ datasets/**
 *.db
 *.mdb
 *.accdb
+*.zip
 
 # Generated exports go here during local work. Reviewed, versioned export
 # packages may be deliberately added elsewhere under product-exports/.

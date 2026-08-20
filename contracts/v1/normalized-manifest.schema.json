@@ -50,16 +50,22 @@
         "parent_references": {"const": "verified"},
         "quality_flag_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
         "interpolation": {"$ref": "#/$defs/interpolation"},
-        "gap_detection": {"enum": ["evaluated", "not_evaluated_no_declared_cadence"]}
+        "gap_detection": {"enum": ["evaluated", "distance_coverage_evaluated", "not_evaluated_no_declared_cadence"]}
       }
     },
     "records_file": {"type": "string", "minLength": 1},
     "records_sha256": {"$ref": "#/$defs/sha256"},
     "record_counts": {
       "type": "object",
-      "propertyNames": {"enum": ["session", "lap", "segment", "telemetry_sample", "driver_input_event"]},
+      "propertyNames": {"enum": ["session", "lap", "segment", "telemetry_sample", "distance_bin", "driver_input_event"]},
       "additionalProperties": {"type": "integer", "minimum": 0}
     },
+    "source_bundle": {"$ref": "#/$defs/source_bundle"},
+    "source_semantics": {"$ref": "#/$defs/source_semantics"},
+    "research_eligibility": {"$ref": "#/$defs/research_eligibility"},
+    "collection_record": {"$ref": "#/$defs/integrity_bound_file"},
+    "product_annotations": {"$ref": "#/$defs/integrity_bound_file"},
+    "adapter_conformance": {"$ref": "#/$defs/integrity_bound_file"},
     "source_files": {
       "type": "array",
       "minItems": 1,
@@ -86,6 +92,18 @@
     },
     "unknown_source_channels": {"type": "array", "items": {"type": "string", "minLength": 1}}
   },
+  "allOf": [
+    {
+      "if": {"required": ["source_bundle"]},
+      "then": {
+        "required": ["source_semantics", "research_eligibility", "collection_record", "product_annotations", "adapter_conformance"],
+        "properties": {
+          "adapter": {"properties": {"id": {"const": "apex-session-export"}, "version": {"const": "1.0.0"}}},
+          "record_counts": {"required": ["distance_bin"]}
+        }
+      }
+    }
+  ],
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -99,6 +117,43 @@
         "git_state": {"enum": ["clean", "dirty", "uncommitted"]},
         "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
         "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    },
+    "source_bundle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "sha256", "manifest_sha256", "privacy_mode"],
+      "properties": {
+        "schema_version": {"const": "apex-session-export/1.0.0"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "privacy_mode": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_semantics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_semantics", "distance_bin_width_m", "interpolation_performed", "time_domain_available"],
+      "properties": {
+        "record_semantics": {"const": "distance_binned_aggregate_not_raw_frames"},
+        "distance_bin_width_m": {"type": "number", "exclusiveMinimum": 0},
+        "interpolation_performed": {"const": false},
+        "time_domain_available": {"const": false}
+      }
+    },
+    "research_eligibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "scientific_promotion_eligible", "reason"],
+      "properties": {
+        "classification": {"enum": ["observational", "experimental", "integration_validation_only", "synthetic_demo"]},
+        "scientific_promotion_eligible": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "integrity_bound_file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^[^/\\\\]+(?:/[^/\\\\]+)*$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
       }
     },
     "interpolation": {

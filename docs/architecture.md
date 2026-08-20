@@ -60,7 +60,12 @@ An adapter translates an explicitly declared source format to normalized records
 6. Declare source clock, normalized monotonic clock, resolution, reset/duplicate/gap policies, interpolation, canonical units, and coordinate/sign conversion.
 7. Refuse malformed or ambiguous input and preserve detectable defects as quality flags when policy allows them.
 
-The initial `tabular-csv` adapter has no iRacing or Apex Sim Coach names embedded in it. Its manifest supplies the mapping. A future Apex Sim Coach adapter must target a reviewed, versioned production export specification supplied to this repository—not reverse-engineer or guess one. Native compatibility is currently unverified.
+The generic `tabular-csv` adapter has no iRacing or Apex Sim Coach names embedded
+in it. Its manifest supplies the mapping. The native customer-bundle adapter
+targets exactly the reviewed `apex-session-export/1.0.0` contract and represents
+its telemetry as distance aggregates, not raw samples. High-resolution Research
+export compatibility remains unimplemented until production engineering supplies
+an actual reviewed sample/specification for that separate contract.
 
 ## Versioning
 

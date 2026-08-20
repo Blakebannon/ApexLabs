@@ -4,12 +4,12 @@ Apex Labs is the reproducible performance-science and telemetry-research environ
 
 It is not the Apex Sim Coach application, a live coach, a notebook dumping ground, or an automatic production-update system. It does not turn plausible correlations into racing truths. Apex Labs never writes to the separate production repository.
 
-## Milestone 0.1 capabilities
+## Foundation and native customer-bundle capabilities
 
 - Versioned contracts for datasets, normalized records, experiments, findings, metrics, algorithm recommendations, and product exports.
-- Manifest-driven `tabular-csv` ingestion without assumptions about Apex Sim Coach's current export names.
+- Manifest-driven generic CSV ingestion plus a strict native adapter for exactly `apex-session-export/1.0.0`.
 - Content-bound dataset fingerprints covering source bytes, canonical manifest, complete adapter/preprocessing configuration, code and schema identity, normalized record bytes, and integrity summary.
-- Session, lap, segment, telemetry-sample, and driver-input-event record types.
+- Session, lap, segment, timestamped telemetry-sample, distance-bin aggregate, and driver-input-event record types.
 - Explicit canonical units/conventions; measured, derived, estimated, and unavailable provenance; parent/order/time policies; and non-repairing quality flags.
 - Immutable protocol freezes, hash-bound randomization/schedules, and append-only amendments.
 - Independent finding-validation artifacts separating analyst claims, computed evidence, structural/reproducibility gates, scientific review, and product review.
@@ -47,6 +47,8 @@ apex-labs export-product-findings product-exports/synthetic-demo-export-definiti
 apex-labs verify-export product-exports/generated/demo
 apex-labs repository-guard --root .
 apex-labs verify-synthetic-demo --root .
+apex-labs apex-session inspect "D:\external-data\session.zip"
+apex-labs apex-session validate "D:\external-data\session.zip" --collection-record "D:\external-data\collection-record.json"
 ```
 
 `ingest` and `export-product-findings` refuse to overwrite existing files. `inspect` verifies content hashes and normalized record counts; it is not merely a metadata viewer.
@@ -70,7 +72,7 @@ See [architecture](docs/architecture.md), [scientific method](docs/scientific-me
 
 Real telemetry is not committed by default. Keep it in an approved external location and commit only reviewed, non-identifying manifests when appropriate. Tiny fixtures may be committed only when synthetic or explicitly sanitized and labeled. Never add credentials, production databases, customer data, or private keys.
 
-Real participant ingestion requires pseudonymization, no direct identifiers, collection authority/consent metadata, retention policy, an exact frozen-protocol/condition/block/schedule link, and a clean Apex Labs Git commit. Run `apex-labs repository-guard` before review, while recognizing its heuristic limits.
+Real participant ingestion requires pseudonymization, no direct identifiers, collection authority/consent metadata, retention policy, and a clean Apex Labs Git commit. Controlled experimental data additionally requires an exact frozen-protocol/condition/block/schedule link. Observational data must be labeled observational and cannot masquerade as preregistered. Run `apex-labs repository-guard` before review, while recognizing its heuristic limits.
 
 ## Status and scope are separate
 
@@ -78,4 +80,6 @@ A finding status describes evidential disposition. Its scope describes where evi
 
 ## Readiness boundary
 
-The generic synthetic CSV mechanics are ready and tested. Real Apex Sim Coach telemetry collection is not yet ready: native compatibility remains unverified until an actual versioned sample/specification and the campaign protocol are reviewed against the [native adapter checklist](docs/native-adapter-readiness.md). Deterministic output is not scientific truth, schema validity is not adequate evidence, and export verification is not authorship or production approval.
+Compatibility with the existing customer-facing `apex-session-export/1.0.0` bundle has been validated against an external anonymized sample. That bundle contains distance-binned aggregates and is suitable for limited observational analysis, not high-fidelity time-domain research. Formal controlled collection remains blocked until the future Research-export contract, production capture implementation, privacy review, and frozen campaign protocol/schedule are reviewed. See the [customer-bundle adapter](docs/apex-session-export-adapter.md), [collection sidecar](docs/collection-record.md), [Research-export handoff](docs/apex-research-export-contract.md), and [remaining readiness checklist](docs/native-adapter-readiness.md).
+
+Deterministic output is not scientific truth, schema validity is not adequate evidence, product annotations are not ground truth, and export verification is not authorship or production approval.

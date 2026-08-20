@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/product-annotations.schema.json",
+  "title": "Non-scientific Apex Sim Coach product annotations",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "source_schema_version", "source_file_sha256", "classification", "scientific_evidence", "training_labels", "ground_truth", "product_recommendations", "scientific_promotion_allowed", "annotations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.product-annotations/v1"},
+    "source_schema_version": {"const": "apex-session-export/1.0.0"},
+    "source_file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {"const": "product_generated_annotations_not_scientific_evidence"},
+    "scientific_evidence": {"const": false},
+    "training_labels": {"const": false},
+    "ground_truth": {"const": false},
+    "product_recommendations": {"const": false},
+    "scientific_promotion_allowed": {"const": false},
+    "annotations": {"type": "array", "items": {"type": "object"}}
+  }
+}

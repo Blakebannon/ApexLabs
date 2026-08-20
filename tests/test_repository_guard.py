@@ -120,6 +120,7 @@ class RepositoryGuardTests(unittest.TestCase):
             "datasets/raw/private-session.csv",
             "datasets/private/identity.json",
             "raw-session.ibt",
+            "external-session.zip",
             ".env",
             "product-exports/generated/local/manifest.json",
         ]
@@ -134,6 +135,14 @@ class RepositoryGuardTests(unittest.TestCase):
             check=False,
         )
         self.assertNotEqual(0, result.returncode)
+
+    def test_force_visible_zip_is_refused_even_if_gitignore_would_hide_it(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "session.zip"
+            archive.write_bytes(b"not-real-telemetry")
+            rules = {item.rule for item in scan_repository_files(root, [archive])}
+            self.assertIn("prohibited-binary", rules)
 
 
 if __name__ == "__main__":

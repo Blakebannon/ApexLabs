@@ -4,6 +4,11 @@
 
 A product export is a review artifact, not an integration mechanism. Apex Labs never opens, patches, configures, or deploys the Apex Sim Coach production repository. A human and a production engineer or production-focused AI must decide whether a finding is relevant, safe, implementable, and testable.
 
+The future telemetry-capture handoff is separately specified in
+[apex-research-export-contract.md](apex-research-export-contract.md). The normal
+customer Session Analysis Bundle remains separate. Neither contract authorizes
+Apex Labs to change production.
+
 ## Package contract
 
 `apex-labs export-product-findings` consumes a versioned export definition and creates:

@@ -17,6 +17,13 @@ from apex_labs.schemas.research_validation import (
     validate_protocol_amendment,
     validate_protocol_freeze,
 )
+from apex_labs.schemas.apex_session_validation import (
+    validate_apex_session_manifest,
+    validate_collection_record,
+    validate_product_annotations,
+    validate_research_export_manifest,
+    validate_adapter_conformance,
+)
 
 __all__ = [
     "validate_dataset_manifest",
@@ -32,4 +39,9 @@ __all__ = [
     "validate_protocol_freeze",
     "validate_metric_definition",
     "validate_algorithm_recommendation",
+    "validate_apex_session_manifest",
+    "validate_collection_record",
+    "validate_product_annotations",
+    "validate_research_export_manifest",
+    "validate_adapter_conformance",
 ]

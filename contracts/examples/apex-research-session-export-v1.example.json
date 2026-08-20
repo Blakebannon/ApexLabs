@@ -1,0 +1,89 @@
+{
+  "schema_version": "apex-research-session-export/1.0.0",
+  "session": {
+    "session_id": "synthetic-research-session",
+    "participant_pseudonym": "synthetic-participant",
+    "simulator": {"id": "synthetic-simulator", "version": "synthetic"},
+    "car": {"id": "synthetic-car"},
+    "track": {"id": "synthetic-track", "layout": "synthetic-layout"},
+    "start_utc": "2000-01-01T00:00:00Z",
+    "end_utc": "2000-01-01T00:01:00Z"
+  },
+  "timing": {
+    "timestamped_samples": true,
+    "utc_session_timing": true,
+    "utc_lap_timing": true,
+    "source_clock": "synthetic-monotonic-clock",
+    "nominal_frequency_hz": 60.0,
+    "resolution_seconds": 0.001,
+    "reset_behavior": "declared-in-events",
+    "lap_elapsed_time": true,
+    "lap_distance": true,
+    "gaps_dropped_frames_and_backpressure_recorded": true
+  },
+  "channels": [
+    {"name": "timestamp", "availability": "available", "provenance": "measured", "unit": "s", "axis_and_sign": "monotonic source clock", "missing_value": "null plus quality event"},
+    {"name": "brake", "availability": "available", "provenance": "measured", "unit": "ratio", "axis_and_sign": "0 released; 1 fully applied", "missing_value": "null"},
+    {"name": "throttle", "availability": "available", "provenance": "measured", "unit": "ratio", "axis_and_sign": "0 released; 1 fully applied", "missing_value": "null"},
+    {"name": "steering_angle", "availability": "available", "provenance": "measured", "unit": "rad", "axis_and_sign": "positive left", "missing_value": "null"},
+    {"name": "speed", "availability": "available", "provenance": "measured", "unit": "m/s", "axis_and_sign": "non-negative vehicle speed", "missing_value": "null"},
+    {"name": "gear", "availability": "available", "provenance": "measured", "unit": "integer", "axis_and_sign": "simulator-declared gear encoding", "missing_value": "null"},
+    {"name": "rpm", "availability": "available", "provenance": "measured", "unit": "rpm", "axis_and_sign": "non-negative", "missing_value": "null"},
+    {"name": "longitudinal_acceleration", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "lateral_acceleration", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "yaw_rate", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "wheel_state", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "tire_state", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "fuel", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "setup", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "assists", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "damage", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "flags", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "weather", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "track_conditions", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"}
+  ],
+  "events": {
+    "incidents": true,
+    "pit_transitions": true,
+    "lap_validity": true,
+    "session_state": true,
+    "coaching_cue_authorization_and_delivery_receipts": true,
+    "experimental_block_and_condition_markers": true
+  },
+  "collection": {
+    "protocol_identity": "synthetic-protocol-freeze",
+    "configuration_setup_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "coaching_disabled_research_mode": true
+  },
+  "privacy": {
+    "classification": "synthetic",
+    "direct_identifiers_present": false,
+    "pseudonymization_supported": true
+  },
+  "storage": {
+    "local_only": true,
+    "retention_declaration": "Synthetic contract example only.",
+    "complete_marker_required": true,
+    "truncation_and_corruption_behavior": "Incomplete or hash-mismatched bundles are invalid."
+  },
+  "files": [
+    {"path": "samples.arrow", "size_bytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "role": "timestamped-samples"},
+    {"path": "events.jsonl", "size_bytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "role": "session-events"}
+  ],
+  "build_boundary": {
+    "shared_codebase": true,
+    "isolated_research_capture_module": true,
+    "research_build_capability": true,
+    "production_capture_proven_absent": true,
+    "public_research_ui": false,
+    "production_high_resolution_artifacts": false,
+    "local_only_recording": true,
+    "bounded_streaming_to_disk": true,
+    "disk_space_preflight": true,
+    "low_disk_fail_safe": true,
+    "configurable_output_location": true,
+    "explicit_activation": true,
+    "visible_recording_state": true,
+    "automatic_upload": false
+  }
+}

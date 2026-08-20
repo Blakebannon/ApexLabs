@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/adapter-conformance.schema.json",
+  "title": "Apex customer-bundle adapter conformance report",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "source_schema_version", "adapter", "available", "aggregated", "product_derived_annotations", "ambiguous", "unavailable", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.adapter-conformance/v1"},
+    "source_schema_version": {"const": "apex-session-export/1.0.0"},
+    "adapter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {"id": {"const": "apex-session-export"}, "version": {"const": "1.0.0"}}
+    },
+    "available": {"$ref": "#/$defs/nonempty_strings"},
+    "aggregated": {
+      "type": "object", "additionalProperties": false,
+      "required": ["brake", "throttle", "steering_angle", "speed"],
+      "properties": {"brake": {"type": "string", "minLength": 1}, "throttle": {"type": "string", "minLength": 1}, "steering_angle": {"type": "string", "minLength": 1}, "speed": {"type": "string", "minLength": 1}}
+    },
+    "product_derived_annotations": {"$ref": "#/$defs/nonempty_strings"},
+    "ambiguous": {
+      "type": "object", "additionalProperties": false,
+      "required": ["lap_fraction_denominator", "layout_identity"],
+      "properties": {"lap_fraction_denominator": {"type": "string", "minLength": 1}, "layout_identity": {"type": "string", "minLength": 1}}
+    },
+    "unavailable": {"$ref": "#/$defs/nonempty_strings"},
+    "limitations": {"$ref": "#/$defs/nonempty_strings"}
+  },
+  "$defs": {
+    "nonempty_strings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}

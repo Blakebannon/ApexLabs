@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/collection-record.schema.json",
+  "title": "Apex Labs collection record v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "collection_record_id", "version", "dataset_id", "synthetic", "collection_classification", "participant", "authority", "privacy", "storage", "source_bundle", "session_identity", "session_condition", "protocol", "blocks", "lap_assignments", "deviations", "coaching", "operator_notes", "created_at"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.collection-record/v1"},
+    "collection_record_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "dataset_id": {"$ref": "#/$defs/id"},
+    "synthetic": {"type": "boolean"},
+    "collection_classification": {"enum": ["observational", "experimental"]},
+    "participant": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pseudonymous_participant_id", "external_identity_map_reference", "direct_identity_in_record"],
+      "properties": {
+        "pseudonymous_participant_id": {"$ref": "#/$defs/id"},
+        "external_identity_map_reference": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "direct_identity_in_record": {"const": false}
+      }
+    },
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["declaration", "recorded_at"],
+      "properties": {"declaration": {"type": "string", "minLength": 1}, "recorded_at": {"type": "string", "format": "date-time"}}
+    },
+    "privacy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["classification", "pseudonymized", "direct_identifiers_present"],
+      "properties": {
+        "classification": {"enum": ["synthetic", "private", "sanitized"]},
+        "pseudonymized": {"type": "boolean"},
+        "direct_identifiers_present": {"type": "boolean"}
+      }
+    },
+    "storage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_bundle_location", "retention_declaration"],
+      "properties": {"source_bundle_location": {"const": "external_untracked"}, "retention_declaration": {"type": "string", "minLength": 1}}
+    },
+    "source_bundle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sha256", "schema_version"],
+      "properties": {"sha256": {"$ref": "#/$defs/sha256"}, "schema_version": {"const": "apex-session-export/1.0.0"}}
+    },
+    "session_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["simulator", "car", "track", "layout", "confirmation_method"],
+      "properties": {
+        "simulator": {"type": "string", "minLength": 1}, "car": {"type": "string", "minLength": 1},
+        "track": {"type": "string", "minLength": 1}, "layout": {"type": ["string", "null"], "minLength": 1},
+        "confirmation_method": {"type": "string", "minLength": 1}
+      }
+    },
+    "session_condition": {"type": ["string", "null"], "minLength": 1},
+    "protocol": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["freeze_id", "freeze_sha256", "experiment_id", "experiment_version", "schedule_id", "schedule_sha256", "schedule_assignment_id"],
+          "properties": {
+            "freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"},
+            "experiment_id": {"$ref": "#/$defs/id"}, "experiment_version": {"type": "string", "minLength": 1},
+            "schedule_id": {"$ref": "#/$defs/id"}, "schedule_sha256": {"$ref": "#/$defs/sha256"},
+            "schedule_assignment_id": {"$ref": "#/$defs/id"}
+          }
+        }
+      ]
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["block_id", "condition_id", "start_lap", "end_lap"],
+        "properties": {"block_id": {"$ref": "#/$defs/id"}, "condition_id": {"$ref": "#/$defs/id"}, "start_lap": {"type": "integer", "minimum": 0}, "end_lap": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "lap_assignments": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["lap_number", "block_id"],
+        "properties": {"lap_number": {"type": "integer", "minimum": 0}, "block_id": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "deviations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "coaching": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "notes"],
+      "properties": {"state": {"enum": ["enabled", "disabled", "mixed", "unknown"]}, "notes": {"type": "string"}}
+    },
+    "operator_notes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {"if": {"properties": {"synthetic": {"const": true}}}, "then": {"properties": {"privacy": {"properties": {"classification": {"const": "synthetic"}}}}}},
+    {"if": {"properties": {"synthetic": {"const": false}}}, "then": {"properties": {"privacy": {"properties": {"classification": {"enum": ["private", "sanitized"]}, "pseudonymized": {"const": true}, "direct_identifiers_present": {"const": false}}}}}},
+    {"if": {"properties": {"collection_classification": {"const": "observational"}}}, "then": {"properties": {"protocol": {"type": "null"}, "blocks": {"maxItems": 0}, "lap_assignments": {"maxItems": 0}}}},
+    {"if": {"properties": {"collection_classification": {"const": "experimental"}}}, "then": {"properties": {"protocol": {"type": "object"}, "blocks": {"minItems": 1}, "lap_assignments": {"minItems": 1}}}}
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

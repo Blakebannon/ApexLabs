@@ -1,34 +1,61 @@
-# Native Apex telemetry adapter readiness
+# Native Apex Research-export readiness
 
-Native Apex Sim Coach compatibility is unverified. Generic CSV ingestion does not establish it. Do not implement or claim a native adapter until a reviewed sample and specification are deliberately supplied to Apex Labs.
+The existing customer Session Analysis Bundle is supported at exactly
+`apex-session-export/1.0.0` and has been validated against one external
+anonymized sample. It contains distance-binned aggregates, not the timestamped
+raw or near-raw samples needed for the proposed controlled campaign. Native
+high-fidelity Research-export compatibility remains unverified and unimplemented.
 
 ## Required input package
 
-1. A tiny sanitized or synthetic, versioned sample export produced by the actual export path, plus its SHA-256 hash and expected parsed record counts.
-2. The export contract/version and compatibility policy, including how unsupported older/newer versions must fail.
-3. Every channel name, type, semantic definition, availability rule, source unit, canonical-unit conversion, coordinate frame, sign convention, valid range if structural, and provenance (`measured`, production-derived with algorithm identity, estimated, or unavailable).
-4. Sampling behavior: nominal and variable rates, per-channel rates, ordering, buffering, dropped/duplicated samples, resampling, interpolation, quantization, and clock resolution.
-5. Clock behavior: timestamp type/source/origin/epoch, monotonicity, precision, rollover, pause/reset/reconnect/session-reset behavior, and relationship among simulator, session, lap, wall, and export clocks.
-6. Missing-value conventions: absent columns, null/blank/sentinel/NaN behavior, zero semantics, disabled channels, and partial-record behavior.
-7. Session, stint, lap, sector, corner/segment, pit, reset, replay, reconnect, and file-rotation boundaries, including identifiers and invalidation reasons.
-8. Simulator, simulator/build, car/model/class/setup, track/layout/configuration, driver pseudonym, session, and export identifiers; state which are stable, local, or personally identifying.
-9. Incident, off-track, traffic, flag, aid, damage, fuel, tire, environment, calibration, hardware, and setup context where available, including change events.
-10. Privacy classification and field-level review: direct identifiers, pseudonymization method and key custody, collection authority/consent, retention/deletion policy, and permitted research uses.
-11. Provenance: original file/container hashes, exporter version/commit/build identity, configuration, source file ordering, completeness markers, and production-derived algorithm versions/configuration.
-12. Expected minimum/typical/maximum files, record counts, duration, and byte sizes so streaming, limits, and repository boundaries can be tested without committing real telemetry.
-13. Corruption behavior: truncation, incomplete final writes, invalid checksums, duplicate blocks, unexpected fields, unsupported encodings, compression/container failure, and how a complete export is distinguished from an interrupted one.
-14. At least one expected-output conformance fixture showing normalized sessions/laps/samples and deliberately unavailable capabilities, with no racing conclusion.
+1. A tiny sanitized or synthetic, versioned sample produced by the actual
+   Research export path, its SHA-256, and expected record counts.
+2. The export contract/version and compatibility policy, including strict
+   refusal of unsupported older/newer versions.
+3. Every channel name, type, semantic definition, availability, source unit,
+   canonical conversion, coordinate frame, sign, structural range, and
+   measured/derived/estimated/unavailable provenance.
+4. Nominal and variable sampling rates, per-channel rates, ordering, buffering,
+   dropped/duplicated samples, resampling, interpolation, quantization, clock
+   resolution, and recorder backpressure.
+5. Clock source/origin/epoch, monotonicity, precision, rollover, pause, reset,
+   reconnect, and the relationships among simulator/session/lap/wall clocks.
+6. Missing conventions for absent columns, null/blank/sentinel/NaN, true zero,
+   disabled channels, and partial records.
+7. Session, stint, lap, sector, pit, reset, replay, reconnect, and file-rotation
+   boundaries and invalidation reasons.
+8. Exact simulator/build, car, track/layout, participant pseudonym, session, and
+   export identifiers and their stability/privacy classifications.
+9. Incident, off-track, traffic, flags, assists, damage, fuel, tires, environment,
+   calibration, hardware, setup, and change events where available.
+10. Privacy review, pseudonymization/key custody, collection authority/consent,
+    retention/deletion, and permitted research uses.
+11. Container/file hashes, exporter build identity, configuration, completeness
+    markers, and product-derived algorithm versions/configuration.
+12. Minimum/typical/maximum file sizes, rates, durations, and record counts.
+13. Truncation, interrupted writes, invalid hashes, duplicates, unexpected
+    fields, encodings, compression failure, and completion detection.
+14. One small conformance fixture with expected normalized records and explicit
+    unavailable capabilities, containing no racing conclusion.
 
 ## Adapter acceptance checks
 
-- Hash and parse the same immutable snapshot bytes; reject source changes and truncation.
-- Validate all path, privacy, protocol-link, version, unit, clock, boundary, and identifier declarations before emitting a final artifact.
-- Convert only declared channels to canonical concepts/units/conventions; retain unknown source channels in provenance.
-- Enforce parent/order/finite-value rules and apply documented timestamp, gap, reset, lap-distance, and interpolation policies without silent repair.
-- Produce identical normalized bytes/fingerprints in independent directories for identical source bytes, configuration, code/schema content, and platform semantics.
-- Add Linux and Windows conformance cases if the export is expected to move between them.
-- Review expected file sizes against local storage and guard limits; raw/private files remain outside Git.
+- Hash and parse the same immutable snapshot bytes.
+- Validate path, privacy, protocol, version, unit, clock, boundary, and identity
+  declarations before producing a final artifact.
+- Convert only declared channels and retain source provenance/unknown channels.
+- Enforce parent, order, finite-value, gap/reset/distance, and interpolation
+  rules without silent repair.
+- Reproduce identical normalized bytes and fingerprints across independent
+  directories and supported platforms.
+- Keep real/private inputs outside Git and review expected storage requirements.
 
 ## Campaign gate
 
-Real collection remains blocked until both the native export contract/sample and the campaign protocol—including conditions, privacy handling, frozen schedule, comparability, exclusions, sample design, success/falsification rules, and safe collection procedure—are reviewed. Passing this checklist confirms adapter mechanics, not that the first real campaign is scientifically ready.
+Formal controlled collection remains blocked until both an implemented and
+reviewed Research export sample/specification and the campaign protocol—including
+conditions, privacy handling, frozen schedule, comparability, exclusions, sample
+design, success/falsification rules, and safe collection procedure—are reviewed.
+Passing this checklist confirms adapter mechanics, not that the first campaign
+is scientifically ready. The customer bundle may be ingested as an explicitly
+observational session; that does not satisfy the controlled-campaign gate.

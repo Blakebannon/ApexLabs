@@ -14,7 +14,13 @@ from apex_labs.errors import ApexLabsError, ContractValidationError
 from apex_labs.experiments import freeze_protocol, verify_protocol_freeze
 from apex_labs.exports import generate_product_export, verify_product_export
 from apex_labs.findings import validate_finding_with_artifact
-from apex_labs.ingestion import ingest_dataset, inspect_dataset
+from apex_labs.ingestion import (
+    ingest_apex_session_bundle,
+    ingest_dataset,
+    inspect_apex_session_bundle,
+    inspect_dataset,
+    validate_apex_session_bundle,
+)
 from apex_labs.io import canonical_json_bytes, read_json, read_json_lines
 from apex_labs.repository_guard import run_repository_guard
 from apex_labs.schemas import (
@@ -23,6 +29,11 @@ from apex_labs.schemas import (
     validate_finding_validation,
     validate_protocol_amendment,
     validate_protocol_freeze,
+    validate_apex_session_manifest,
+    validate_collection_record,
+    validate_product_annotations,
+    validate_research_export_manifest,
+    validate_adapter_conformance,
 )
 from apex_labs.schemas.validation import VALIDATORS
 
@@ -31,6 +42,11 @@ ALL_VALIDATORS = {
     "finding-validation": validate_finding_validation,
     "protocol-amendment": validate_protocol_amendment,
     "protocol-freeze": validate_protocol_freeze,
+    "apex-session-manifest": validate_apex_session_manifest,
+    "collection-record": validate_collection_record,
+    "product-annotations": validate_product_annotations,
+    "research-export-manifest": validate_research_export_manifest,
+    "adapter-conformance": validate_adapter_conformance,
 }
 
 
@@ -127,6 +143,25 @@ def _parser() -> argparse.ArgumentParser:
         help="Reproduce the synthetic mechanics path twice; never scientific evidence",
     )
     demo.add_argument("--root", type=Path, default=Path.cwd())
+
+    apex_session = commands.add_parser(
+        "apex-session", help="Securely inspect, validate, or normalize an apex-session-export/1.0.0 bundle"
+    )
+    apex_commands = apex_session.add_subparsers(dest="apex_session_command", required=True)
+    apex_inspect = apex_commands.add_parser("inspect", help="Inspect source semantics and capabilities")
+    apex_inspect.add_argument("bundle", type=Path)
+    apex_validate = apex_commands.add_parser("validate", help="Validate archive and cross-file integrity")
+    apex_validate.add_argument("bundle", type=Path)
+    apex_validate.add_argument("--collection-record", type=Path)
+    apex_ingest = apex_commands.add_parser("ingest", help="Normalize distance-binned source data")
+    apex_ingest.add_argument("bundle", type=Path)
+    apex_ingest.add_argument("--collection-record", type=Path, required=True)
+    apex_ingest.add_argument("--output", "-o", type=Path, required=True)
+    apex_ingest.add_argument(
+        "--integration-validation",
+        action="store_true",
+        help="Permit dirty-code real-sample mechanics validation; output is scientifically ineligible",
+    )
     return parser
 
 
@@ -217,6 +252,26 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         return result
     if args.command == "verify-synthetic-demo":
         return verify_synthetic_demo(args.root)
+    if args.command == "apex-session":
+        if args.apex_session_command == "inspect":
+            return inspect_apex_session_bundle(args.bundle)
+        if args.apex_session_command == "validate":
+            return validate_apex_session_bundle(args.bundle, args.collection_record)
+        manifest = ingest_apex_session_bundle(
+            args.bundle,
+            args.output,
+            args.collection_record,
+            integration_validation=args.integration_validation,
+        )
+        return {
+            "ok": True,
+            "dataset_id": manifest["dataset_id"],
+            "fingerprint": manifest["dataset_fingerprint"],
+            "record_counts": manifest["record_counts"],
+            "source_semantics": manifest["source_semantics"],
+            "research_eligibility": manifest["research_eligibility"],
+            "output": str(args.output),
+        }
     raise AssertionError(f"Unhandled command: {args.command}")
 
 

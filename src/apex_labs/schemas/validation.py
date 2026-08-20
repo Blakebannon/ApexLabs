@@ -399,6 +399,13 @@ def validate_normalized_record(value: Any) -> dict[str, Any]:
         "lap": ({"lap_id", "lap_number", "fields"}, set()),
         "segment": ({"lap_id", "segment_id", "segment_kind", "label", "fields"}, set()),
         "telemetry_sample": ({"lap_id", "sample_index", "fields"}, {"segment_id", "quality_flags"}),
+        "distance_bin": (
+            {
+                "lap_id", "distance_bin_index", "distance_start_m", "distance_end_m",
+                "sample_count", "has_sample", "aggregation", "fields",
+            },
+            {"quality_flags"},
+        ),
         "driver_input_event": ({"lap_id", "event_type", "fields"}, {"segment_id", "quality_flags"}),
     }
     if record_type in {"session", "lap", "segment"}:
@@ -419,7 +426,7 @@ def validate_normalized_record(value: Any) -> dict[str, Any]:
     if record_type == "session":
         for field in ("simulator", "driver_id", "car", "track", "layout"):
             _string(obj[field], f"$.{field}")
-    if record_type in {"lap", "segment", "telemetry_sample", "driver_input_event"}:
+    if record_type in {"lap", "segment", "telemetry_sample", "distance_bin", "driver_input_event"}:
         _id(obj["lap_id"], "$.lap_id")
     if "segment_id" in obj:
         _id(obj["segment_id"], "$.segment_id")
@@ -435,6 +442,48 @@ def validate_normalized_record(value: Any) -> dict[str, Any]:
             _fail("$.fields", "telemetry_sample requires timestamp")
         if fields["timestamp"].get("reference") != "normalized_monotonic_time":
             _fail("$.fields.timestamp.reference", "must identify normalized_monotonic_time")
+    if record_type == "distance_bin":
+        index = _integer(obj["distance_bin_index"], "$.distance_bin_index", minimum=0)
+        start = _number(obj["distance_start_m"], "$.distance_start_m")
+        end = _number(obj["distance_end_m"], "$.distance_end_m")
+        if start < 0 or end <= start:
+            _fail("$.distance_end_m", "must be greater than a non-negative distance_start_m")
+        if index != int(start):
+            _fail("$.distance_bin_index", "must equal the integer one-metre distance_start_m")
+        sample_count = _integer(obj["sample_count"], "$.sample_count", minimum=0)
+        has_sample = _boolean(obj["has_sample"], "$.has_sample")
+        if has_sample != (sample_count > 0):
+            _fail("$.has_sample", "must be true exactly when sample_count is positive")
+        aggregation = _object(obj["aggregation"], "$.aggregation")
+        _keys(
+            aggregation,
+            "$.aggregation",
+            required={"source_semantics", "distance_bin_width_m", "channel_methods"},
+        )
+        if aggregation["source_semantics"] != "distance_binned_aggregate":
+            _fail("$.aggregation.source_semantics", "must identify distance-binned aggregate source data")
+        if _number(aggregation["distance_bin_width_m"], "$.aggregation.distance_bin_width_m") != 1:
+            _fail("$.aggregation.distance_bin_width_m", "apex-session-export/1.0.0 bins must be one metre")
+        methods = _object(aggregation["channel_methods"], "$.aggregation.channel_methods")
+        expected_methods = {
+            "brake": "maximum",
+            "throttle": "arithmetic_mean",
+            "steering_angle": "arithmetic_mean",
+            "speed": "arithmetic_mean",
+        }
+        _keys(methods, "$.aggregation.channel_methods", required=set(expected_methods))
+        for concept, expected in expected_methods.items():
+            if methods[concept] != expected:
+                _fail(f"$.aggregation.channel_methods.{concept}", f"must be {expected!r}")
+        required_fields = {"lap_distance", "lap_fraction", *expected_methods}
+        if set(fields) != required_fields:
+            _fail("$.fields", f"distance_bin fields must be exactly {sorted(required_fields)}")
+        for concept in expected_methods:
+            value = fields[concept]
+            if not has_sample and (value["value"] is not None or value["provenance"] != "unavailable"):
+                _fail(f"$.fields.{concept}", "unsampled bins must preserve the channel as unavailable, not zero")
+            if has_sample and value["provenance"] != "derived":
+                _fail(f"$.fields.{concept}.provenance", "aggregated channel values must be derived")
     if record_type == "driver_input_event":
         _id(obj["event_type"], "$.event_type")
         if "timestamp" not in fields:
@@ -456,6 +505,10 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
             "normalization_version", "adapter", "code_identity", "preprocessing",
             "collection_context", "temporal_policy", "conventions", "integrity_summary", "records_file",
             "records_sha256", "record_counts", "source_files", "capabilities", "unknown_source_channels",
+        },
+        optional={
+            "source_bundle", "source_semantics", "research_eligibility", "collection_record",
+            "product_annotations", "adapter_conformance",
         },
     )
     _id(obj["dataset_id"], "$.dataset_id")
@@ -527,7 +580,11 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
         _string(flag, f"$.integrity_summary.quality_flag_counts.{flag}")
         _integer(count, f"$.integrity_summary.quality_flag_counts.{flag}", minimum=0)
     _object(integrity_summary["interpolation"], "$.integrity_summary.interpolation")
-    _enum(integrity_summary["gap_detection"], {"evaluated", "not_evaluated_no_declared_cadence"}, "$.integrity_summary.gap_detection")
+    _enum(
+        integrity_summary["gap_detection"],
+        {"evaluated", "distance_coverage_evaluated", "not_evaluated_no_declared_cadence"},
+        "$.integrity_summary.gap_detection",
+    )
     _string(obj["records_file"], "$.records_file")
     _sha(obj["records_sha256"], "$.records_sha256")
     counts = _object(obj["record_counts"], "$.record_counts")
@@ -565,6 +622,54 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
         if "source_channel" in item:
             _string(item["source_channel"], f"{path}.source_channel")
     _strings(obj["unknown_source_channels"], "$.unknown_source_channels")
+    if "source_bundle" in obj:
+        bundle = _object(obj["source_bundle"], "$.source_bundle")
+        _keys(bundle, "$.source_bundle", required={"schema_version", "sha256", "manifest_sha256", "privacy_mode"})
+        if bundle["schema_version"] != versions.APEX_SESSION_EXPORT:
+            _fail("$.source_bundle.schema_version", f"must be {versions.APEX_SESSION_EXPORT!r}")
+        _sha(bundle["sha256"], "$.source_bundle.sha256")
+        _sha(bundle["manifest_sha256"], "$.source_bundle.manifest_sha256")
+        _string(bundle["privacy_mode"], "$.source_bundle.privacy_mode")
+    if "source_semantics" in obj:
+        semantics = _object(obj["source_semantics"], "$.source_semantics")
+        _keys(semantics, "$.source_semantics", required={"record_semantics", "distance_bin_width_m", "interpolation_performed", "time_domain_available"})
+        if semantics["record_semantics"] != "distance_binned_aggregate_not_raw_frames":
+            _fail("$.source_semantics.record_semantics", "must not represent distance bins as raw frames")
+        if _number(semantics["distance_bin_width_m"], "$.source_semantics.distance_bin_width_m") != 1:
+            _fail("$.source_semantics.distance_bin_width_m", "must be one metre")
+        if semantics["interpolation_performed"] is not False or semantics["time_domain_available"] is not False:
+            _fail("$.source_semantics", "customer bundle contains neither interpolation nor time-domain samples")
+    if "research_eligibility" in obj:
+        eligibility = _object(obj["research_eligibility"], "$.research_eligibility")
+        _keys(eligibility, "$.research_eligibility", required={"classification", "scientific_promotion_eligible", "reason"})
+        classification = _enum(eligibility["classification"], {"observational", "experimental", "integration_validation_only", "synthetic_demo"}, "$.research_eligibility.classification")
+        eligible = _boolean(eligibility["scientific_promotion_eligible"], "$.research_eligibility.scientific_promotion_eligible")
+        _string(eligibility["reason"], "$.research_eligibility.reason")
+        if classification in {"integration_validation_only", "synthetic_demo"} and eligible:
+            _fail("$.research_eligibility.scientific_promotion_eligible", "integration and synthetic mechanics are ineligible")
+    for name in ("collection_record", "product_annotations", "adapter_conformance"):
+        if name in obj:
+            bound = _object(obj[name], f"$.{name}")
+            _keys(bound, f"$.{name}", required={"path", "sha256"})
+            validate_contract_path(_string(bound["path"], f"$.{name}.path"))
+            _sha(bound["sha256"], f"$.{name}.sha256")
+    native_fields = {
+        "source_bundle", "source_semantics", "research_eligibility", "collection_record",
+        "product_annotations", "adapter_conformance",
+    }
+    present_native = native_fields & obj.keys()
+    if present_native and present_native != native_fields:
+        _fail("$", f"native Apex normalization requires the complete bound metadata set; missing={sorted(native_fields - present_native)}")
+    if present_native:
+        if adapter["id"] != "apex-session-export" or adapter["version"] != "1.0.0":
+            _fail("$.adapter", "native source metadata requires apex-session-export adapter 1.0.0")
+        if "distance_bin" not in counts:
+            _fail("$.record_counts", "native customer-bundle normalization requires distance_bin records")
+        source_is_synthetic = obj["source_bundle"]["privacy_mode"] == "Synthetic"
+        if source_is_synthetic != obj["synthetic"]:
+            _fail("$.source_bundle.privacy_mode", "must agree with normalized synthetic classification")
+        if obj["synthetic"] and obj["research_eligibility"]["classification"] != "synthetic_demo":
+            _fail("$.research_eligibility.classification", "synthetic native bundles must remain synthetic_demo")
     return obj
 
 

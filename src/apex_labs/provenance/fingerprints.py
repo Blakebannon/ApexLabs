@@ -84,7 +84,7 @@ def build_dataset_fingerprint(provenance_inputs: dict[str, Any]) -> str:
 
 def normalized_dataset_fingerprint_basis(manifest: dict[str, Any]) -> dict[str, Any]:
     """Select every field that defines normalized scientific content/behavior."""
-    return {
+    basis = {
         "synthetic": manifest["synthetic"],
         "source_fingerprint": manifest["source_fingerprint"],
         "canonical_source_manifest_sha256": manifest["canonical_source_manifest_sha256"],
@@ -110,6 +110,13 @@ def normalized_dataset_fingerprint_basis(manifest: dict[str, Any]) -> dict[str, 
         "record_counts": manifest["record_counts"],
         "integrity_summary": manifest["integrity_summary"],
     }
+    for field in (
+        "source_bundle", "source_semantics", "research_eligibility", "collection_record",
+        "product_annotations", "adapter_conformance",
+    ):
+        if field in manifest:
+            basis[field] = manifest[field]
+    return basis
 
 
 def snapshot_source_files(

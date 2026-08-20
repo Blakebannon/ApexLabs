@@ -11,6 +11,7 @@ NORMALIZED_CONCEPTS = {
     "lap_time",
     "lap_valid",
     "lap_distance",
+    "lap_fraction",
     "track_position_x",
     "track_position_y",
     "track_position_z",
@@ -54,6 +55,7 @@ RECORD_TYPES = {
     "lap",
     "segment",
     "telemetry_sample",
+    "distance_bin",
     "driver_input_event",
 }
 
@@ -63,6 +65,7 @@ CANONICAL_UNITS = {
     "lap_time": "s",
     "lap_valid": "boolean",
     "lap_distance": "m",
+    "lap_fraction": "ratio",
     "track_position_x": "m",
     "track_position_y": "m",
     "track_position_z": "m",

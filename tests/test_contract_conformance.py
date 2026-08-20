@@ -25,6 +25,11 @@ from apex_labs.schemas import (
     validate_finding,
     validate_finding_validation,
     validate_protocol_freeze,
+    validate_apex_session_manifest,
+    validate_collection_record,
+    validate_product_annotations,
+    validate_research_export_manifest,
+    validate_adapter_conformance,
 )
 
 try:
@@ -76,12 +81,83 @@ class ContractConformanceTests(unittest.TestCase):
             ("finding", validate_finding, FINDING),
             ("finding-validation", validate_finding_validation, VALIDATION),
             ("product-export-definition", validate_export_definition, EXPORT_DEFINITION),
+            (
+                "apex-session-bundle-manifest",
+                validate_apex_session_manifest,
+                ROOT / "tests" / "fixtures" / "apex_session_export_v1" / "bundle" / "manifest.json",
+            ),
+            (
+                "collection-record",
+                validate_collection_record,
+                ROOT / "tests" / "fixtures" / "apex_session_export_v1" / "collection-record.json",
+            ),
+            (
+                "apex-research-session-export",
+                validate_research_export_manifest,
+                ROOT / "contracts" / "examples" / "apex-research-session-export-v1.example.json",
+            ),
+            (
+                "adapter-conformance",
+                validate_adapter_conformance,
+                ROOT / "tests" / "fixtures" / "apex_session_export_v1" / "adapter-conformance.expected.json",
+            ),
         ]
         for kind, validator, path in cases:
             with self.subTest(kind=kind):
                 value = read_json(path)
                 self.assert_schema_valid(kind, value)
                 validator(value)
+
+        annotation = {
+            "schema_version": "apex-labs.product-annotations/v1",
+            "source_schema_version": "apex-session-export/1.0.0",
+            "source_file_sha256": "1" * 64,
+            "classification": "product_generated_annotations_not_scientific_evidence",
+            "scientific_evidence": False,
+            "training_labels": False,
+            "ground_truth": False,
+            "product_recommendations": False,
+            "scientific_promotion_allowed": False,
+            "annotations": [],
+        }
+        self.assert_schema_valid("product-annotations", annotation)
+        validate_product_annotations(annotation)
+
+    def test_native_contract_required_unknown_enum_and_version_fail_both_paths(self) -> None:
+        base = read_json(ROOT / "tests" / "fixtures" / "apex_session_export_v1" / "collection-record.json")
+        missing = copy.deepcopy(base)
+        del missing["privacy"]
+        self.assert_both_reject("collection-record", validate_collection_record, missing)
+        unknown = copy.deepcopy(base)
+        unknown["unexpected"] = True
+        self.assert_both_reject("collection-record", validate_collection_record, unknown)
+        invalid_enum = copy.deepcopy(base)
+        invalid_enum["collection_classification"] = "maybe_experimental"
+        self.assert_both_reject("collection-record", validate_collection_record, invalid_enum)
+        version = copy.deepcopy(base)
+        version["schema_version"] = "apex-labs.collection-record/v2"
+        with self.assertRaises(ValidationError):
+            self.assert_schema_valid("collection-record", version)
+        with self.assertRaises(UnsupportedVersionError):
+            validate_collection_record(version)
+
+        research = read_json(ROOT / "contracts" / "examples" / "apex-research-session-export-v1.example.json")
+        research["timing"]["timestamped_samples"] = False
+        self.assert_both_reject("apex-research-session-export", validate_research_export_manifest, research)
+
+        annotation = {
+            "schema_version": "apex-labs.product-annotations/v1",
+            "source_schema_version": "apex-session-export/1.0.0",
+            "source_file_sha256": "1" * 64,
+            "classification": "product_generated_annotations_not_scientific_evidence",
+            "scientific_evidence": False,
+            "training_labels": False,
+            "ground_truth": True,
+            "product_recommendations": False,
+            "scientific_promotion_allowed": False,
+            "annotations": [],
+        }
+        self.assert_both_reject("product-annotations", validate_product_annotations, annotation)
 
     def test_required_unknown_enum_and_version_fail_both_paths(self) -> None:
         base = read_json(DATASET_MANIFEST)

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/apex-session-bundle-manifest.schema.json",
+  "title": "Supported Apex Sim Coach customer session bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "productVersion", "exportCreatedUtc", "privacyMode", "sources", "files"],
+  "properties": {
+    "schema": {"const": "apex-session-export/1.0.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "exportCreatedUtc": {"type": "string", "format": "date-time"},
+    "privacyMode": {"enum": ["Anonymized", "Synthetic"]},
+    "sources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["lapsWithTelemetry", "lapsWithRecordedFacts", "sessionIdentityRecorded", "overallDebriefIncluded", "findingCount", "localAiEnhancement", "localAiExplanationCount"],
+      "properties": {
+        "lapsWithTelemetry": {"type": "integer", "minimum": 0},
+        "lapsWithRecordedFacts": {"type": "integer", "minimum": 0},
+        "sessionIdentityRecorded": {"type": "boolean"},
+        "overallDebriefIncluded": {"type": "boolean"},
+        "findingCount": {"type": "integer", "minimum": 0},
+        "localAiEnhancement": {"enum": ["included", "not_included"]},
+        "localAiExplanationCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "files": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "sizeBytes", "sha256"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "sizeBytes": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}
