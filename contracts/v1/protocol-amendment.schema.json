@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/protocol-amendment.schema.json",
+  "title": "Apex Labs immutable protocol amendment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "amendment_id", "version", "amendment_sha256", "frozen_protocol", "created_at", "source_commit", "reason", "changes", "impact_assessment", "requires_new_protocol_version", "prior_amendments", "synthetic"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.protocol-amendment/v1"},
+    "amendment_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+    "amendment_sha256": {"$ref": "#/$defs/sha256"},
+    "frozen_protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["freeze_id", "freeze_sha256", "protocol_id", "protocol_version"],
+      "properties": {"freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"}, "protocol_id": {"$ref": "#/$defs/id"}, "protocol_version": {"type": "string", "minLength": 1}}
+    },
+    "created_at": {"type": "string", "format": "date-time"}, "source_commit": {"$ref": "#/$defs/commit"},
+    "reason": {"type": "string", "minLength": 1},
+    "changes": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "additionalProperties": false, "required": ["field_path", "before_sha256", "after_value", "rationale"], "properties": {"field_path": {"type": "string", "minLength": 1}, "before_sha256": {"$ref": "#/$defs/sha256"}, "after_value": {}, "rationale": {"type": "string", "minLength": 1}}}
+    },
+    "impact_assessment": {"type": "string", "minLength": 1}, "requires_new_protocol_version": {"type": "boolean"},
+    "prior_amendments": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["amendment_id", "version", "amendment_sha256"], "properties": {"amendment_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "amendment_sha256": {"$ref": "#/$defs/sha256"}}}},
+    "synthetic": {"type": "boolean"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"}
+  }
+}

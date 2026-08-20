@@ -1,0 +1,74 @@
+{
+  "schema_version": "apex-labs.experiment/v1",
+  "synthetic": true,
+  "experiment_id": "synthetic-mechanics-demo-protocol",
+  "version": "1.0.0",
+  "status": "preregistered",
+  "research_question": "Can the Milestone 0 software path process a tiny synthetic dataset while refusing to treat it as scientific evidence?",
+  "hypothesis": "Versioned validation, normalization, provenance, and export mechanics can operate deterministically on fabricated input.",
+  "null_hypothesis": "The software path cannot reproduce the same normalized and export artifacts from the same fabricated input.",
+  "independent_variable": {
+    "name": "software-run",
+    "operational_definition": "A local invocation of the versioned Apex Labs mechanics against the immutable synthetic fixture.",
+    "levels": [
+      "first-run",
+      "repeat-run"
+    ]
+  },
+  "primary_dependent_metric": {
+    "metric_id": "demo-record-count",
+    "definition": "Count of validated normalized telemetry-sample records.",
+    "unit": "count",
+    "provenance_expectation": "derived"
+  },
+  "secondary_metrics": [],
+  "controlled_variables": [
+    "Fixture bytes",
+    "Dataset manifest",
+    "Apex Labs package version",
+    "Export definition"
+  ],
+  "comparability_requirements": [
+    "Repeat runs use byte-identical declared inputs and the same package version"
+  ],
+  "exclusion_criteria": [
+    "Any run with modified fixture bytes, configuration, or contract version"
+  ],
+  "minimum_sample_requirements": {
+    "state": "declared",
+    "requirements": [
+      "Use exactly one immutable synthetic fixture and repeat generation independently at least twice"
+    ],
+    "rationale": "This is a deterministic software demonstration requirement, not a scientific sample-size claim."
+  },
+  "baseline_condition": "First deterministic software run.",
+  "intervention_conditions": [
+    "Repeat deterministic software run"
+  ],
+  "randomization_counterbalancing": "Not applicable to a deterministic software fixture; repeated outputs are compared byte for byte.",
+  "analysis_methods": [
+    "Validate source hashes, normalized records, record counts, export metadata, and every exported payload hash",
+    "Compare independently generated export files byte for byte"
+  ],
+  "predeclared_success_criteria": {
+    "state": "declared",
+    "criteria": [
+      "All structural validators and integrity checks pass",
+      "Independent export generations are byte-identical"
+    ],
+    "falsification_criteria": [
+      "Any input-bound hash mismatch is accepted",
+      "Repeated identical inputs produce different normalized or export bytes"
+    ]
+  },
+  "safety_constraints": [
+    "Use only fabricated data with no real driver, customer, simulator, or production source",
+    "Never infer racing performance from the fixture"
+  ],
+  "notes": [
+    "This protocol exists only to keep the mechanics finding separate from the first real racing campaign.",
+    "Its finding must remain synthetic_demo and do_not_implement."
+  ],
+  "created_at": "2026-08-19T00:00:00Z",
+  "apex_labs_source_commit": "UNCOMMITTED"
+}

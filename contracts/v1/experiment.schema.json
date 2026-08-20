@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/experiment.schema.json",
+  "title": "Apex Labs experiment protocol v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "synthetic", "experiment_id", "version", "status", "research_question", "hypothesis", "null_hypothesis", "independent_variable", "primary_dependent_metric", "secondary_metrics", "controlled_variables", "comparability_requirements", "exclusion_criteria", "minimum_sample_requirements", "baseline_condition", "intervention_conditions", "randomization_counterbalancing", "analysis_methods", "predeclared_success_criteria", "safety_constraints", "notes", "created_at", "apex_labs_source_commit"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.experiment/v1"},
+    "synthetic": {"type": "boolean"},
+    "experiment_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "preregistered", "active", "completed", "aborted"]},
+    "research_question": {"type": "string", "minLength": 1},
+    "hypothesis": {"type": "string", "minLength": 1},
+    "null_hypothesis": {"type": "string", "minLength": 1},
+    "independent_variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "operational_definition", "levels"],
+      "properties": {
+        "name": {"$ref": "#/$defs/id"},
+        "operational_definition": {"type": "string", "minLength": 1},
+        "levels": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "primary_dependent_metric": {"$ref": "#/$defs/metric"},
+    "secondary_metrics": {"type": "array", "items": {"$ref": "#/$defs/metric"}},
+    "controlled_variables": {"$ref": "#/$defs/strings"},
+    "comparability_requirements": {"$ref": "#/$defs/nonempty_strings"},
+    "exclusion_criteria": {"$ref": "#/$defs/nonempty_strings"},
+    "minimum_sample_requirements": {"$ref": "#/$defs/declaration"},
+    "baseline_condition": {"type": "string", "minLength": 1},
+    "intervention_conditions": {"$ref": "#/$defs/strings"},
+    "randomization_counterbalancing": {"type": "string", "minLength": 1},
+    "analysis_methods": {"$ref": "#/$defs/nonempty_strings"},
+    "predeclared_success_criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "criteria", "falsification_criteria"],
+      "properties": {
+        "state": {"enum": ["to_be_determined", "declared"]},
+        "criteria": {"$ref": "#/$defs/strings"},
+        "falsification_criteria": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "safety_constraints": {"$ref": "#/$defs/nonempty_strings"},
+    "notes": {"$ref": "#/$defs/strings"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "apex_labs_source_commit": {"$ref": "#/$defs/commit"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "commit": {"type": "string", "pattern": "^([0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "nonempty_strings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "definition", "unit", "provenance_expectation"],
+      "properties": {
+        "metric_id": {"$ref": "#/$defs/id"},
+        "definition": {"type": "string", "minLength": 1},
+        "unit": {"type": "string"},
+        "provenance_expectation": {"enum": ["measured", "derived", "estimated"]}
+      }
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "requirements", "rationale"],
+      "properties": {
+        "state": {"enum": ["to_be_determined", "declared"]},
+        "requirements": {"$ref": "#/$defs/strings"},
+        "rationale": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

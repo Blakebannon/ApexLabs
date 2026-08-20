@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/product-export-manifest.schema.json",
+  "title": "Apex Labs product export manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "export_id", "created_at", "apex_labs_version", "apex_labs_source_commit", "summary", "review_gate", "findings", "files"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.product-export-manifest/v1"},
+    "export_id": {"$ref": "#/$defs/id"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "apex_labs_version": {"type": "string", "minLength": 1},
+    "apex_labs_source_commit": {"$ref": "#/$defs/commit"},
+    "summary": {"type": "string", "minLength": 1},
+    "review_gate": {"const": "human_and_production_engineering_review_required"},
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding_id", "version", "status", "scope", "evidence_classification", "synthetic", "safe_for_global_consideration", "recommended_product_action", "scientific_review_state", "product_review_state", "validation_path", "validation_sha256", "implementation_caveats", "path", "sha256"],
+        "properties": {
+          "finding_id": {"$ref": "#/$defs/id"},
+          "version": {"type": "string", "minLength": 1},
+          "status": {"enum": ["validated", "provisional", "inconclusive", "rejected"]},
+          "scope": {"enum": ["driver_specific", "car_specific", "track_specific", "corner_archetype_specific", "simulator_specific", "session_specific", "algorithmic", "population_hypothesis", "population_supported"]},
+          "evidence_classification": {"enum": ["controlled", "observational", "synthetic_demo"]},
+          "synthetic": {"type": "boolean"},
+          "safe_for_global_consideration": {"type": "boolean"},
+          "recommended_product_action": {"enum": ["consider", "personalize_only", "research_only", "do_not_implement"]},
+          "scientific_review_state": {"enum": ["unresolved", "pending", "approved", "rejected"]},
+          "product_review_state": {"enum": ["not_requested", "pending", "approved", "rejected"]},
+          "validation_path": {"type": "string", "minLength": 1},
+          "validation_sha256": {"$ref": "#/$defs/sha256"},
+          "implementation_caveats": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "media_type", "role"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "media_type": {"type": "string", "minLength": 1},
+          "role": {"enum": ["finding", "validation", "metric", "algorithm", "provenance", "summary"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^([0-9a-f]{7,40}|UNCOMMITTED)$"}
+  }
+}

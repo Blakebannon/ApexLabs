@@ -1,0 +1,146 @@
+from __future__ import annotations
+
+import copy
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from _support import (
+    DATASET_MANIFEST,
+    DEMO_PROTOCOL,
+    EXPORT_DEFINITION,
+    FINDING,
+    FROZEN_PROTOCOL,
+    ROOT,
+    VALIDATION,
+)
+
+from apex_labs.errors import ContractValidationError, UnsupportedVersionError
+from apex_labs.io import parse_json_bytes, read_json
+from apex_labs.schemas import (
+    validate_dataset_manifest,
+    validate_experiment,
+    validate_export_definition,
+    validate_finding,
+    validate_finding_validation,
+    validate_protocol_freeze,
+)
+
+try:
+    from jsonschema import Draft202012Validator, FormatChecker
+    from jsonschema.exceptions import ValidationError
+    from referencing import Registry, Resource
+except ImportError as exc:  # pragma: no cover - reproducible test extra is required
+    raise RuntimeError("Install the declared test extra: pip install -e .[test]") from exc
+
+
+SCHEMA_DIR = ROOT / "contracts" / "v1"
+
+
+def schema_registry() -> tuple[Registry, dict[str, dict]]:
+    schemas = {
+        path.name.removesuffix(".schema.json"): json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(SCHEMA_DIR.glob("*.schema.json"))
+    }
+    registry = Registry().with_resources(
+        (schema["$id"], Resource.from_contents(schema)) for schema in schemas.values()
+    )
+    return registry, schemas
+
+
+class ContractConformanceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.registry, cls.schemas = schema_registry()
+
+    def assert_schema_valid(self, kind: str, value: dict) -> None:
+        Draft202012Validator(
+            self.schemas[kind], registry=self.registry, format_checker=FormatChecker()
+        ).validate(value)
+
+    def assert_both_reject(self, kind: str, validator, value: dict) -> None:
+        with self.assertRaises(ValidationError) as schema_error:
+            self.assert_schema_valid(kind, value)
+        self.assertIsNotNone(schema_error.exception)
+        with self.assertRaises(ContractValidationError):
+            validator(value)
+
+    def test_published_schemas_are_unique_and_runtime_artifacts_conform(self) -> None:
+        ids = [schema["$id"] for schema in self.schemas.values()]
+        self.assertEqual(len(ids), len(set(ids)))
+        cases = [
+            ("dataset-manifest", validate_dataset_manifest, DATASET_MANIFEST),
+            ("experiment", validate_experiment, DEMO_PROTOCOL),
+            ("protocol-freeze", validate_protocol_freeze, FROZEN_PROTOCOL),
+            ("finding", validate_finding, FINDING),
+            ("finding-validation", validate_finding_validation, VALIDATION),
+            ("product-export-definition", validate_export_definition, EXPORT_DEFINITION),
+        ]
+        for kind, validator, path in cases:
+            with self.subTest(kind=kind):
+                value = read_json(path)
+                self.assert_schema_valid(kind, value)
+                validator(value)
+
+    def test_required_unknown_enum_and_version_fail_both_paths(self) -> None:
+        base = read_json(DATASET_MANIFEST)
+        missing = copy.deepcopy(base)
+        del missing["privacy"]
+        self.assert_both_reject("dataset-manifest", validate_dataset_manifest, missing)
+
+        unknown = copy.deepcopy(base)
+        unknown["unexpected"] = True
+        self.assert_both_reject("dataset-manifest", validate_dataset_manifest, unknown)
+
+        enum = copy.deepcopy(base)
+        enum["data_classification"] = "public-ish"
+        self.assert_both_reject("dataset-manifest", validate_dataset_manifest, enum)
+
+        version = copy.deepcopy(base)
+        version["schema_version"] = "apex-labs.dataset-manifest/v2"
+        with self.assertRaises(ValidationError):
+            self.assert_schema_valid("dataset-manifest", version)
+        with self.assertRaises(UnsupportedVersionError):
+            validate_dataset_manifest(version)
+
+    def test_nested_structure_and_finding_review_enum_fail_both_paths(self) -> None:
+        dataset = read_json(DATASET_MANIFEST)
+        dataset["privacy"]["unknown"] = "not allowed"
+        self.assert_both_reject("dataset-manifest", validate_dataset_manifest, dataset)
+
+        finding = read_json(FINDING)
+        finding["scientific_review_state"] = "self_approved"
+        self.assert_both_reject("finding", validate_finding, finding)
+
+    def test_duplicate_keys_and_nonfinite_json_are_refused_before_validation(self) -> None:
+        with self.assertRaises(ContractValidationError):
+            parse_json_bytes(b'{"field":1,"field":2}')
+        with self.assertRaises(ContractValidationError):
+            parse_json_bytes(b'{"value":NaN}')
+
+    def test_runtime_authority_enforces_cross_identity_rules(self) -> None:
+        dataset = read_json(DATASET_MANIFEST)
+        duplicate = copy.deepcopy(dataset["source_files"][0])
+        duplicate["sha256"] = "f" * 64
+        duplicate["role"] = "metadata"
+        dataset["source_files"].append(duplicate)
+        # JSON Schema validates portable structure. Runtime authority rejects the
+        # duplicate Windows-case-insensitive path as a cross-entry semantic rule.
+        self.assert_schema_valid("dataset-manifest", dataset)
+        with self.assertRaises(ContractValidationError):
+            validate_dataset_manifest(dataset)
+
+    def test_malformed_utf8_and_json_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            invalid = Path(directory) / "invalid.json"
+            invalid.write_bytes(b"\xff")
+            with self.assertRaises(ContractValidationError):
+                read_json(invalid)
+            invalid.write_text('{"broken":', encoding="utf-8")
+            with self.assertRaises(ContractValidationError):
+                read_json(invalid)
+
+
+if __name__ == "__main__":
+    unittest.main()

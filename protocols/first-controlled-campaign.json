@@ -1,0 +1,100 @@
+{
+  "schema_version": "apex-labs.experiment/v1",
+  "synthetic": false,
+  "experiment_id": "first-controlled-campaign-pilot",
+  "version": "0.1.0",
+  "status": "draft",
+  "research_question": "Can a two-car by two-track campaign collect comparable naturalistic and controlled blocks while exposing car, track, session-order, learning, and fatigue effects?",
+  "hypothesis": "A counterbalanced two-car by two-track protocol can produce auditable, comparable samples for later preregistered performance hypotheses.",
+  "null_hypothesis": "The proposed protocol will not produce sufficiently comparable samples to distinguish block effects from car, track, order, learning, fatigue, fuel, tire, and session-progression effects.",
+  "independent_variable": {
+    "name": "driving-block",
+    "operational_definition": "The declared instruction applied to a contiguous session block; exact instructions and transition rules must be preregistered before collection.",
+    "levels": [
+      "naturalistic-baseline-opening",
+      "braking-release-candidate",
+      "throttle-commitment-candidate",
+      "coasting-candidate",
+      "steering-trajectory-candidate",
+      "naturalistic-baseline-closing"
+    ]
+  },
+  "primary_dependent_metric": {
+    "metric_id": "protocol-adherence",
+    "definition": "Whether collected samples satisfy the preregistered block labeling, completeness, and comparability rules.",
+    "unit": "boolean",
+    "provenance_expectation": "derived"
+  },
+  "secondary_metrics": [
+    {
+      "metric_id": "comparable-event-count",
+      "definition": "Count of events surviving preregistered comparability and exclusion rules, reported by car, track, block, and order.",
+      "unit": "count",
+      "provenance_expectation": "derived"
+    }
+  ],
+  "controlled_variables": [
+    "Simulator build and telemetry-export version within a collection wave",
+    "Car setup within each car condition unless setup is explicitly experimental",
+    "Track configuration and session settings",
+    "Fuel and tire-state recording",
+    "Driver hardware and control calibration",
+    "Block instructions and labeling"
+  ],
+  "comparability_requirements": [
+    "Compare like corner or segment definitions and compatible approach states",
+    "Preserve car, track, layout, simulator, setup, weather, fuel, tire, and session-order context",
+    "Use within-driver pairing when the same driver supplies both conditions",
+    "Do not pool blocks until required normalized channels and provenance are available",
+    "Treat the opening and closing naturalistic baselines as distinct order positions"
+  ],
+  "exclusion_criteria": [
+    "Incident, off-track, traffic, yellow-flag, reset, or invalid-lap samples when relevant to the declared metric",
+    "Missing required telemetry or unresolved unit/calibration metadata",
+    "Warm-up, out-lap, in-lap, and interrupted blocks unless explicitly included",
+    "Samples that fail the preregistered approach-state or segment-comparability rules",
+    "Undocumented setup, environment, hardware, or simulator changes"
+  ],
+  "minimum_sample_requirements": {
+    "state": "to_be_determined",
+    "requirements": [],
+    "rationale": "The pilot must estimate event yield, variance, dependence, and attrition before defensible sample requirements are preregistered. No numerical threshold is invented at Milestone 0."
+  },
+  "baseline_condition": "Naturalistic driving is collected at both the opening and closing of each session without asking the driver to target a hypothesized technique.",
+  "intervention_conditions": [
+    "Braking and brake-release controlled block, with exact instruction deferred to a focused preregistration",
+    "Throttle-commitment controlled block, with exact instruction deferred to a focused preregistration",
+    "Coasting controlled block, with exact instruction deferred to a focused preregistration",
+    "Steering and trajectory controlled block, with exact instruction deferred to a focused preregistration"
+  ],
+  "randomization_counterbalancing": "Use a balanced or randomized order for car-track combinations and rotate eligible controlled-block orders. Record the realized order. Keep opening and closing baselines fixed to reveal session drift. The exact schedule and random seed must be frozen before collection.",
+  "analysis_methods": [
+    "Report robust descriptive summaries and attrition before hypothesis tests",
+    "Prefer within-driver paired contrasts inside comparable car-track contexts",
+    "Quantify effect sizes with intervals whose interpretation is explicitly documented",
+    "Model repeated observations at their actual unit rather than treating telemetry samples as independent",
+    "Perform order, exclusion-rule, approach-state, and outlier sensitivity analyses",
+    "Treat car, track, and car-by-track patterns as separate until evidence supports pooling",
+    "Reserve holdout data or a later collection wave for claims selected from exploratory analysis",
+    "Control or clearly disclose multiplicity when testing multiple metrics or candidate blocks"
+  ],
+  "predeclared_success_criteria": {
+    "state": "to_be_determined",
+    "criteria": [],
+    "falsification_criteria": []
+  },
+  "safety_constraints": [
+    "Use only simulated driving in this campaign",
+    "Allow the driver to stop any block for discomfort, equipment problems, or fatigue",
+    "Do not encourage unsafe physical strain or disable simulator safety features",
+    "Do not continue solely to satisfy a sample target when fatigue compromises collection"
+  ],
+  "notes": [
+    "Target design is approximately two cars by two deliberately different tracks with roughly one hour per combination, subject to preregistration.",
+    "Cars should be dynamically meaningfully different; tracks should differ in performance demands.",
+    "This campaign scaffold is not executable until car/track selection, instructions, sampling rules, primary performance question, sample requirements, and success/falsification criteria are declared.",
+    "Each racing-performance hypothesis should receive a focused protocol rather than inheriting a result from this broad pilot."
+  ],
+  "created_at": "2026-08-19T00:00:00Z",
+  "apex_labs_source_commit": "UNCOMMITTED"
+}

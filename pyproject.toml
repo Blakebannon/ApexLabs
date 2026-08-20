@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel>=0.41"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apex-labs"
+version = "0.1.1"
+description = "Reproducible motorsport-performance and telemetry research infrastructure"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+authors = [{name = "Apex Labs"}]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["build>=1.2,<2", "jsonschema>=4.23,<5"]
+
+[project.scripts]
+apex-labs = "apex_labs.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/product-provenance-summary.schema.json",
+  "title": "Apex Labs product provenance summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "export_id", "apex_labs_version", "apex_labs_source_commit", "finding_provenance"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.product-provenance-summary/v1"},
+    "export_id": {"$ref": "#/$defs/id"},
+    "apex_labs_version": {"type": "string", "minLength": 1},
+    "apex_labs_source_commit": {"$ref": "#/$defs/commit"},
+    "finding_provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding_id", "finding_version", "dataset_references", "protocol_reference", "preprocessing", "analysis", "validation_artifact_reference", "scientific_review_state", "product_review_state"],
+        "properties": {
+          "finding_id": {"$ref": "#/$defs/id"},
+          "finding_version": {"type": "string", "minLength": 1},
+          "dataset_references": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+          "protocol_reference": {"type": "object"},
+          "preprocessing": {"type": "object"},
+          "analysis": {"type": "object"},
+          "validation_artifact_reference": {"type": "object"},
+          "scientific_review_state": {"enum": ["unresolved", "pending", "approved", "rejected"]},
+          "product_review_state": {"enum": ["not_requested", "pending", "approved", "rejected"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "commit": {"type": "string", "pattern": "^([0-9a-f]{7,40}|UNCOMMITTED)$"}
+  }
+}

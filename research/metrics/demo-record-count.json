@@ -1,0 +1,17 @@
+{
+  "schema_version": "apex-labs.metric-definition/v1",
+  "metric_id": "demo-record-count",
+  "version": "1.0.0",
+  "name": "Synthetic normalized record count",
+  "definition": "Count of normalized telemetry_sample records in a declared synthetic mechanics fixture.",
+  "unit": "count",
+  "directionality": "descriptive_only",
+  "required_inputs": [
+    "timestamp"
+  ],
+  "computation": "Count records whose record_type is telemetry_sample after all records pass the normalized-record/v1 validator.",
+  "output_provenance": "derived",
+  "limitations": [
+    "This metric only demonstrates deterministic plumbing and has no racing-performance interpretation."
+  ]
+}

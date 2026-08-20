@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/normalized-record.schema.json",
+  "title": "Apex Labs normalized record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "record_type", "dataset_id", "session_id", "record_id", "sequence_index", "source_provenance", "fields"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.normalized-record/v1"},
+    "record_type": {"enum": ["session", "lap", "segment", "telemetry_sample", "driver_input_event"]},
+    "dataset_id": {"$ref": "#/$defs/id"},
+    "session_id": {"$ref": "#/$defs/id"},
+    "record_id": {"$ref": "#/$defs/id"},
+    "sequence_index": {"type": "integer", "minimum": 0},
+    "quality_flags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "lap_id": {"$ref": "#/$defs/id"},
+    "lap_number": {"type": "integer", "minimum": 0},
+    "sample_index": {"type": "integer", "minimum": 0},
+    "segment_id": {"$ref": "#/$defs/id"},
+    "segment_kind": {"enum": ["corner", "straight", "custom"]},
+    "label": {"type": "string", "minLength": 1},
+    "event_type": {"$ref": "#/$defs/id"},
+    "simulator": {"type": "string", "minLength": 1},
+    "driver_id": {"type": "string", "minLength": 1},
+    "car": {"type": "string", "minLength": 1},
+    "track": {"type": "string", "minLength": 1},
+    "layout": {"type": "string", "minLength": 1},
+    "source_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_file", "source_file_sha256", "adapter_id", "adapter_version"],
+      "properties": {
+        "source_file": {"type": "string", "minLength": 1},
+        "source_file_sha256": {"$ref": "#/$defs/sha256"},
+        "adapter_id": {"$ref": "#/$defs/id"},
+        "adapter_version": {"type": "string", "minLength": 1},
+        "row_start": {"type": "integer", "minimum": 1},
+        "row_end": {"type": "integer", "minimum": 1},
+        "source_record_id": {"type": "string"},
+        "source_timestamp": {"type": "string"}
+      }
+    },
+    "fields": {
+      "type": "object",
+      "propertyNames": {"enum": ["timestamp", "lap_time", "lap_valid", "lap_distance", "track_position_x", "track_position_y", "track_position_z", "speed", "longitudinal_acceleration", "lateral_acceleration", "vertical_acceleration", "yaw_rate", "steering_angle", "steering_input", "throttle", "brake", "clutch", "gear", "rpm", "wheel_speed_front_left", "wheel_speed_front_right", "wheel_speed_rear_left", "wheel_speed_rear_right", "tire_pressure_front_left", "tire_pressure_front_right", "tire_pressure_rear_left", "tire_pressure_rear_right", "tire_temperature_front_left", "tire_temperature_front_right", "tire_temperature_rear_left", "tire_temperature_rear_right", "abs_active", "traction_control_active", "fuel_mass", "session_state", "incident_state", "off_track_state", "air_temperature", "track_temperature", "track_wetness"]},
+      "additionalProperties": {"$ref": "#/$defs/qualified_value"}
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"record_type": {"const": "session"}}}, "then": {"required": ["simulator", "driver_id", "car", "track", "layout"]}},
+    {"if": {"properties": {"record_type": {"const": "lap"}}}, "then": {"required": ["lap_id", "lap_number"]}},
+    {"if": {"properties": {"record_type": {"const": "segment"}}}, "then": {"required": ["lap_id", "segment_id", "segment_kind", "label"]}},
+    {"if": {"properties": {"record_type": {"const": "telemetry_sample"}}}, "then": {"required": ["lap_id", "sample_index"]}},
+    {"if": {"properties": {"record_type": {"const": "driver_input_event"}}}, "then": {"required": ["lap_id", "event_type"]}}
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "qualified_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "provenance", "unit"],
+      "properties": {
+        "value": {},
+        "provenance": {"enum": ["measured", "derived", "estimated", "unavailable"]},
+        "unit": {"type": "string", "minLength": 1},
+        "source_channel": {"type": "string", "minLength": 1},
+        "derivation": {"type": "string", "minLength": 1},
+        "quality_flags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "reference": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"provenance": {"const": "unavailable"}}}, "then": {"properties": {"value": {"type": "null"}}}},
+        {"if": {"properties": {"provenance": {"const": "measured"}}}, "then": {"required": ["source_channel"]}},
+        {"if": {"properties": {"provenance": {"enum": ["derived", "estimated"]}}}, "then": {"required": ["derivation"]}}
+      ]
+    }
+  }
+}

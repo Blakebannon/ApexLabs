@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/finding-validation.schema.json",
+  "title": "Apex Labs independent finding validation artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "validation_id", "version", "finding_id", "finding_version", "finding_sha256", "synthetic", "datasets", "frozen_protocol", "preprocessing", "analysis", "analysis_code_identity", "computed_evidence", "scope_assessment", "population_validation_design", "gate_evaluations", "review", "product_review_state", "created_at"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.finding-validation/v1"},
+    "validation_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+    "finding_id": {"$ref": "#/$defs/id"}, "finding_version": {"type": "string", "minLength": 1},
+    "finding_sha256": {"$ref": "#/$defs/sha256"}, "synthetic": {"type": "boolean"},
+    "datasets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/dataset"}},
+    "frozen_protocol": {"$ref": "#/$defs/frozen_protocol"},
+    "preprocessing": {"$ref": "#/$defs/preprocessing"}, "analysis": {"$ref": "#/$defs/analysis"},
+    "analysis_code_identity": {"$ref": "#/$defs/code_identity"},
+    "computed_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sample_counts", "sample_sufficiency", "exclusions", "effect_estimate", "uncertainty", "comparability", "falsification_attempts"],
+      "properties": {
+        "sample_counts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["provenance", "values", "evidence_sha256"],
+          "properties": {"provenance": {"enum": ["computed", "analyst_claim", "unavailable"]}, "values": {"$ref": "#/$defs/counts"}, "evidence_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}}
+        },
+        "sample_sufficiency": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "provenance", "criteria_applied", "evidence_references"],
+          "properties": {"status": {"enum": ["sufficient", "insufficient", "undetermined"]}, "provenance": {"enum": ["computed", "analyst_claim", "unavailable"]}, "criteria_applied": {"$ref": "#/$defs/nonempty_strings"}, "evidence_references": {"$ref": "#/$defs/strings"}}
+        },
+        "exclusions": {
+          "type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["reason", "count", "provenance", "evidence_sha256"], "properties": {"reason": {"type": "string", "minLength": 1}, "count": {"type": "integer", "minimum": 0}, "provenance": {"enum": ["computed", "analyst_claim"]}, "evidence_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}}}
+        },
+        "effect_estimate": {"type": ["object", "null"]}, "uncertainty": {"type": "object"},
+        "comparability": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "provenance", "criteria_applied", "violations", "evidence_references"],
+          "properties": {"status": {"enum": ["adequate", "limited", "inadequate", "undetermined"]}, "provenance": {"enum": ["computed", "analyst_claim", "unavailable"]}, "criteria_applied": {"$ref": "#/$defs/nonempty_strings"}, "violations": {"$ref": "#/$defs/strings"}, "evidence_references": {"$ref": "#/$defs/strings"}}
+        },
+        "falsification_attempts": {
+          "type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["description", "outcome", "provenance", "evidence_sha256"], "properties": {"description": {"type": "string", "minLength": 1}, "outcome": {"enum": ["supports_hypothesis", "contradicts_hypothesis", "inconclusive", "not_applicable"]}, "provenance": {"enum": ["computed", "analyst_claim", "unavailable"]}, "evidence_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}}}
+        }
+      }
+    },
+    "scope_assessment": {"type": "object", "additionalProperties": false, "required": ["scope", "design_basis", "evidence_references"], "properties": {"scope": {"$ref": "#/$defs/scope"}, "design_basis": {"type": "string", "minLength": 1}, "evidence_references": {"$ref": "#/$defs/strings"}}},
+    "population_validation_design": {"anyOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["state", "frozen_protocol", "evidence_sha256", "assessment"], "properties": {"state": {"enum": ["passed", "failed", "unresolved"]}, "frozen_protocol": {"type": "object"}, "evidence_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}, "assessment": {"type": "string", "minLength": 1}}}]},
+    "gate_evaluations": {"type": "object", "additionalProperties": false, "required": ["structural", "reproducibility", "scientific"], "properties": {"structural": {"enum": ["passed", "failed"]}, "reproducibility": {"enum": ["passed", "failed", "unresolved"]}, "scientific": {"enum": ["passed", "failed", "unresolved"]}}},
+    "review": {"type": "object", "additionalProperties": false, "required": ["state", "reviewers", "reviewed_at", "notes"], "properties": {"state": {"enum": ["unreviewed", "pending", "approved", "rejected"]}, "reviewers": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["reviewer_id", "role"], "properties": {"reviewer_id": {"$ref": "#/$defs/id"}, "role": {"type": "string", "minLength": 1}}}}, "reviewed_at": {"type": ["string", "null"], "format": "date-time"}, "notes": {"$ref": "#/$defs/strings"}}},
+    "product_review_state": {"enum": ["not_requested", "pending", "approved", "rejected"]}, "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}}, "nonempty_strings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "scope": {"enum": ["driver_specific", "car_specific", "track_specific", "corner_archetype_specific", "simulator_specific", "session_specific", "algorithmic", "population_hypothesis", "population_supported"]},
+    "dataset": {"type": "object", "additionalProperties": false, "required": ["dataset_id", "fingerprint", "normalized_manifest_sha256", "records_sha256", "synthetic"], "properties": {"dataset_id": {"$ref": "#/$defs/id"}, "fingerprint": {"$ref": "#/$defs/sha256"}, "normalized_manifest_sha256": {"$ref": "#/$defs/sha256"}, "records_sha256": {"$ref": "#/$defs/sha256"}, "synthetic": {"type": "boolean"}}},
+    "frozen_protocol": {"type": "object", "additionalProperties": false, "required": ["freeze_id", "freeze_sha256", "protocol_id", "protocol_version"], "properties": {"freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"}, "protocol_id": {"$ref": "#/$defs/id"}, "protocol_version": {"type": "string", "minLength": 1}}},
+    "preprocessing": {"type": "object", "additionalProperties": false, "required": ["pipeline_id", "pipeline_version", "normalization_version", "configuration", "configuration_sha256"], "properties": {"pipeline_id": {"$ref": "#/$defs/id"}, "pipeline_version": {"type": "string", "minLength": 1}, "normalization_version": {"type": "string", "minLength": 1}, "configuration": {"type": "object"}, "configuration_sha256": {"$ref": "#/$defs/sha256"}}},
+    "analysis": {"type": "object", "additionalProperties": false, "required": ["algorithm_id", "algorithm_version", "configuration", "random_seed"], "properties": {"algorithm_id": {"$ref": "#/$defs/id"}, "algorithm_version": {"type": "string", "minLength": 1}, "configuration": {"type": "object"}, "random_seed": {"type": ["integer", "null"], "minimum": 0}}},
+    "code_identity": {"type": "object", "additionalProperties": false, "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"], "properties": {"package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"}, "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"}, "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}}},
+    "counts": {"type": "object", "additionalProperties": false, "required": ["drivers", "cars", "tracks", "sessions", "laps", "corners_or_events", "observations"], "properties": {"drivers": {"type": "integer", "minimum": 0}, "cars": {"type": "integer", "minimum": 0}, "tracks": {"type": "integer", "minimum": 0}, "sessions": {"type": "integer", "minimum": 0}, "laps": {"type": "integer", "minimum": 0}, "corners_or_events": {"type": "integer", "minimum": 0}, "observations": {"type": "integer", "minimum": 0}}}
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "schema_version": "apex-labs.finding-validation/v1",
+  "validation_id": "synthetic-mechanics-demo-validation",
+  "version": "1.0.0",
+  "finding_id": "synthetic-mechanics-demo",
+  "finding_version": "1.0.0",
+  "finding_sha256": "955c9735859353c3e4b62f244dbcb75b191f86c9b076090d44ea724c355f88b6",
+  "synthetic": true,
+  "datasets": [
+    {
+      "dataset_id": "synthetic-mechanics-demo",
+      "fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
+      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9",
+      "records_sha256": "de125c35b2f1b62b31b82cd4044fc438a4289135d005fc8aea9c6a9a19a39832",
+      "synthetic": true
+    }
+  ],
+  "frozen_protocol": {
+    "freeze_id": "synthetic-mechanics-demo-protocol.freeze",
+    "freeze_sha256": "29bc942f4c7a24e38b28212a7b850e1487048a1b128c8077c13b74f9af2a8d0f",
+    "protocol_id": "synthetic-mechanics-demo-protocol",
+    "protocol_version": "1.0.0"
+  },
+  "preprocessing": {
+    "pipeline_id": "tabular-csv-normalization",
+    "pipeline_version": "1.1.0",
+    "normalization_version": "1.1.0",
+    "configuration": {
+      "normalized_dataset_fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
+      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9"
+    },
+    "configuration_sha256": "1835ea6edff1a1561260712afb3ece5050234194e710705595732d4c5c91f9b9"
+  },
+  "analysis": {
+    "algorithm_id": "demo-record-count",
+    "algorithm_version": "1.0.0",
+    "configuration": {
+      "purpose": "mechanics_only"
+    },
+    "random_seed": null
+  },
+  "analysis_code_identity": {
+    "package_version": "0.1.1",
+    "git_commit": "UNCOMMITTED",
+    "git_state": "uncommitted",
+    "code_and_schema_sha256": "a71b0dbe4e5e0acef78d6bd34f63137ad6b805cf5b03ca7f6e9c9237f34ae5b8",
+    "schema_sha256": {
+      "contracts/v1/algorithm-recommendation.schema.json": "a8da243061a06ca44e07389d134e58b336b0c2e4cdc58abd11d1c24a4483c91a",
+      "contracts/v1/dataset-manifest.schema.json": "da60b565a01102598c8478b667bb320c544e7ddd095c8b7bdd4bb9cd773947a7",
+      "contracts/v1/experiment.schema.json": "4c23ac262b4ddc37737a88b18e600465776124f74949fbb774f56ac2fd769015",
+      "contracts/v1/finding-validation.schema.json": "e11faf34a694e4bb798623136a0da02c1024d5d9693ad1a8474cb27a3f1ac52b",
+      "contracts/v1/finding.schema.json": "e94555523044f0d02ea7165c91f57e0b4891c074fc2c3a5e92f8b6235412bc8f",
+      "contracts/v1/metric-definition.schema.json": "ad7d1101a4d8ce900c4633f20e0256b21bbb34a2eb5eae6098d5cfa7fb7ecfe6",
+      "contracts/v1/normalized-manifest.schema.json": "f6216bb6f99cf70b3428f4df6c181619b9b1261297db733309fff902b1f2d993",
+      "contracts/v1/normalized-record.schema.json": "74148f59bf39081e59141b906eb37bd0bed5fad6e8ce4a9552820bfe900238f1",
+      "contracts/v1/product-export-definition.schema.json": "b2ca27b8ad7a6524c49023d130dcaac877982742c3944e3b5d08ed81c9086c00",
+      "contracts/v1/product-export-manifest.schema.json": "db47970dd497a5996e9066ff66c4e42686bf3af201d95f0f96e5f04f99465a0c",
+      "contracts/v1/product-provenance-summary.schema.json": "aa495758a7b94e161b7275f3ad2d225aa171af3ce8ec3fb7d71d73d9459cb7d2",
+      "contracts/v1/protocol-amendment.schema.json": "95db7de234be1cd941c120f5b4cbc09ffe3a93a2a9007defe8348bac8b563f0e",
+      "contracts/v1/protocol-freeze.schema.json": "a483f3ebbc26c8f50c9f703b9ec670eebccb63e89b132304019fd60f6064f88b"
+    }
+  },
+  "computed_evidence": {
+    "sample_counts": {
+      "provenance": "computed",
+      "values": {
+        "drivers": 0,
+        "cars": 0,
+        "tracks": 0,
+        "sessions": 1,
+        "laps": 2,
+        "corners_or_events": 0,
+        "observations": 8
+      },
+      "evidence_sha256": "de125c35b2f1b62b31b82cd4044fc438a4289135d005fc8aea9c6a9a19a39832"
+    },
+    "sample_sufficiency": {
+      "status": "insufficient",
+      "provenance": "unavailable",
+      "criteria_applied": [
+        "Synthetic mechanics cannot satisfy a scientific sample design"
+      ],
+      "evidence_references": []
+    },
+    "exclusions": [],
+    "effect_estimate": null,
+    "uncertainty": {
+      "method": "not_applicable_synthetic_mechanics_demo",
+      "interval": null,
+      "confidence_level": null,
+      "interpretation": "No inferential estimate or confidence statement was produced."
+    },
+    "comparability": {
+      "status": "undetermined",
+      "provenance": "unavailable",
+      "criteria_applied": [
+        "Schema validity and record linkage only"
+      ],
+      "violations": [
+        "No real conditions or performance events exist to compare"
+      ],
+      "evidence_references": []
+    },
+    "falsification_attempts": [
+      {
+        "description": "Exercise malformed-input, hash, relationship, and deterministic-output failure cases.",
+        "outcome": "not_applicable",
+        "provenance": "analyst_claim",
+        "evidence_sha256": null
+      }
+    ]
+  },
+  "scope_assessment": {
+    "scope": "session_specific",
+    "design_basis": "Synthetic software fixture only; the scope label prevents any wider inference.",
+    "evidence_references": []
+  },
+  "population_validation_design": null,
+  "gate_evaluations": {
+    "structural": "passed",
+    "reproducibility": "unresolved",
+    "scientific": "unresolved"
+  },
+  "review": {
+    "state": "unreviewed",
+    "reviewers": [],
+    "reviewed_at": null,
+    "notes": [
+      "Synthetic mechanics validation is ineligible for scientific approval."
+    ]
+  },
+  "product_review_state": "not_requested",
+  "created_at": "2026-08-19T00:00:00Z"
+}

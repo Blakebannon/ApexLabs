@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/dataset-manifest.schema.json",
+  "title": "Apex Labs source dataset manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_id", "title", "synthetic", "data_classification", "created_at", "simulator", "driver_identifiers", "privacy", "collection_context", "source", "source_files", "adapter"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.dataset-manifest/v1"},
+    "dataset_id": {"$ref": "#/$defs/id"},
+    "title": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "synthetic": {"type": "boolean"},
+    "data_classification": {"enum": ["synthetic", "sanitized", "private"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "simulator": {"type": "string", "minLength": 1},
+    "driver_identifiers": {"enum": ["none", "pseudonymized", "identifiable"]},
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_data", "pseudonymized", "direct_identifiers_present", "pseudonymization_method", "consent_or_authority", "retention_policy"],
+      "properties": {
+        "participant_data": {"type": "boolean"},
+        "pseudonymized": {"type": "boolean"},
+        "direct_identifiers_present": {"type": "boolean"},
+        "pseudonymization_method": {"type": ["string", "null"]},
+        "consent_or_authority": {"type": "string", "minLength": 1},
+        "retention_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "collection_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_snapshot", "condition_id", "block_id", "schedule_assignment_id"],
+      "properties": {
+        "protocol_snapshot": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["path", "file_sha256", "freeze_id", "freeze_sha256", "experiment_id", "experiment_version", "schedule_id", "schedule_sha256"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "file_sha256": {"$ref": "#/$defs/sha256"},
+            "freeze_id": {"$ref": "#/$defs/id"},
+            "freeze_sha256": {"$ref": "#/$defs/sha256"},
+            "experiment_id": {"$ref": "#/$defs/id"},
+            "experiment_version": {"type": "string", "minLength": 1},
+            "schedule_id": {"$ref": "#/$defs/id"},
+            "schedule_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "condition_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "block_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "schedule_assignment_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "description"],
+      "properties": {
+        "format": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "export_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "role", "media_type"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "role": {"enum": ["telemetry", "metadata", "events", "protocol"]},
+          "media_type": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "configuration"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "version": {"type": "string", "minLength": 1},
+        "configuration": {"type": "object"}
+      }
+    },
+    "license": {"type": "string"},
+    "consent_or_authority": {"type": "string"},
+    "tags": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

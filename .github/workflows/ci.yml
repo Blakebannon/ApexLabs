@@ -1,0 +1,32 @@
+name: Apex Labs CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install package and reproducible test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Build source and wheel distributions
+        run: python -m build
+      - name: Run complete automated test suite
+        run: python -m unittest discover -s tests -v
+      - name: Guard Git-visible repository content
+        run: apex-labs repository-guard --root .
+      - name: Reproduce synthetic mechanics twice
+        run: apex-labs verify-synthetic-demo --root .

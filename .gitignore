@@ -1,0 +1,60 @@
+# Python build and test artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+.venv/
+venv/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+secrets/
+
+# Local research workspace and generated caches
+.apex-labs/
+notebooks/.ipynb_checkpoints/
+
+# Dataset content is local-only by default. Only deliberately reviewed manifests
+# and synthetic data in named allow-list folders may be tracked.
+datasets/**
+!datasets/README.md
+!datasets/manifests/
+!datasets/manifests/**
+!datasets/synthetic/
+!datasets/synthetic/**
+
+# Common raw telemetry/binary formats are excluded anywhere in the repository.
+*.ibt
+*.ld
+*.ldx
+*.bin
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.sqlite*
+*.db
+*.mdb
+*.accdb
+
+# Generated exports go here during local work. Reviewed, versioned export
+# packages may be deliberately added elsewhere under product-exports/.
+product-exports/generated/

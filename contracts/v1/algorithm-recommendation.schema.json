@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/algorithm-recommendation.schema.json",
+  "title": "Apex Labs algorithm recommendation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "algorithm_id", "version", "title", "recommendation_status", "scope", "finding_references", "purpose", "required_inputs", "output", "procedure", "parameters", "assumptions", "validation_requirements", "implementation_caveats", "safe_for_global_consideration"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.algorithm-recommendation/v1"},
+    "algorithm_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "recommendation_status": {"enum": ["recommended", "experimental", "not_recommended"]},
+    "scope": {"enum": ["driver_specific", "car_specific", "track_specific", "corner_archetype_specific", "simulator_specific", "session_specific", "algorithmic", "population_hypothesis", "population_supported"]},
+    "finding_references": {"$ref": "#/$defs/nonempty_strings"},
+    "purpose": {"type": "string", "minLength": 1},
+    "required_inputs": {"$ref": "#/$defs/nonempty_strings"},
+    "output": {"type": "string", "minLength": 1},
+    "procedure": {"$ref": "#/$defs/nonempty_strings"},
+    "parameters": {"type": "object"},
+    "assumptions": {"$ref": "#/$defs/nonempty_strings"},
+    "validation_requirements": {"$ref": "#/$defs/nonempty_strings"},
+    "implementation_caveats": {"$ref": "#/$defs/nonempty_strings"},
+    "safe_for_global_consideration": {"type": "boolean"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "nonempty_strings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "apex-labs.product-export-definition/v1",
+  "export_id": "synthetic-mechanics-demo-v1",
+  "created_at": "2026-08-19T00:00:00Z",
+  "apex_labs_version": "0.1.1",
+  "apex_labs_source_commit": "UNCOMMITTED",
+  "summary": "Synthetic, demo-only proof of the Apex Labs handoff mechanics. Contains no scientific or product recommendation.",
+  "finding_paths": [
+    "research/findings/inconclusive/synthetic-mechanics-demo.json"
+  ],
+  "validation_paths": [
+    "research/validations/synthetic-mechanics-demo-validation.json"
+  ],
+  "metric_paths": [
+    "research/metrics/demo-record-count.json"
+  ],
+  "algorithm_paths": []
+}

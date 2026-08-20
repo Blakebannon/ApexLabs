@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/protocol-freeze.schema.json",
+  "title": "Apex Labs immutable protocol freeze v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "freeze_id", "freeze_sha256", "protocol_id", "protocol_version", "protocol_sha256", "source_commit", "code_identity", "frozen_at", "synthetic", "protocol", "randomization", "amendment_history"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.protocol-freeze/v1"},
+    "freeze_id": {"$ref": "#/$defs/id"},
+    "freeze_sha256": {"$ref": "#/$defs/sha256"},
+    "protocol_id": {"$ref": "#/$defs/id"},
+    "protocol_version": {"type": "string", "minLength": 1},
+    "protocol_sha256": {"$ref": "#/$defs/sha256"},
+    "source_commit": {"$ref": "#/$defs/commit"},
+    "code_identity": {"$ref": "#/$defs/code_identity"},
+    "frozen_at": {"type": "string", "format": "date-time"},
+    "synthetic": {"type": "boolean"},
+    "protocol": {"$ref": "experiment.schema.json"},
+    "randomization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "method", "seed", "schedule_id", "schedule", "schedule_sha256"],
+      "properties": {
+        "strategy": {"enum": ["randomized", "counterbalanced", "fixed", "not_applicable"]},
+        "method": {"type": "string", "minLength": 1},
+        "seed": {"type": ["integer", "null"], "minimum": 0},
+        "schedule_id": {"$ref": "#/$defs/id"},
+        "schedule": {"type": "array"},
+        "schedule_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "amendment_history": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["amendment_id", "version", "amendment_sha256"],
+        "properties": {"amendment_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "amendment_sha256": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "code_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  }
+}

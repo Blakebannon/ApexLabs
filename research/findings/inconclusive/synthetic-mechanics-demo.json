@@ -1,0 +1,113 @@
+{
+  "schema_version": "apex-labs.finding/v1",
+  "finding_id": "synthetic-mechanics-demo",
+  "version": "1.0.0",
+  "title": "Synthetic pipeline mechanics demonstration",
+  "research_question": "Can Apex Labs deterministically ingest, normalize, fingerprint, validate, and export a tiny declared dataset?",
+  "status": "inconclusive",
+  "scope": "session_specific",
+  "evidence_classification": "synthetic_demo",
+  "hypothesis": "The Milestone 0 mechanics can process a declared synthetic tabular dataset without treating it as scientific evidence.",
+  "conclusion": "The artifact records a software-path demonstration only. It contains no evidence about a driver, car, track, simulator, technique, causal effect, or population.",
+  "analyst_claim": {
+    "proposed_status": "inconclusive",
+    "rationale": "The synthetic run is a software mechanics check and cannot support a scientific disposition."
+  },
+  "validation_artifact_reference": {
+    "validation_id": "synthetic-mechanics-demo-validation",
+    "version": "1.0.0"
+  },
+  "scientific_review_state": "unresolved",
+  "product_review_state": "not_requested",
+  "effect_estimate": null,
+  "uncertainty": {
+    "method": "not_applicable_synthetic_mechanics_demo",
+    "interval": null,
+    "confidence_level": null,
+    "interpretation": "No inferential estimate or confidence statement was produced."
+  },
+  "sample_counts": {
+    "drivers": 0,
+    "cars": 0,
+    "tracks": 0,
+    "sessions": 1,
+    "laps": 2,
+    "corners_or_events": 0,
+    "observations": 8
+  },
+  "sample_sufficiency": {
+    "status": "insufficient",
+    "method": "not_applicable_synthetic_mechanics_demo",
+    "rationale": "Synthetic samples cannot satisfy a scientific sample requirement."
+  },
+  "comparability_assessment": {
+    "status": "undetermined",
+    "criteria_applied": [
+      "Schema validity and record linkage only"
+    ],
+    "violations": [
+      "No real conditions or performance events exist to compare"
+    ]
+  },
+  "dataset_references": [
+    {
+      "dataset_id": "synthetic-mechanics-demo",
+      "fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
+      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9",
+      "records_sha256": "de125c35b2f1b62b31b82cd4044fc438a4289135d005fc8aea9c6a9a19a39832",
+      "synthetic": true
+    }
+  ],
+  "protocol_reference": {
+    "experiment_id": "synthetic-mechanics-demo-protocol",
+    "version": "1.0.0",
+    "freeze_id": "synthetic-mechanics-demo-protocol.freeze",
+    "freeze_sha256": "29bc942f4c7a24e38b28212a7b850e1487048a1b128c8077c13b74f9af2a8d0f"
+  },
+  "preprocessing": {
+    "pipeline_id": "tabular-csv-normalization",
+    "pipeline_version": "1.1.0",
+    "normalization_version": "1.1.0",
+    "configuration": {
+      "normalized_dataset_fingerprint": "a9b4f5d73a005ffa7728328e0995d955986f8af6bda20a59392454ee5d4390bd",
+      "normalized_manifest_sha256": "f93d7d14496602f56072b6c7d455b1336c531640772c1cc6f1efc75d5b9120f9"
+    },
+    "configuration_sha256": "1835ea6edff1a1561260712afb3ece5050234194e710705595732d4c5c91f9b9"
+  },
+  "analysis": {
+    "algorithm_id": "demo-record-count",
+    "algorithm_version": "1.0.0",
+    "configuration": {
+      "purpose": "mechanics_only"
+    },
+    "random_seed": null
+  },
+  "analysis_code_identity": {
+    "package_version": "0.1.1",
+    "git_commit": "UNCOMMITTED",
+    "git_state": "uncommitted",
+    "code_and_schema_sha256": "a71b0dbe4e5e0acef78d6bd34f63137ad6b805cf5b03ca7f6e9c9237f34ae5b8"
+  },
+  "limitations": [
+    "All values were hand-authored and synthetic.",
+    "The record counts prove mechanics, not research validity.",
+    "No experiment was executed and no performance hypothesis was tested."
+  ],
+  "possible_confounders": [
+    "Not applicable because this is not a scientific result."
+  ],
+  "generalizability_assessment": "None. This artifact must not be generalized to any driver, vehicle, track, simulator, corner, algorithm, or population.",
+  "falsification_attempts": [
+    "No racing hypothesis exists to falsify; integrity checks exercised malformed input, hashes, schema constraints, and export verification."
+  ],
+  "product_implication": "The export format can be inspected by a future production reviewer; it offers no coaching recommendation.",
+  "recommended_product_action": "do_not_implement",
+  "safe_for_global_consideration": false,
+  "required_future_validation": [
+    "Collect real data under an approved, preregistered protocol before evaluating any performance claim.",
+    "Replace UNCOMMITTED with an Apex Labs source commit for every real finding."
+  ],
+  "created_at": "2026-08-19T00:00:00Z",
+  "apex_labs_source_commit": "UNCOMMITTED",
+  "synthetic": true
+}

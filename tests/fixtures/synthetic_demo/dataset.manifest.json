@@ -1,0 +1,133 @@
+{
+  "schema_version": "apex-labs.dataset-manifest/v1",
+  "adapter": {
+    "configuration": {
+      "column_mapping": {
+        "brake_fraction": {
+          "concept": "brake",
+          "provenance": "measured",
+          "unit": "ratio"
+        },
+        "lap_distance_m": {
+          "concept": "lap_distance",
+          "provenance": "measured",
+          "unit": "m"
+        },
+        "speed_mps": {
+          "concept": "speed",
+          "provenance": "measured",
+          "unit": "m/s"
+        },
+        "steering_norm": {
+          "concept": "steering_input",
+          "provenance": "measured",
+          "unit": "ratio"
+        },
+        "throttle_fraction": {
+          "concept": "throttle",
+          "provenance": "measured",
+          "unit": "ratio"
+        },
+        "time_s": {
+          "concept": "timestamp",
+          "provenance": "measured",
+          "unit": "s"
+        },
+        "yaw_rate_rad_s": {
+          "concept": "yaw_rate",
+          "provenance": "measured",
+          "unit": "rad/s"
+        }
+      },
+      "delimiter": ",",
+      "lap_number_column": "lap",
+      "session": {
+        "car": "synthetic-car-a",
+        "driver_id": "synthetic-driver-001",
+        "layout": "synthetic-layout-a",
+        "session_id": "synthetic-session-001",
+        "track": "synthetic-track-a"
+      },
+      "telemetry_file": "telemetry.csv",
+      "temporal_policy": {
+        "source_clock": "synthetic_session_relative_seconds",
+        "normalized_clock_origin": "session_start",
+        "clock_resolution_seconds": 0.1,
+        "duplicate_timestamp_policy": "reject",
+        "clock_reset_policy": "reject",
+        "expected_sample_period_seconds": null,
+        "gap_tolerance_seconds": null,
+        "lap_distance_regression_policy": "reject",
+        "interpolation": {
+          "performed": false,
+          "method": null,
+          "affected_concepts": []
+        }
+      },
+      "conventions": {
+        "vehicle_frame": "right_handed_x_forward_y_left_z_up",
+        "steering_sign": "positive_left",
+        "yaw_rate_sign": "positive_counterclockwise_viewed_from_above",
+        "lateral_acceleration_sign": "positive_left",
+        "longitudinal_acceleration_sign": "positive_forward",
+        "track_position_frame": "right_handed_adapter_normalized"
+      }
+    },
+    "id": "tabular-csv",
+    "version": "1.1.0"
+  },
+  "created_at": "2026-08-19T00:00:00Z",
+  "data_classification": "synthetic",
+  "description": "Tiny fabricated telemetry used only to prove Apex Labs mechanics. It is not evidence about driving performance.",
+  "driver_identifiers": "none",
+  "privacy": {
+    "participant_data": false,
+    "pseudonymized": false,
+    "direct_identifiers_present": false,
+    "pseudonymization_method": null,
+    "consent_or_authority": "not_applicable_synthetic_fixture",
+    "retention_policy": "tracked_tiny_synthetic_fixture"
+  },
+  "collection_context": {
+    "protocol_snapshot": {
+      "path": "protocol.freeze.json",
+      "file_sha256": "f1803fab4c79fb041cd805b1975b41f4dd6ebbf5e9ba66a2d910a94351a3f8e1",
+      "freeze_id": "synthetic-mechanics-demo-protocol.freeze",
+      "freeze_sha256": "29bc942f4c7a24e38b28212a7b850e1487048a1b128c8077c13b74f9af2a8d0f",
+      "experiment_id": "synthetic-mechanics-demo-protocol",
+      "experiment_version": "1.0.0",
+      "schedule_id": "not-applicable",
+      "schedule_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "condition_id": "synthetic-condition",
+    "block_id": "synthetic-block",
+    "schedule_assignment_id": "not-applicable"
+  },
+  "dataset_id": "synthetic-mechanics-demo",
+  "simulator": "synthetic-simulator",
+  "source": {
+    "description": "Hand-authored values with no human or simulator source.",
+    "format": "text/csv"
+  },
+  "source_files": [
+    {
+      "media_type": "text/csv",
+      "path": "telemetry.csv",
+      "role": "telemetry",
+      "sha256": "32db11d8cf04dd0146713a6c1c1d0224cc83d012e88bd9d427c3eb03d45465d0"
+    },
+    {
+      "media_type": "application/json",
+      "path": "protocol.freeze.json",
+      "role": "protocol",
+      "sha256": "f1803fab4c79fb041cd805b1975b41f4dd6ebbf5e9ba66a2d910a94351a3f8e1"
+    }
+  ],
+  "synthetic": true,
+  "tags": [
+    "synthetic",
+    "demo-only",
+    "not-scientific-evidence"
+  ],
+  "title": "Synthetic mechanics demonstration"
+}
