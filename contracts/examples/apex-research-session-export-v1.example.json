@@ -40,6 +40,7 @@
     {"name": "damage", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
     {"name": "flags", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
     {"name": "weather", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
+    {"name": "traffic", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"},
     {"name": "track_conditions", "availability": "unavailable", "provenance": "unavailable", "unit": null, "axis_and_sign": null, "missing_value": "explicitly unavailable"}
   ],
   "events": {

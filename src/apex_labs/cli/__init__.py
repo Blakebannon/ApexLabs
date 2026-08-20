@@ -20,6 +20,9 @@ from apex_labs.ingestion import (
     inspect_apex_session_bundle,
     inspect_dataset,
     validate_apex_session_bundle,
+    ingest_research_bundle,
+    inspect_research_bundle,
+    validate_research_bundle,
 )
 from apex_labs.io import canonical_json_bytes, read_json, read_json_lines
 from apex_labs.repository_guard import run_repository_guard
@@ -33,6 +36,7 @@ from apex_labs.schemas import (
     validate_collection_record,
     validate_product_annotations,
     validate_research_export_manifest,
+    validate_research_recorder_manifest,
     validate_adapter_conformance,
 )
 from apex_labs.schemas.validation import VALIDATORS
@@ -46,6 +50,7 @@ ALL_VALIDATORS = {
     "collection-record": validate_collection_record,
     "product-annotations": validate_product_annotations,
     "research-export-manifest": validate_research_export_manifest,
+    "research-recorder-manifest": validate_research_recorder_manifest,
     "adapter-conformance": validate_adapter_conformance,
 }
 
@@ -162,6 +167,24 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Permit dirty-code real-sample mechanics validation; output is scientifically ineligible",
     )
+    apex_research = commands.add_parser(
+        "apex-research", help="Inspect, validate, or normalize a completed local Research Recorder bundle"
+    )
+    research_commands = apex_research.add_subparsers(dest="apex_research_command", required=True)
+    research_inspect = research_commands.add_parser("inspect", help="Inspect recorder capabilities and counts")
+    research_inspect.add_argument("bundle", type=Path)
+    research_validate = research_commands.add_parser("validate", help="Validate completion, contract, hashes, and semantics")
+    research_validate.add_argument("bundle", type=Path)
+    research_validate.add_argument("--collection-record", type=Path)
+    research_ingest = research_commands.add_parser("ingest", help="Stream recorder samples into normalized v1 records")
+    research_ingest.add_argument("bundle", type=Path)
+    research_ingest.add_argument("--collection-record", type=Path, required=True)
+    research_ingest.add_argument("--protocol-snapshot", type=Path)
+    research_ingest.add_argument("--output", "-o", type=Path, required=True)
+    research_ingest.add_argument(
+        "--integration-validation", action="store_true",
+        help="Permit dirty-code real-sample mechanics validation; output is scientifically ineligible",
+    )
     return parser
 
 
@@ -271,6 +294,26 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "source_semantics": manifest["source_semantics"],
             "research_eligibility": manifest["research_eligibility"],
             "output": str(args.output),
+        }
+    if args.command == "apex-research":
+        if args.apex_research_command == "inspect":
+            return inspect_research_bundle(args.bundle)
+        if args.apex_research_command == "validate":
+            return validate_research_bundle(args.bundle, args.collection_record)
+        manifest = ingest_research_bundle(
+            args.bundle,
+            args.output,
+            args.collection_record,
+            integration_validation=args.integration_validation,
+            protocol_snapshot_path=args.protocol_snapshot,
+        )
+        return {
+            "ok": True,
+            "dataset_id": manifest["dataset_id"],
+            "fingerprint": manifest["dataset_fingerprint"],
+            "record_counts": manifest["record_counts"],
+            "output": str(args.output),
+            "direction": "research-bundle-to-labs-only",
         }
     raise AssertionError(f"Unhandled command: {args.command}")
 

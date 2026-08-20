@@ -9,5 +9,7 @@ Contract IDs are stable within v1. A breaking semantic or structural change requ
 Native contracts cover the supported customer `apex-session-export/1.0.0`
 manifest, the Apex Labs collection-record sidecar, the permanently
 non-scientific product-annotation wrapper, and the proposed future
-`apex-research-session-export/1.0.0` handoff. The latter is a target contract,
-not evidence that production capture exists.
+`apex-research-session-export/1.0.0` handoff. The additive
+`apex-research-recorder-profile-v1.json` pins the exact M54R recorder channel,
+file, null, coaching-evidence, configuration-hash, and completion conventions.
+It tightens conformance without invalidating historical base-v1 manifests.

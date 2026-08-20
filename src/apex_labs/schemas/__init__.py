@@ -22,6 +22,7 @@ from apex_labs.schemas.apex_session_validation import (
     validate_collection_record,
     validate_product_annotations,
     validate_research_export_manifest,
+    validate_research_recorder_manifest,
     validate_adapter_conformance,
 )
 
@@ -43,5 +44,6 @@ __all__ = [
     "validate_collection_record",
     "validate_product_annotations",
     "validate_research_export_manifest",
+    "validate_research_recorder_manifest",
     "validate_adapter_conformance",
 ]

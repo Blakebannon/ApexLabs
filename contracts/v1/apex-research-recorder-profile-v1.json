@@ -1,0 +1,50 @@
+{
+  "profile_id": "apex-labs-research-recorder-profile/1.0.0",
+  "base_contract": "apex-research-session-export/1.0.0",
+  "base_schema_sha256": "5432cf9034b72bc8dc9c99c45c76dac07e320036460b0a7e4092c029bbf698b6",
+  "required_channels": [
+    "timestamp",
+    "brake",
+    "throttle",
+    "steering_angle",
+    "speed",
+    "gear",
+    "rpm",
+    "longitudinal_acceleration",
+    "lateral_acceleration",
+    "yaw_rate",
+    "wheel_state",
+    "tire_state",
+    "fuel",
+    "setup",
+    "assists",
+    "damage",
+    "flags",
+    "weather",
+    "traffic",
+    "track_conditions"
+  ],
+  "required_files": [
+    {"path": "samples.csv", "role": "timestamped-samples"},
+    {"path": "events.jsonl", "role": "session-events"},
+    {"path": "configuration-setup.json", "role": "configuration-setup-declaration"},
+    {"path": "recorder-metadata.json", "role": "recorder-provenance-and-metrics"}
+  ],
+  "samples": {
+    "format": "utf-8-rfc4180-csv",
+    "nullable_value": "empty-field",
+    "non_finite_numbers": "forbidden",
+    "sequence": "capture_sequence-strictly-increasing-gaps-declared"
+  },
+  "configuration_setup_hash": "sha256-of-exact-configuration-setup.json-bytes",
+  "completion": {
+    "marker": "COMPLETE",
+    "content": "apex-research-complete/v1 newline manifest-sha256 newline",
+    "written_last": true
+  },
+  "coaching_evidence": {
+    "required": true,
+    "disabled_control_must_be_explicit": true,
+    "delivery_must_not_be-inferred-from-authorization": true
+  }
+}

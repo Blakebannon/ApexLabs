@@ -4,7 +4,10 @@ The existing customer Session Analysis Bundle is supported at exactly
 `apex-session-export/1.0.0` and has been validated against one external
 anonymized sample. It contains distance-binned aggregates, not the timestamped
 raw or near-raw samples needed for the proposed controlled campaign. Native
-high-fidelity Research-export compatibility remains unverified and unimplemented.
+The M54R recorder profile now has deterministic synthetic end-to-end evidence:
+an actual C# recorder bundle passes the dependency-free Labs runtime validator
+and streams through the `apex-research-recorder/1.0.0` adapter into normalized
+records. Real-session fitness remains unverified.
 
 ## Required input package
 
@@ -52,10 +55,10 @@ high-fidelity Research-export compatibility remains unverified and unimplemented
 
 ## Campaign gate
 
-Formal controlled collection remains blocked until both an implemented and
-reviewed Research export sample/specification and the campaign protocol—including
+Formal controlled collection remains blocked until the live variable inventory,
+30-minute overhead/storage rehearsal, privacy key custody, and campaign protocol—including
 conditions, privacy handling, frozen schedule, comparability, exclusions, sample
 design, success/falsification rules, and safe collection procedure—are reviewed.
-Passing this checklist confirms adapter mechanics, not that the first campaign
+Passing the deterministic M54R checks confirms adapter mechanics, not that the first campaign
 is scientifically ready. The customer bundle may be ingested as an explicitly
 observational session; that does not satisfy the controlled-campaign gate.

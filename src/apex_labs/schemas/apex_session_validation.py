@@ -130,7 +130,10 @@ def validate_collection_record(value: Any) -> dict[str, Any]:
     bundle = _object(obj["source_bundle"], "$.source_bundle")
     _keys(bundle, "$.source_bundle", required={"sha256", "schema_version"})
     _sha(bundle["sha256"], "$.source_bundle.sha256")
-    if bundle["schema_version"] != versions.APEX_SESSION_EXPORT:
+    if bundle["schema_version"] not in {
+        versions.APEX_SESSION_EXPORT,
+        versions.APEX_RESEARCH_EXPORT,
+    }:
         from apex_labs.errors import UnsupportedVersionError
 
         raise UnsupportedVersionError(f"$.source_bundle.schema_version: unsupported {bundle['schema_version']!r}")
@@ -329,10 +332,11 @@ def validate_research_export_manifest(value: Any) -> dict[str, Any]:
         "tire_state", "fuel", "setup", "assists", "damage", "flags", "weather",
         "track_conditions",
     }
-    if seen != required_channels:
+    allowed_channels = required_channels | {"traffic"}
+    if not required_channels.issubset(seen) or not seen.issubset(allowed_channels):
         from apex_labs.errors import ContractValidationError
 
-        raise ContractValidationError(f"$.channels: must declare every required capability; missing={sorted(required_channels - seen)}, extra={sorted(seen - required_channels)}")
+        raise ContractValidationError(f"$.channels: must declare every required capability; missing={sorted(required_channels - seen)}, extra={sorted(seen - allowed_channels)}")
     events = _object(obj["events"], "$.events")
     event_fields = {"incidents", "pit_transitions", "lap_validity", "session_state", "coaching_cue_authorization_and_delivery_receipts", "experimental_block_and_condition_markers"}
     _keys(events, "$.events", required=event_fields)
@@ -363,11 +367,18 @@ def validate_research_export_manifest(value: Any) -> dict[str, Any]:
     _string(storage["retention_declaration"], "$.storage.retention_declaration")
     _string(storage["truncation_and_corruption_behavior"], "$.storage.truncation_and_corruption_behavior")
     files = _list(obj["files"], "$.files", nonempty=True)
+    seen_paths: set[str] = set()
     for index, item in enumerate(files):
         path = f"$.files[{index}]"
         file_entry = _object(item, path)
         _keys(file_entry, path, required={"path", "size_bytes", "sha256", "role"})
-        validate_contract_path(_string(file_entry["path"], f"{path}.path"))
+        file_path = validate_contract_path(_string(file_entry["path"], f"{path}.path"))
+        folded_path = file_path.casefold()
+        if folded_path in seen_paths:
+            from apex_labs.errors import ContractValidationError
+
+            raise ContractValidationError(f"{path}.path: duplicate portable file path")
+        seen_paths.add(folded_path)
         _integer(file_entry["size_bytes"], f"{path}.size_bytes", minimum=0)
         _sha(file_entry["sha256"], f"{path}.sha256")
         _string(file_entry["role"], f"{path}.role")
@@ -390,4 +401,53 @@ def validate_research_export_manifest(value: Any) -> dict[str, Any]:
             from apex_labs.errors import ContractValidationError
 
             raise ContractValidationError(f"$.build_boundary.{name}: must be false")
+    return obj
+
+
+def validate_research_recorder_manifest(value: Any) -> dict[str, Any]:
+    """Validate the stricter Apex Sim Coach recorder profile layered on v1."""
+    obj = validate_research_export_manifest(value)
+    seen = {item["name"] for item in obj["channels"]}
+    expected = {
+        "timestamp", "brake", "throttle", "steering_angle", "speed", "gear", "rpm",
+        "longitudinal_acceleration", "lateral_acceleration", "yaw_rate", "wheel_state",
+        "tire_state", "fuel", "setup", "assists", "damage", "flags", "weather",
+        "traffic", "track_conditions",
+    }
+    if seen != expected:
+        from apex_labs.errors import ContractValidationError
+
+        raise ContractValidationError(
+            f"$.channels: recorder profile requires the exact 20-channel inventory; "
+            f"missing={sorted(expected - seen)}, extra={sorted(seen - expected)}"
+        )
+    for field in (
+        "coaching_cue_authorization_and_delivery_receipts",
+        "experimental_block_and_condition_markers",
+    ):
+        if obj["events"][field] is not True:
+            from apex_labs.errors import ContractValidationError
+
+            raise ContractValidationError(f"$.events.{field}: recorder profile requires explicit evidence")
+    if obj["privacy"]["pseudonymization_supported"] is not True:
+        from apex_labs.errors import ContractValidationError
+
+        raise ContractValidationError(
+            "$.privacy.pseudonymization_supported: recorder profile requires pseudonymization"
+        )
+    expected_files = {
+        "configuration-setup.json": "configuration-setup-declaration",
+        "events.jsonl": "session-events",
+        "recorder-metadata.json": "recorder-provenance-and-metrics",
+        "samples.csv": "timestamped-samples",
+    }
+    actual_files = {item["path"]: item["role"] for item in obj["files"]}
+    if len(obj["files"]) != len(expected_files) or actual_files != expected_files:
+        from apex_labs.errors import ContractValidationError
+
+        raise ContractValidationError(
+            f"$.files: recorder profile requires the exact portable inventory; "
+            f"missing={sorted(set(expected_files) - set(actual_files))}, "
+            f"extra={sorted(set(actual_files) - set(expected_files))}"
+        )
     return obj

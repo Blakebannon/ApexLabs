@@ -653,14 +653,15 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
             _keys(bound, f"$.{name}", required={"path", "sha256"})
             validate_contract_path(_string(bound["path"], f"$.{name}.path"))
             _sha(bound["sha256"], f"$.{name}.sha256")
-    native_fields = {
-        "source_bundle", "source_semantics", "research_eligibility", "collection_record",
+    customer_native_fields = {
+        "source_bundle", "source_semantics", "research_eligibility",
         "product_annotations", "adapter_conformance",
     }
-    present_native = native_fields & obj.keys()
-    if present_native and present_native != native_fields:
-        _fail("$", f"native Apex normalization requires the complete bound metadata set; missing={sorted(native_fields - present_native)}")
-    if present_native:
+    customer_native_required = customer_native_fields | {"collection_record"}
+    present_customer_native = customer_native_fields & obj.keys()
+    if present_customer_native and not customer_native_required.issubset(obj):
+        _fail("$", f"native customer normalization requires the complete bound metadata set; missing={sorted(customer_native_required - obj.keys())}")
+    if present_customer_native:
         if adapter["id"] != "apex-session-export" or adapter["version"] != "1.0.0":
             _fail("$.adapter", "native source metadata requires apex-session-export adapter 1.0.0")
         if "distance_bin" not in counts:
@@ -670,6 +671,8 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
             _fail("$.source_bundle.privacy_mode", "must agree with normalized synthetic classification")
         if obj["synthetic"] and obj["research_eligibility"]["classification"] != "synthetic_demo":
             _fail("$.research_eligibility.classification", "synthetic native bundles must remain synthetic_demo")
+    if adapter["id"] == "apex-research-recorder" and "collection_record" not in obj:
+        _fail("$.collection_record", "research-recorder normalization must bind its Labs collection record")
     return obj
 
 

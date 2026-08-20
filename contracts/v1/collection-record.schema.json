@@ -42,7 +42,7 @@
     "source_bundle": {
       "type": "object", "additionalProperties": false,
       "required": ["sha256", "schema_version"],
-      "properties": {"sha256": {"$ref": "#/$defs/sha256"}, "schema_version": {"const": "apex-session-export/1.0.0"}}
+      "properties": {"sha256": {"$ref": "#/$defs/sha256"}, "schema_version": {"enum": ["apex-session-export/1.0.0", "apex-research-session-export/1.0.0"]}}
     },
     "session_identity": {
       "type": "object", "additionalProperties": false,

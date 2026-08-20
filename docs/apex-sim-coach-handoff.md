@@ -9,6 +9,11 @@ The future telemetry-capture handoff is separately specified in
 customer Session Analysis Bundle remains separate. Neither contract authorizes
 Apex Labs to change production.
 
+`apex-labs apex-research inspect|validate|ingest` is a local, one-way ingestion
+surface for completed recorder directories. It never locates or writes the Apex
+Sim Coach repository. Collection records and protocol snapshots remain Labs-side
+operator inputs; findings still require human and production-engineering review.
+
 ## Package contract
 
 `apex-labs export-product-findings` consumes a versioned export definition and creates:

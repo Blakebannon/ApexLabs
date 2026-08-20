@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
@@ -29,6 +30,7 @@ from apex_labs.schemas import (
     validate_collection_record,
     validate_product_annotations,
     validate_research_export_manifest,
+    validate_research_recorder_manifest,
     validate_adapter_conformance,
 )
 
@@ -141,6 +143,11 @@ class ContractConformanceTests(unittest.TestCase):
         with self.assertRaises(UnsupportedVersionError):
             validate_collection_record(version)
 
+        research_collection = copy.deepcopy(base)
+        research_collection["source_bundle"]["schema_version"] = "apex-research-session-export/1.0.0"
+        self.assert_schema_valid("collection-record", research_collection)
+        validate_collection_record(research_collection)
+
         research = read_json(ROOT / "contracts" / "examples" / "apex-research-session-export-v1.example.json")
         research["timing"]["timestamped_samples"] = False
         self.assert_both_reject("apex-research-session-export", validate_research_export_manifest, research)
@@ -158,6 +165,20 @@ class ContractConformanceTests(unittest.TestCase):
             "annotations": [],
         }
         self.assert_both_reject("product-annotations", validate_product_annotations, annotation)
+
+    def test_research_recorder_profile_pin_and_traffic_compatibility(self) -> None:
+        profile = ROOT / "contracts" / "v1" / "apex-research-recorder-profile-v1.json"
+        self.assertEqual(
+            hashlib.sha256(profile.read_bytes()).hexdigest(),
+            "20b547de4ef89d8b4a33bd8eb1bed282268b4b8e0b5f521108279e13961b800f",
+        )
+        base = read_json(ROOT / "contracts" / "examples" / "apex-research-session-export-v1.example.json")
+        validate_research_export_manifest(base)
+        legacy = copy.deepcopy(base)
+        legacy["channels"] = [item for item in legacy["channels"] if item["name"] != "traffic"]
+        validate_research_export_manifest(legacy)
+        with self.assertRaises(ContractValidationError):
+            validate_research_recorder_manifest(base)
 
     def test_required_unknown_enum_and_version_fail_both_paths(self) -> None:
         base = read_json(DATASET_MANIFEST)
