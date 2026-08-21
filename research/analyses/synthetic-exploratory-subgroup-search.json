@@ -1,0 +1,220 @@
+{
+  "analysis_id": "synthetic-exploratory-subgroup-search",
+  "classification": "exploratory",
+  "comparisons": [
+    {
+      "comparison_id": "subgroup-01",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-01"
+      }
+    },
+    {
+      "comparison_id": "subgroup-02",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-02"
+      }
+    },
+    {
+      "comparison_id": "subgroup-03",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-03"
+      }
+    },
+    {
+      "comparison_id": "subgroup-04",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-04"
+      }
+    },
+    {
+      "comparison_id": "subgroup-05",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-05"
+      }
+    },
+    {
+      "comparison_id": "subgroup-06",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "The same fabricated smallest difference worth noticing, applied to every searched subgroup.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "exploratory",
+      "subset": {
+        "field": "pair_key",
+        "value": "participant=synthetic-driver-001|car=synthetic-car-a|track=synthetic-track-a|layout=synthetic-layout-a|session_id=session-06"
+      }
+    }
+  ],
+  "evidence_scope": "primary",
+  "evidence_set": {
+    "definition_sha256": "a56a200f0a27edbd9b065b03e0c3381c436bf18afe166305dfe58152c3623942",
+    "evidence_set_id": "synthetic-paired-corner-speed",
+    "version": "1.0.0"
+  },
+  "experimental_unit": "lap",
+  "falsification_tests": [
+    {
+      "description": "Recompute the estimate without each pair in turn and report whether the direction ever changes.",
+      "kind": "leave_one_unit_out",
+      "test_id": "leave-one-pair-out"
+    },
+    {
+      "description": "Recompute the estimate without each block in turn; a direction carried by one block is fragile.",
+      "kind": "leave_one_cluster_out",
+      "test_id": "leave-one-block-out"
+    },
+    {
+      "description": "Remove the single pair furthest from the median difference and report whether the direction and practical magnitude survive.",
+      "kind": "outlier_dependence",
+      "test_id": "outlier-dependence"
+    },
+    {
+      "description": "Split the ordered pairs in half and report whether both halves carry the direction.",
+      "kind": "order_effect_early_versus_late",
+      "test_id": "early-versus-late"
+    },
+    {
+      "description": "Estimate within each block separately and report whether the direction is isolated to one of them.",
+      "kind": "isolation_by_cluster",
+      "test_id": "isolation-by-block"
+    }
+  ],
+  "family": {
+    "alpha": 0.05,
+    "correction": "benjamini_hochberg",
+    "family_id": "session-subgroup-search",
+    "members": [
+      "subgroup-01",
+      "subgroup-02",
+      "subgroup-03",
+      "subgroup-04",
+      "subgroup-05",
+      "subgroup-06"
+    ],
+    "role": "exploratory"
+  },
+  "grouping": {
+    "kind": "paired",
+    "unpaired_justification": null
+  },
+  "hypothesis": "At least one session subgroup shows a difference in segment minimum speed.",
+  "interpretation_ceiling": "associational",
+  "limitations": [
+    "Six subgroups were searched. A single low raw value among six searched slices is what chance looks like, which is why the family is corrected and why any survivor would still require independent replication before becoming a hypothesis worth testing.",
+    "Every value analysed here is fabricated; no racing conclusion follows from any number in this run.",
+    "A statistical result is not a finding, and a finding is not a product change."
+  ],
+  "missing_data_policy": "exclude_unit_and_report",
+  "null_hypothesis": "No session subgroup shows a difference in segment minimum speed beyond what searching six subgroups produces by chance.",
+  "outlier_policy": "retain_all_and_report_sensitivity",
+  "primary_metric": {
+    "metric_id": "segment-minimum-speed",
+    "sha256": "8987ddbdfe09906981d9950bf44d80a41f9ed15d4a631a0345bf5d6324d56291",
+    "version": "1.0.0"
+  },
+  "protocol": {
+    "experiment_id": "synthetic-inference-controlled",
+    "experiment_version": "1.0.0",
+    "freeze_id": "synthetic-inference-controlled.freeze",
+    "freeze_sha256": "35189ae5964fcd1fb7e59fd834bb81c0ced572b661e90b0291895a10d81f6486"
+  },
+  "replication_policy": {
+    "holdout_inspected": false,
+    "required_scope": "different_session",
+    "state": "required_before_validation"
+  },
+  "resampling_unit": "block",
+  "schema_version": "apex-labs.inferential-analysis-definition/v1",
+  "scientific_question": "Does any fabricated session subgroup show a difference in segment minimum speed?",
+  "secondary_metrics": [],
+  "sufficiency_rule": {
+    "minimum_experimental_units": 8,
+    "minimum_pairs": 4,
+    "minimum_participants": 1,
+    "minimum_resampling_clusters": 2,
+    "pilot_reference": null,
+    "source": "frozen_protocol",
+    "source_declarations": [
+      "At least 4 comparable within-driver pairs and at least 2 blocks for a mechanics-level contrast"
+    ],
+    "stopping_rule": "Every declared subgroup is searched exactly once. No subgroup is added or removed after the results are known."
+  },
+  "synthetic": true,
+  "title": "Exploratory search across every fabricated session subgroup",
+  "uncertainty": {
+    "bootstrap_draws": 2000,
+    "coverage_level": 0.95,
+    "interval_semantics": "Percentile interval over a deterministic cluster bootstrap that resamples whole blocks. It describes sampling variability of this estimator on this evidence and is not a probability statement about the true effect.",
+    "method": "deterministic_cluster_percentile_bootstrap",
+    "minimum_resampling_clusters": 2,
+    "random_seed": 20260820,
+    "resampling_unit": "block"
+  },
+  "version": "1.0.0"
+}

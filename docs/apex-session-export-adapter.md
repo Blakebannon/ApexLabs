@@ -2,7 +2,7 @@
 
 ## Supported contract
 
-Apex Labs 0.2 supports exactly `apex-session-export/1.0.0`, the existing
+Apex Labs 0.3 supports exactly `apex-session-export/1.0.0`, the existing
 customer-facing Session Analysis Bundle. Newer or older schemas are refused.
 This compatibility does not imply compatibility with a future high-resolution
 Research export.

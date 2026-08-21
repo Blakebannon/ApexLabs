@@ -1,0 +1,44 @@
+{
+  "classification": "synthetic_demo_only_not_racing_research",
+  "description": "Deterministic inputs for regenerating the checked-in synthetic inference protocol references after a clean engine commit.",
+  "references": [
+    {
+      "protocol": "protocols/synthetic-inference-controlled.json",
+      "frozen_at": "2026-08-20T00:00:00Z",
+      "strategy": "fixed",
+      "method": "Block order is fixed in this fabricated demonstration; the order is frozen but not counterbalanced.",
+      "seed": null,
+      "schedule_id": "synthetic-fixed-schedule",
+      "schedule": [
+        {"block_id": "block-01", "condition_id": "synthetic-baseline"},
+        {"block_id": "block-02", "condition_id": "synthetic-intervention"},
+        {"block_id": "block-03", "condition_id": "synthetic-baseline"},
+        {"block_id": "block-04", "condition_id": "synthetic-intervention"}
+      ]
+    },
+    {
+      "protocol": "protocols/synthetic-inference-counterbalanced.json",
+      "frozen_at": "2026-08-20T00:00:00Z",
+      "strategy": "counterbalanced",
+      "method": "Block order is counterbalanced from a frozen schedule fixed before any value was inspected.",
+      "seed": null,
+      "schedule_id": "synthetic-counterbalance-schedule",
+      "schedule": [
+        {"block_id": "block-01", "condition_id": "synthetic-baseline"},
+        {"block_id": "block-02", "condition_id": "synthetic-intervention"},
+        {"block_id": "block-03", "condition_id": "synthetic-intervention"},
+        {"block_id": "block-04", "condition_id": "synthetic-baseline"}
+      ]
+    },
+    {
+      "protocol": "protocols/synthetic-inference-observational.json",
+      "frozen_at": "2026-08-20T00:00:00Z",
+      "strategy": "not_applicable",
+      "method": "No assignment occurs; fabricated blocks are observed in the order they happened.",
+      "seed": null,
+      "schedule_id": "not-applicable",
+      "schedule": []
+    }
+  ],
+  "synthetic": true
+}

@@ -25,6 +25,46 @@ from apex_labs.provenance import sha256_file
 
 
 class ProductExportTests(unittest.TestCase):
+    def test_algorithm_transitively_derived_from_synthetic_finding_is_never_a_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            portable_root = base / "portable-root"
+            shutil.copytree(ROOT / "research", portable_root / "research")
+            (portable_root / "product-exports").mkdir(parents=True)
+            (portable_root / "algorithms").mkdir()
+            definition = read_json(EXPORT_DEFINITION)
+            definition["algorithm_paths"] = ["algorithms/synthetic-derived.json"]
+            definition_path = portable_root / "product-exports" / "definition.json"
+            algorithm = {
+                "schema_version": "apex-labs.algorithm-recommendation/v1",
+                "algorithm_id": "synthetic-derived",
+                "version": "1.0.0",
+                "title": "Synthetic-derived candidate that must be refused",
+                "recommendation_status": "experimental",
+                "scope": "algorithmic",
+                "finding_references": ["synthetic-mechanics-demo"],
+                "purpose": "Negative test only.",
+                "required_inputs": ["speed"],
+                "output": "No product output is permitted.",
+                "procedure": ["Reference the fabricated finding."],
+                "parameters": {},
+                "assumptions": ["All inputs are fabricated."],
+                "validation_requirements": ["Must be refused."],
+                "implementation_caveats": ["Never implement."],
+                "safe_for_global_consideration": False,
+            }
+            for status, safe in (("experimental", False), ("recommended", True)):
+                with self.subTest(status=status):
+                    algorithm["recommendation_status"] = status
+                    algorithm["safe_for_global_consideration"] = safe
+                    write_json(portable_root / "algorithms" / "synthetic-derived.json", algorithm)
+                    write_json(definition_path, definition)
+                    with self.assertRaises(ExportError) as error:
+                        generate_product_export(
+                            definition_path, base / f"export-{status}", portable_root
+                        )
+                    self.assertIn("transitively derived from synthetic findings", str(error.exception))
+
     def test_deterministic_across_directories_order_locale_timezone_and_cwd(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
@@ -158,6 +198,11 @@ class ProductExportTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_cli_reports_checkpoint_version(self) -> None:
+        result = run_cli("--version")
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("apex-labs 0.3.0", result.stdout.strip())
+
     def test_cli_validation_ingestion_inspection_guard_and_export_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)

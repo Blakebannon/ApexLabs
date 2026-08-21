@@ -1,0 +1,58 @@
+{
+  "applies_to": [
+    {
+      "geometry_fingerprint": "ab16578b2ccd9e69c3f8b3c869feb831a2c6e4ab62ef65e56e87c820fb972f45",
+      "geometry_source": "Fabricated geometry descriptor apex-labs-synthetic-geometry/layout-a/turn-a/90m-200m.",
+      "layout": "synthetic-layout-a",
+      "simulator": "synthetic-simulator",
+      "track": "synthetic-track-a"
+    },
+    {
+      "geometry_fingerprint": "1c45cc6db84295b1fae4f98c1933e3ec441aa3814cbe4b902e8c4f2c164b10e7",
+      "geometry_source": "Fabricated geometry descriptor apex-labs-synthetic-geometry/layout-b/turn-4/90m-200m; the same ordinal name over different geometry.",
+      "layout": "synthetic-layout-b",
+      "simulator": "synthetic-simulator",
+      "track": "synthetic-track-a"
+    }
+  ],
+  "boundary_sample_resolution": "half_open_start_inclusive",
+  "corner_identity": {
+    "catalog_id": "synthetic-corner-catalog",
+    "catalog_sha256": "5954e28adc32de746ce9c69ed943faeb1dcce848740a919c816863e195e6850a",
+    "catalog_version": "1.0.0",
+    "corner_reference": "Turn 4"
+  },
+  "coverage_requirements": {
+    "minimum_comparable_units": 4,
+    "minimum_concept_coverage_ratio": 0.9,
+    "minimum_records_per_unit": 4,
+    "required_concepts": [
+      "speed",
+      "brake",
+      "lap_distance"
+    ]
+  },
+  "identity_confidence": "declared",
+  "identity_source": "verified_corner_identity",
+  "limitations": [
+    "The two applicability entries share an ordinal name but not a geometry. Evidence spanning both is refused, which is the point of this definition.",
+    "A shared corner ordinal is never evidence that two regions are the same region."
+  ],
+  "overlap_policy": "disjoint_within_definition",
+  "phase": null,
+  "region": {
+    "boundary": {
+      "end_inclusive": false,
+      "start_inclusive": true
+    },
+    "end": 200.0,
+    "kind": "distance_range",
+    "lap_length_m": 1000.0,
+    "start": 90.0,
+    "wraparound": false
+  },
+  "schema_version": "apex-labs.segment-definition/v1",
+  "segment_definition_id": "synthetic-corner-4-multi-layout",
+  "title": "Turn 4 as named on two fabricated layouts with different geometry",
+  "version": "1.0.0"
+}

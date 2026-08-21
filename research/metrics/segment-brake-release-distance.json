@@ -1,0 +1,20 @@
+{
+  "computation": "Select records inside the declared segment region whose brake value is at or above the declared threshold, and take the along-lap distance of the last such record.",
+  "definition": "The along-lap distance of the last record inside the declared segment whose brake value was at or above the declared threshold.",
+  "directionality": "descriptive_only",
+  "limitations": [
+    "Later brake release is not automatically better; it may equally reflect a missed entry or an unsustainable line.",
+    "The value is quantized to the sampling resolution of the source and is not a continuous measurement of pedal release.",
+    "The metric is defined only relative to the declared threshold and segment region."
+  ],
+  "metric_id": "segment-brake-release-distance",
+  "name": "Segment brake-release distance",
+  "output_provenance": "derived",
+  "required_inputs": [
+    "brake",
+    "lap_distance"
+  ],
+  "schema_version": "apex-labs.metric-definition/v1",
+  "unit": "m",
+  "version": "1.0.0"
+}

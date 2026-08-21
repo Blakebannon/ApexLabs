@@ -36,7 +36,20 @@
           "implementation_caveats": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
           "path": {"type": "string", "minLength": 1},
           "sha256": {"$ref": "#/$defs/sha256"}
-        }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"synthetic": {"const": true}}, "required": ["synthetic"]},
+            "then": {
+              "properties": {
+                "evidence_classification": {"const": "synthetic_demo"},
+                "safe_for_global_consideration": {"const": false},
+                "recommended_product_action": {"const": "do_not_implement"},
+                "product_review_state": {"const": "not_requested"}
+              }
+            }
+          }
+        ]
       }
     },
     "files": {

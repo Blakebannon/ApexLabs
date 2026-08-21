@@ -21,6 +21,22 @@ from apex_labs.schemas.analysis_validation import (
     validate_analysis_definition,
     validate_analysis_run,
 )
+from apex_labs.schemas.evidence_validation import (
+    validate_evidence_set,
+    validate_evidence_set_definition,
+    validate_segment_definition,
+)
+from apex_labs.schemas.inference_validation import (
+    validate_inferential_analysis_definition,
+    validate_inferential_analysis_run,
+)
+from apex_labs.schemas.lifecycle_validation import (
+    hypothesis_hash,
+    transition_hash,
+    validate_finding_review_package,
+    validate_hypothesis,
+    validate_hypothesis_transition,
+)
 from apex_labs.schemas.apex_session_validation import (
     validate_apex_session_manifest,
     validate_collection_record,
@@ -31,8 +47,18 @@ from apex_labs.schemas.apex_session_validation import (
 )
 
 __all__ = [
+    "hypothesis_hash",
+    "transition_hash",
     "validate_analysis_definition",
     "validate_analysis_run",
+    "validate_evidence_set",
+    "validate_evidence_set_definition",
+    "validate_finding_review_package",
+    "validate_hypothesis",
+    "validate_hypothesis_transition",
+    "validate_inferential_analysis_definition",
+    "validate_inferential_analysis_run",
+    "validate_segment_definition",
     "validate_dataset_manifest",
     "validate_experiment",
     "validate_export_definition",

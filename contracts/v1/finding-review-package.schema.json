@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/finding-review-package.schema.json",
+  "title": "Apex Labs finding review package v1",
+  "description": "A deterministic evidence dossier assembled for human scientific review. It carries no authority to change Apex Sim Coach and never opens a production change by itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "package_id", "version", "created_at", "synthetic", "classification", "method_id", "package_sha256", "finding", "hypothesis", "protocol", "evidence", "analysis_definition", "analysis_run", "metric_definitions", "effect", "uncertainty", "practical_threshold", "statistical_evidence", "sufficiency", "attrition", "confounds", "sensitivity", "replication", "interpretation_ceiling", "limitations", "scientific_review", "product_review", "product_recommendation", "code_identity", "report_sha256"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.finding-review-package/v1"},
+    "package_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "synthetic": {"type": "boolean"},
+    "classification": {"const": "evidence_for_human_review_not_a_production_change"},
+    "method_id": {"const": "apex-labs.finding-review-package/1.0.0"},
+    "package_sha256": {"$ref": "#/$defs/sha256"},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["finding_id", "version", "finding_sha256", "status", "title", "research_question", "scope", "evidence_classification", "validation_id", "validation_version"],
+      "properties": {
+        "finding_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+        "finding_sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"enum": ["validated", "provisional", "inconclusive", "rejected"]},
+        "title": {"type": "string", "minLength": 1}, "research_question": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "evidence_classification": {"enum": ["controlled", "observational", "synthetic_demo"]},
+        "validation_id": {"$ref": "#/$defs/id"}, "validation_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "hypothesis": {
+      "type": "object", "additionalProperties": false,
+      "required": ["hypothesis_id", "version", "hypothesis_sha256", "state", "transition_count", "head_transition_sha256", "generation_source"],
+      "properties": {
+        "hypothesis_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+        "hypothesis_sha256": {"$ref": "#/$defs/sha256"},
+        "state": {"enum": ["generated", "analysis_ready", "tested", "replication_required", "supported_provisionally", "rejected", "inconclusive"]},
+        "transition_count": {"type": "integer", "minimum": 1},
+        "head_transition_sha256": {"$ref": "#/$defs/sha256"},
+        "generation_source": {"enum": ["deterministic_algorithm", "human", "llm"]}
+      }
+    },
+    "protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["freeze_id", "freeze_sha256", "protocol_id", "protocol_version", "protocol_sha256", "scientific_question"],
+      "properties": {
+        "freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"},
+        "protocol_id": {"$ref": "#/$defs/id"}, "protocol_version": {"type": "string", "minLength": 1},
+        "protocol_sha256": {"$ref": "#/$defs/sha256"}, "scientific_question": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_set_id", "version", "evidence_set_sha256", "definition_sha256", "segment_definition_id", "segment_definition_sha256", "datasets", "comparability_status", "comparability_violations", "counts", "experimental_unit", "resampling_unit"],
+      "properties": {
+        "evidence_set_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+        "evidence_set_sha256": {"$ref": "#/$defs/sha256"}, "definition_sha256": {"$ref": "#/$defs/sha256"},
+        "segment_definition_id": {"$ref": "#/$defs/id"}, "segment_definition_sha256": {"$ref": "#/$defs/sha256"},
+        "datasets": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["dataset_id", "fingerprint", "synthetic"], "properties": {"dataset_id": {"$ref": "#/$defs/id"}, "fingerprint": {"$ref": "#/$defs/sha256"}, "synthetic": {"type": "boolean"}}}},
+        "comparability_status": {"enum": ["adequate", "limited", "inadequate"]},
+        "comparability_violations": {"$ref": "#/$defs/strings"},
+        "counts": {"type": "object"},
+        "experimental_unit": {"type": "string", "minLength": 1},
+        "resampling_unit": {"type": "string", "minLength": 1}
+      }
+    },
+    "analysis_definition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["analysis_id", "version", "definition_sha256", "classification"],
+      "properties": {"analysis_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "definition_sha256": {"$ref": "#/$defs/sha256"}, "classification": {"enum": ["confirmatory", "exploratory"]}}
+    },
+    "analysis_run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "run_sha256", "analysis_state", "recomputed_and_verified", "scope"],
+      "properties": {"run_id": {"$ref": "#/$defs/id"}, "run_sha256": {"$ref": "#/$defs/sha256"}, "analysis_state": {"enum": ["computed", "inconclusive"]}, "recomputed_and_verified": {"type": "boolean"}, "scope": {"enum": ["primary", "holdout"]}}
+    },
+    "metric_definitions": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "additionalProperties": false, "required": ["metric_id", "version", "sha256"], "properties": {"metric_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}}
+    },
+    "effect": {"type": ["object", "null"]},
+    "uncertainty": {"type": "object"},
+    "practical_threshold": {"type": "object"},
+    "statistical_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["raw", "adjusted", "correction", "family_id", "interpretation"],
+      "properties": {
+        "raw": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "adjusted": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "correction": {"enum": ["holm_bonferroni", "benjamini_hochberg", "none"]},
+        "family_id": {"$ref": "#/$defs/id"},
+        "interpretation": {"type": "string", "minLength": 1}
+      }
+    },
+    "sufficiency": {"type": "object"},
+    "attrition": {"type": "array", "items": {"type": "object"}},
+    "confounds": {"type": "object"},
+    "sensitivity": {"type": "array", "items": {"type": "object"}},
+    "replication": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "required_scope", "achieved_scope", "holdout_available", "holdout_tested"],
+      "properties": {
+        "state": {"enum": ["not_required", "required_before_validation", "this_run_is_the_replication"]},
+        "required_scope": {"type": "string", "minLength": 1},
+        "achieved_scope": {"type": "string", "minLength": 1},
+        "holdout_available": {"type": "boolean"},
+        "holdout_tested": {"type": "boolean"}
+      }
+    },
+    "interpretation_ceiling": {"enum": ["descriptive", "associational", "intervention_associated", "causal_candidate"]},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "scientific_review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "gate_structural", "gate_reproducibility", "gate_scientific"],
+      "properties": {
+        "state": {"enum": ["unreviewed", "pending", "approved", "rejected"]},
+        "gate_structural": {"enum": ["passed", "failed"]},
+        "gate_reproducibility": {"enum": ["passed", "failed", "unresolved"]},
+        "gate_scientific": {"enum": ["passed", "failed", "unresolved"]}
+      }
+    },
+    "product_review": {"enum": ["not_requested", "pending", "approved", "rejected"]},
+    "product_recommendation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "rationale", "automatic_production_change"],
+      "properties": {
+        "state": {"enum": ["none", "investigate", "replication_required", "engineering_review_candidate", "do_not_implement"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "automatic_production_change": {"const": false}
+      }
+    },
+    "code_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"synthetic": {"const": true}}, "required": ["synthetic"]},
+      "then": {
+        "properties": {
+          "product_review": {"const": "not_requested"},
+          "evidence": {"properties": {"datasets": {"items": {"properties": {"synthetic": {"const": true}}}}}},
+          "product_recommendation": {
+            "properties": {"state": {"enum": ["none", "do_not_implement"]}}
+          },
+          "finding": {"properties": {"status": {"enum": ["inconclusive", "rejected"]}}}
+        }
+      },
+      "else": {
+        "properties": {
+          "evidence": {"properties": {"datasets": {"items": {"properties": {"synthetic": {"const": false}}}}}}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  }
+}

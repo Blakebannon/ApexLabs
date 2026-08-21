@@ -164,6 +164,14 @@ def generate_product_export(definition_path: Path, output_dir: Path, root: Path)
                 f"Algorithm {algorithm['algorithm_id']} references findings absent from export: {sorted(missing)}"
             )
         references = [findings_by_id[finding_id] for finding_id in algorithm["finding_references"]]
+        if any(finding["synthetic"] for finding in references) and (
+            algorithm["recommendation_status"] != "not_recommended"
+            or algorithm["safe_for_global_consideration"]
+        ):
+            raise ExportError(
+                f"Algorithm {algorithm['algorithm_id']} is transitively derived from synthetic findings "
+                "and must remain not_recommended and globally unsafe"
+            )
         if algorithm["recommendation_status"] == "recommended" and any(
             finding["status"] != "validated" for finding in references
         ):

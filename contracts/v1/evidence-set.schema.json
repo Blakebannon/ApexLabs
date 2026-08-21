@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/evidence-set.schema.json",
+  "title": "Apex Labs comparable evidence set v1",
+  "description": "A built, deterministic, fully attributed evidence set. It is comparable evidence, never a scientific claim, a status, or a result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_set_id", "version", "built_at", "synthetic", "classification", "method_id", "evidence_set_sha256", "definition", "definition_sha256", "segment_definition", "segment_definition_sha256", "protocol", "datasets", "comparability", "units_declaration", "attrition", "post_hoc_exclusions_present", "counts", "units", "pairs", "unpaired_unit_ids", "holdout", "confounds", "structural_interpretation_ceiling", "code_identity", "integrity", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.evidence-set/v1"},
+    "evidence_set_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "built_at": {"type": "string", "format": "date-time"},
+    "synthetic": {"type": "boolean"},
+    "classification": {"const": "comparable_evidence_not_scientific_evidence"},
+    "method_id": {"const": "apex-labs.comparable-evidence/1.0.0"},
+    "evidence_set_sha256": {"$ref": "#/$defs/sha256"},
+    "definition": {"$ref": "evidence-set-definition.schema.json"},
+    "definition_sha256": {"$ref": "#/$defs/sha256"},
+    "segment_definition": {"$ref": "segment-definition.schema.json"},
+    "segment_definition_sha256": {"$ref": "#/$defs/sha256"},
+    "protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["freeze_id", "freeze_sha256", "protocol_id", "protocol_version", "protocol_sha256", "randomization_strategy", "collection_classification", "minimum_sample_requirements_state"],
+      "properties": {
+        "freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"},
+        "protocol_id": {"$ref": "#/$defs/id"}, "protocol_version": {"type": "string", "minLength": 1},
+        "protocol_sha256": {"$ref": "#/$defs/sha256"},
+        "randomization_strategy": {"enum": ["randomized", "counterbalanced", "fixed", "not_applicable"]},
+        "collection_classification": {"enum": ["observational", "experimental"]},
+        "minimum_sample_requirements_state": {"enum": ["to_be_determined", "declared"]}
+      }
+    },
+    "datasets": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["dataset_id", "fingerprint", "normalized_manifest_sha256", "records_sha256", "synthetic", "session_id", "participant", "simulator", "car", "track", "layout", "condition_id", "block_id", "arm", "coaching_state", "configuration_identity", "product_build", "normalization_contract", "records_considered"],
+        "properties": {
+          "dataset_id": {"$ref": "#/$defs/id"}, "fingerprint": {"$ref": "#/$defs/sha256"},
+          "normalized_manifest_sha256": {"$ref": "#/$defs/sha256"}, "records_sha256": {"$ref": "#/$defs/sha256"},
+          "synthetic": {"type": "boolean"}, "session_id": {"$ref": "#/$defs/id"},
+          "participant": {"type": "string", "minLength": 1}, "simulator": {"type": "string", "minLength": 1},
+          "car": {"type": "string", "minLength": 1}, "track": {"type": "string", "minLength": 1},
+          "layout": {"type": "string", "minLength": 1},
+          "condition_id": {"$ref": "#/$defs/id"}, "block_id": {"$ref": "#/$defs/id"},
+          "arm": {"enum": ["baseline", "intervention"]},
+          "coaching_state": {"enum": ["enabled", "disabled", "mixed", "unknown"]},
+          "configuration_identity": {"type": ["string", "null"], "minLength": 1},
+          "product_build": {"type": ["string", "null"], "minLength": 1},
+          "normalization_contract": {"type": "string", "minLength": 1},
+          "records_considered": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "comparability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "must_match_fields", "observed_values", "permitted_variation", "violations", "limitations", "identity_limitations", "covariate_fields"],
+      "properties": {
+        "status": {"enum": ["adequate", "limited", "inadequate"]},
+        "must_match_fields": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "observed_values": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
+        "permitted_variation": {"type": "array", "items": {"type": "object"}},
+        "violations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "identity_limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "covariate_fields": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "units_declaration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["experimental_unit", "resampling_unit", "factor_varies_at", "pseudoreplication_guard"],
+      "properties": {
+        "experimental_unit": {"$ref": "#/$defs/unit_level"},
+        "resampling_unit": {"$ref": "#/$defs/unit_level"},
+        "factor_varies_at": {"$ref": "#/$defs/unit_level"},
+        "pseudoreplication_guard": {"const": "resampling_unit_at_or_above_factor_variation_level"}
+      }
+    },
+    "attrition": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["level", "stage", "rule_id", "disposition", "considered", "excluded", "remaining", "detail"],
+        "properties": {
+          "level": {"enum": ["record", "unit", "pair"]},
+          "stage": {"type": "string", "minLength": 1},
+          "rule_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+          "disposition": {"enum": ["counted", "excluded_by_preregistered_rule", "unavailable", "structurally_invalid", "accepted_with_limitations", "post_hoc_exclusion"]},
+          "considered": {"type": "integer", "minimum": 0},
+          "excluded": {"type": "integer", "minimum": 0},
+          "remaining": {"type": "integer", "minimum": 0},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "post_hoc_exclusions_present": {"type": "boolean"},
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_records", "included_units", "baseline_units", "intervention_units", "pairs", "unpaired_units", "holdout_units", "participants", "sessions", "blocks", "resampling_clusters"],
+      "properties": {
+        "source_records": {"$ref": "#/$defs/count"}, "included_units": {"$ref": "#/$defs/count"},
+        "baseline_units": {"$ref": "#/$defs/count"}, "intervention_units": {"$ref": "#/$defs/count"},
+        "pairs": {"$ref": "#/$defs/count"}, "unpaired_units": {"$ref": "#/$defs/count"},
+        "holdout_units": {"$ref": "#/$defs/count"}, "participants": {"$ref": "#/$defs/count"},
+        "sessions": {"$ref": "#/$defs/count"}, "blocks": {"$ref": "#/$defs/count"},
+        "resampling_clusters": {"$ref": "#/$defs/count"}
+      }
+    },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["unit_id", "unit_level", "dataset_id", "session_id", "block_id", "condition_id", "arm", "pair_key", "order_index", "value", "unit_of_measure", "aggregation_method", "source_records_considered", "source_records_used", "source_records_missing", "within_unit_dispersion", "provenance", "covariates", "holdout"],
+        "properties": {
+          "unit_id": {"$ref": "#/$defs/id"},
+          "unit_level": {"$ref": "#/$defs/unit_level"},
+          "dataset_id": {"$ref": "#/$defs/id"}, "session_id": {"$ref": "#/$defs/id"},
+          "block_id": {"$ref": "#/$defs/id"}, "condition_id": {"$ref": "#/$defs/id"},
+          "arm": {"enum": ["baseline", "intervention"]},
+          "pair_key": {"type": "string", "minLength": 1},
+          "order_index": {"type": "integer", "minimum": 0},
+          "value": {"type": "number"},
+          "unit_of_measure": {"type": "string", "minLength": 1},
+          "aggregation_method": {"enum": ["median", "arithmetic_mean", "single_record"]},
+          "source_records_considered": {"$ref": "#/$defs/count"},
+          "source_records_used": {"type": "integer", "minimum": 1},
+          "source_records_missing": {"$ref": "#/$defs/count"},
+          "within_unit_dispersion": {"type": ["number", "null"], "minimum": 0},
+          "provenance": {"enum": ["measured", "derived", "estimated"]},
+          "covariates": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}},
+          "holdout": {"type": "boolean"}
+        }
+      }
+    },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["pair_id", "pair_key", "cluster_id", "baseline_unit_id", "intervention_unit_id", "holdout"],
+        "properties": {
+          "pair_id": {"$ref": "#/$defs/id"}, "pair_key": {"type": "string", "minLength": 1},
+          "cluster_id": {"type": "string", "minLength": 1},
+          "baseline_unit_id": {"$ref": "#/$defs/id"}, "intervention_unit_id": {"$ref": "#/$defs/id"},
+          "holdout": {"type": "boolean"}
+        }
+      }
+    },
+    "unpaired_unit_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+    "holdout": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "reserved", "replication_scope", "reserved_unit_ids", "primary_scope_excludes_holdout"],
+      "properties": {
+        "policy": {"enum": ["none", "reserved_blocks", "reserved_sessions"]},
+        "reserved": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+        "replication_scope": {"type": "string", "minLength": 1},
+        "reserved_unit_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+        "primary_scope_excludes_holdout": {"const": true}
+      }
+    },
+    "confounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["controlled", "measured_covariates", "unavailable"],
+      "properties": {
+        "controlled": {"$ref": "#/$defs/strings"},
+        "measured_covariates": {"$ref": "#/$defs/strings"},
+        "unavailable": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "structural_interpretation_ceiling": {"enum": ["descriptive", "associational", "intervention_associated", "causal_candidate"]},
+    "code_identity": {"$ref": "#/$defs/code_identity"},
+    "integrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["datasets_verified", "records_streamed", "segment_applicability_verified", "deterministic_ordering"],
+      "properties": {
+        "datasets_verified": {"const": true},
+        "records_streamed": {"type": "integer", "minimum": 0},
+        "segment_applicability_verified": {"const": true},
+        "deterministic_ordering": {"const": "unit_id_lexicographic"}
+      }
+    },
+    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "count": {"type": "integer", "minimum": 0},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "unit_level": {"enum": ["telemetry_frame", "event", "segment_opportunity", "lap", "stint", "block", "session", "participant"]},
+    "code_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  }
+}

@@ -13,3 +13,21 @@ non-scientific product-annotation wrapper, and the proposed future
 `apex-research-recorder-profile-v1.json` pins the exact M54R recorder channel,
 file, null, coaching-evidence, configuration-hash, and completion conventions.
 It tightens conformance without invalidating historical base-v1 manifests.
+
+Scientific contracts added for comparable evidence and inference are
+`segment-definition`, `evidence-set-definition`, `evidence-set`,
+`inferential-analysis-definition`, `inferential-analysis-run`, `hypothesis`,
+`hypothesis-transition`, and `finding-review-package`. Inference is a separately
+named contract rather than a second version of `analysis-definition`, which
+remains descriptive-observational only, so that a descriptive definition can
+never be quietly promoted into evidence for a hypothesis test and every existing
+v1 descriptive artifact stays valid unchanged.
+
+Setup/configuration and product-build identities are protected comparability
+fields. The initial corpus requires them to match. The experiment contract's
+optional structured `identity_variation_plans` is the only way a future frozen
+protocol can authorize either field to vary; evidence definitions must bind the
+plan id and cannot use free text as a waiver. Synthetic conditions in the
+finding, validation, review-package, and product-export schemas prohibit product
+review and every recommendation state except `none` or `do_not_implement` as
+applicable. Runtime cross-file gates preserve that restriction transitively.

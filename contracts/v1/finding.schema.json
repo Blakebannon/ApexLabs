@@ -101,6 +101,26 @@
     "apex_labs_source_commit": {"$ref": "#/$defs/commit"},
     "synthetic": {"type": "boolean"}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"synthetic": {"const": true}}, "required": ["synthetic"]},
+      "then": {
+        "properties": {
+          "evidence_classification": {"const": "synthetic_demo"},
+          "status": {"enum": ["inconclusive", "rejected"]},
+          "dataset_references": {"items": {"properties": {"synthetic": {"const": true}}}},
+          "product_review_state": {"const": "not_requested"},
+          "recommended_product_action": {"const": "do_not_implement"},
+          "safe_for_global_consideration": {"const": false}
+        }
+      },
+      "else": {
+        "properties": {
+          "dataset_references": {"items": {"properties": {"synthetic": {"const": false}}}}
+        }
+      }
+    }
+  ],
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

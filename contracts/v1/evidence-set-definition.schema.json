@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/evidence-set-definition.schema.json",
+  "title": "Apex Labs comparable evidence-set definition v1",
+  "description": "Declares, before construction, which evidence may be combined, at which experimental and resampling unit, under which inclusion and exclusion rules. Comparability is explicit; it is never inferred from convenient records.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_set_id", "version", "title", "purpose", "synthetic", "protocol", "segment", "comparability", "experimental_unit", "resampling_unit", "factor", "unit_metric", "aggregation", "pairing", "inclusion_rules", "exclusion_rules", "confounds", "holdout", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.evidence-set-definition/v1"},
+    "evidence_set_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "synthetic": {"type": "boolean"},
+    "protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["freeze_id", "freeze_sha256", "experiment_id", "experiment_version"],
+      "properties": {
+        "freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"},
+        "experiment_id": {"$ref": "#/$defs/id"}, "experiment_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "segment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["segment_definition_id", "version", "sha256"],
+      "properties": {"segment_definition_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "comparability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["must_match", "permitted_variation"],
+      "properties": {
+        "must_match": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/comparability_field"}, "uniqueItems": true},
+        "permitted_variation": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["field", "justification", "retained_as"],
+            "properties": {
+              "field": {"$ref": "#/$defs/comparability_field"},
+              "justification": {"type": "string", "minLength": 1},
+              "retained_as": {"enum": ["covariate", "limitation"]},
+              "protocol_variation_plan_id": {"$ref": "#/$defs/id"}
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"field": {"enum": ["configuration_identity", "product_build"]}}, "required": ["field"]},
+                "then": {"required": ["protocol_variation_plan_id"]},
+                "else": {"not": {"required": ["protocol_variation_plan_id"]}}
+              }
+            ]
+          }
+        }
+      }
+    },
+    "experimental_unit": {"$ref": "#/$defs/unit_level"},
+    "resampling_unit": {"$ref": "#/$defs/unit_level"},
+    "factor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["factor_id", "varies_at", "arms"],
+      "properties": {
+        "factor_id": {"$ref": "#/$defs/id"},
+        "varies_at": {"$ref": "#/$defs/unit_level"},
+        "arms": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["arm", "condition_ids", "coaching_state", "protocol_condition"],
+            "properties": {
+              "arm": {"enum": ["baseline", "intervention"]},
+              "condition_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+              "coaching_state": {"enum": ["enabled", "disabled", "mixed", "unknown"]},
+              "protocol_condition": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "unit_metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metric_id", "version", "sha256", "directionality", "unit", "extractor"],
+      "properties": {
+        "metric_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "directionality": {"enum": ["higher_is_better", "lower_is_better", "target_range", "descriptive_only"]},
+        "unit": {"type": "string", "minLength": 1},
+        "extractor": {
+          "oneOf": [
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["kind", "record_type", "concept"],
+              "properties": {"kind": {"const": "record_field"}, "record_type": {"const": "lap"}, "concept": {"type": "string", "minLength": 1}}
+            },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["kind", "record_type", "concept", "method"],
+              "properties": {"kind": {"const": "segment_aggregate"}, "record_type": {"enum": ["telemetry_sample", "distance_bin"]}, "concept": {"type": "string", "minLength": 1}, "method": {"enum": ["minimum", "maximum", "arithmetic_mean", "median"]}}
+            },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["kind", "record_type", "concept", "threshold", "direction"],
+              "properties": {"kind": {"const": "segment_threshold_distance"}, "record_type": {"enum": ["telemetry_sample", "distance_bin"]}, "concept": {"type": "string", "minLength": 1}, "threshold": {"type": "number"}, "direction": {"enum": ["first_at_or_above", "last_at_or_above"]}}
+            }
+          ]
+        }
+      }
+    },
+    "aggregation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "minimum_source_records", "dispersion"],
+      "properties": {
+        "method": {"enum": ["median", "arithmetic_mean", "single_record"]},
+        "minimum_source_records": {"type": "integer", "minimum": 1},
+        "dispersion": {"enum": ["median_absolute_deviation", "not_applicable"]}
+      }
+    },
+    "pairing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "key", "unpaired_justification"],
+      "properties": {
+        "kind": {"enum": ["paired", "unpaired"]},
+        "key": {"type": "array", "minItems": 1, "items": {"enum": ["participant", "simulator", "car", "track", "layout", "session_id", "block_id", "order_index"]}, "uniqueItems": true},
+        "unpaired_justification": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "inclusion_rules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/rule"}},
+    "exclusion_rules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/rule"}},
+    "confounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["controlled", "measured_covariates", "unavailable"],
+      "properties": {
+        "controlled": {"$ref": "#/$defs/strings"},
+        "measured_covariates": {"$ref": "#/$defs/strings"},
+        "unavailable": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "holdout": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "reserved", "replication_scope"],
+      "properties": {
+        "policy": {"enum": ["none", "reserved_blocks", "reserved_sessions"]},
+        "reserved": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+        "replication_scope": {"enum": ["not_applicable", "same_block", "same_session", "different_session", "same_car_track", "different_track", "different_car", "different_participant"]}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "allOf": [
+    {"if": {"properties": {"pairing": {"properties": {"kind": {"const": "unpaired"}}}}}, "then": {"properties": {"pairing": {"properties": {"unpaired_justification": {"type": "string"}}}}}},
+    {"if": {"properties": {"pairing": {"properties": {"kind": {"const": "paired"}}}}}, "then": {"properties": {"pairing": {"properties": {"unpaired_justification": {"type": "null"}}}}}},
+    {"if": {"properties": {"holdout": {"properties": {"policy": {"const": "none"}}}}}, "then": {"properties": {"holdout": {"properties": {"reserved": {"maxItems": 0}}}}}},
+    {"if": {"properties": {"holdout": {"properties": {"policy": {"enum": ["reserved_blocks", "reserved_sessions"]}}}}}, "then": {"properties": {"holdout": {"properties": {"reserved": {"minItems": 1}}}}}}
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "unit_level": {"enum": ["telemetry_frame", "event", "segment_opportunity", "lap", "stint", "block", "session", "participant"]},
+    "comparability_field": {"enum": ["participant", "simulator", "car", "track", "layout", "protocol_version", "condition_semantics", "coaching_state", "configuration_identity", "segment_definition", "metric_definition", "normalization_contract", "product_build"]},
+    "rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule_id", "stage", "preregistered", "description"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/id"},
+        "stage": {"enum": ["source_records", "outside_segment", "missing_required_channel", "invalid_lap", "incident_affected", "pit_replay_discontinuity", "protocol_mismatch", "condition_mismatch", "insufficient_coverage", "duplicate_evidence", "out_of_order_or_corrupt", "confound_based", "holdout_reserved"]},
+        "preregistered": {"type": "boolean"},
+        "description": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

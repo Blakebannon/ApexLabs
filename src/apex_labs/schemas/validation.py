@@ -699,7 +699,7 @@ def validate_experiment(value: Any) -> dict[str, Any]:
         "randomization_counterbalancing", "analysis_methods", "predeclared_success_criteria",
         "safety_constraints", "notes", "created_at", "apex_labs_source_commit", "synthetic",
     }
-    _keys(obj, "$", required=required)
+    _keys(obj, "$", required=required, optional={"identity_variation_plans"})
     _id(obj["experiment_id"], "$.experiment_id")
     _string(obj["version"], "$.version")
     status = _enum(obj["status"], {"draft", "preregistered", "active", "completed", "aborted"}, "$.status")
@@ -717,6 +717,44 @@ def validate_experiment(value: Any) -> dict[str, Any]:
         _metric(metric, f"$.secondary_metrics[{index}]")
     for field in ("controlled_variables", "comparability_requirements", "exclusion_criteria", "intervention_conditions", "analysis_methods", "safety_constraints", "notes"):
         _strings(obj[field], f"$.{field}", nonempty=field in {"comparability_requirements", "exclusion_criteria", "analysis_methods", "safety_constraints"})
+    plans = _list(obj.get("identity_variation_plans", []), "$.identity_variation_plans")
+    seen_plans: set[str] = set()
+    seen_fields: set[str] = set()
+    for index, item in enumerate(plans):
+        path = f"$.identity_variation_plans[{index}]"
+        plan = _object(item, path)
+        _keys(
+            plan,
+            path,
+            required={
+                "plan_id", "field", "varying_factor", "rationale",
+                "assignment_or_balancing", "analysis_handling",
+                "confounding_implications", "interpretation_ceiling",
+            },
+        )
+        plan_id = _id(plan["plan_id"], f"{path}.plan_id")
+        field = _enum(
+            plan["field"],
+            {"configuration_identity", "product_build"},
+            f"{path}.field",
+        )
+        if plan_id in seen_plans:
+            _fail(f"{path}.plan_id", "must be unique within the protocol")
+        if field in seen_fields:
+            _fail(f"{path}.field", "may have only one variation plan per protected identity")
+        seen_plans.add(plan_id)
+        seen_fields.add(field)
+        _id(plan["varying_factor"], f"{path}.varying_factor")
+        for name in (
+            "rationale", "assignment_or_balancing", "analysis_handling",
+            "confounding_implications",
+        ):
+            _string(plan[name], f"{path}.{name}")
+        _enum(
+            plan["interpretation_ceiling"],
+            {"descriptive", "associational", "intervention_associated"},
+            f"{path}.interpretation_ceiling",
+        )
     minimum = _object(obj["minimum_sample_requirements"], "$.minimum_sample_requirements")
     _keys(minimum, "$.minimum_sample_requirements", required={"state", "requirements", "rationale"})
     sample_state = _enum(minimum["state"], {"to_be_determined", "declared"}, "$.minimum_sample_requirements.state")
@@ -787,6 +825,11 @@ def validate_finding(value: Any) -> dict[str, Any]:
         _fail("$.status", "synthetic evidence may only produce inconclusive or rejected demo findings")
     if synthetic and action != "do_not_implement":
         _fail("$.recommended_product_action", "synthetic findings must be do_not_implement")
+    if synthetic and product_review != "not_requested":
+        _fail(
+            "$.product_review_state",
+            "synthetic findings cannot enter product review; state must remain not_requested",
+        )
     if safe_global and (status != "validated" or scope not in {"algorithmic", "population_supported"}):
         _fail("$.safe_for_global_consideration", "requires validated algorithmic or population_supported scope")
     if scope in _LIMITED_SCOPES and safe_global:
@@ -991,11 +1034,21 @@ def validate_product_export_manifest(value: Any) -> dict[str, Any]:
         _enum(item["status"], _STATUSES, f"{path}.status")
         _enum(item["scope"], _SCOPES, f"{path}.scope")
         _enum(item["evidence_classification"], {"controlled", "observational", "synthetic_demo"}, f"{path}.evidence_classification")
-        _boolean(item["synthetic"], f"{path}.synthetic")
+        synthetic = _boolean(item["synthetic"], f"{path}.synthetic")
         _enum(item["scientific_review_state"], {"unresolved", "pending", "approved", "rejected"}, f"{path}.scientific_review_state")
-        _enum(item["product_review_state"], {"not_requested", "pending", "approved", "rejected"}, f"{path}.product_review_state")
-        _boolean(item["safe_for_global_consideration"], f"{path}.safe_for_global_consideration")
-        _enum(item["recommended_product_action"], {"consider", "personalize_only", "research_only", "do_not_implement"}, f"{path}.recommended_product_action")
+        product_review_state = _enum(item["product_review_state"], {"not_requested", "pending", "approved", "rejected"}, f"{path}.product_review_state")
+        safe_global = _boolean(item["safe_for_global_consideration"], f"{path}.safe_for_global_consideration")
+        product_action = _enum(item["recommended_product_action"], {"consider", "personalize_only", "research_only", "do_not_implement"}, f"{path}.recommended_product_action")
+        if synthetic and (
+            item["evidence_classification"] != "synthetic_demo"
+            or product_review_state != "not_requested"
+            or safe_global
+            or product_action != "do_not_implement"
+        ):
+            _fail(
+                path,
+                "synthetic export entries must remain synthetic_demo, not_requested, globally unsafe, and do_not_implement",
+            )
         _strings(item["implementation_caveats"], f"{path}.implementation_caveats", nonempty=True)
         _string(item["path"], f"{path}.path")
         _sha(item["sha256"], f"{path}.sha256")

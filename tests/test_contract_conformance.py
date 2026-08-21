@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from _support import (
+    BUILT_AT,
     DATASET_MANIFEST,
     DEMO_PROTOCOL,
     EXPORT_DEFINITION,
@@ -21,6 +22,14 @@ from apex_labs.errors import ContractValidationError, UnsupportedVersionError
 from apex_labs.io import parse_json_bytes, read_json
 from apex_labs.schemas import (
     validate_analysis_definition,
+    validate_evidence_set,
+    validate_evidence_set_definition,
+    validate_finding_review_package,
+    validate_hypothesis,
+    validate_hypothesis_transition,
+    validate_inferential_analysis_definition,
+    validate_inferential_analysis_run,
+    validate_segment_definition,
     validate_dataset_manifest,
     validate_experiment,
     validate_export_definition,
@@ -30,6 +39,7 @@ from apex_labs.schemas import (
     validate_apex_session_manifest,
     validate_collection_record,
     validate_product_annotations,
+    validate_product_export_manifest,
     validate_research_export_manifest,
     validate_research_recorder_manifest,
     validate_adapter_conformance,
@@ -57,7 +67,9 @@ def schema_registry() -> tuple[Registry, dict[str, dict]]:
     return registry, schemas
 
 
-class ContractConformanceTests(unittest.TestCase):
+class SchemaConformanceMixin(unittest.TestCase):
+    """Shared assertions; carries no tests so subclasses do not re-run them."""
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.registry, cls.schemas = schema_registry()
@@ -74,6 +86,8 @@ class ContractConformanceTests(unittest.TestCase):
         with self.assertRaises(ContractValidationError):
             validator(value)
 
+
+class ContractConformanceTests(SchemaConformanceMixin):
     def test_published_schemas_are_unique_and_runtime_artifacts_conform(self) -> None:
         ids = [schema["$id"] for schema in self.schemas.values()]
         self.assertEqual(len(ids), len(set(ids)))
@@ -213,8 +227,51 @@ class ContractConformanceTests(unittest.TestCase):
         self.assert_both_reject("dataset-manifest", validate_dataset_manifest, dataset)
 
         finding = read_json(FINDING)
+        relabeled_finding = copy.deepcopy(finding)
+        relabeled_finding["synthetic"] = False
+        self.assert_both_reject("finding", validate_finding, relabeled_finding)
         finding["scientific_review_state"] = "self_approved"
         self.assert_both_reject("finding", validate_finding, finding)
+
+    def test_synthetic_product_states_fail_both_schema_and_runtime_paths(self) -> None:
+        finding = read_json(FINDING)
+        for field, value in (
+            ("product_review_state", "pending"),
+            ("recommended_product_action", "research_only"),
+        ):
+            with self.subTest(artifact="finding", field=field):
+                changed = copy.deepcopy(finding)
+                changed[field] = value
+                self.assert_both_reject("finding", validate_finding, changed)
+
+        validation = read_json(VALIDATION)
+        relabeled_validation = copy.deepcopy(validation)
+        relabeled_validation["synthetic"] = False
+        self.assert_both_reject(
+            "finding-validation", validate_finding_validation, relabeled_validation
+        )
+        for state in ("pending", "approved", "rejected"):
+            with self.subTest(artifact="finding-validation", state=state):
+                changed = copy.deepcopy(validation)
+                changed["product_review_state"] = state
+                self.assert_both_reject(
+                    "finding-validation", validate_finding_validation, changed
+                )
+
+        manifest = read_json(
+            ROOT / "product-exports" / "synthetic-mechanics-demo-v1" / "manifest.json"
+        )
+        for field, value in (
+            ("product_review_state", "pending"),
+            ("recommended_product_action", "research_only"),
+            ("safe_for_global_consideration", True),
+        ):
+            with self.subTest(artifact="product-export-manifest", field=field):
+                changed = copy.deepcopy(manifest)
+                changed["findings"][0][field] = value
+                self.assert_both_reject(
+                    "product-export-manifest", validate_product_export_manifest, changed
+                )
 
     def test_duplicate_keys_and_nonfinite_json_are_refused_before_validation(self) -> None:
         with self.assertRaises(ContractValidationError):
@@ -243,6 +300,207 @@ class ContractConformanceTests(unittest.TestCase):
             invalid.write_text('{"broken":', encoding="utf-8")
             with self.assertRaises(ContractValidationError):
                 read_json(invalid)
+
+
+class ScientificContractConformanceTests(SchemaConformanceMixin):
+    """The L4.2-L5 contracts must be enforced by both the schema and the runtime."""
+
+    def test_checked_in_scientific_artifacts_conform_to_both_paths(self) -> None:
+        segments = ROOT / "research" / "segments"
+        evidence_sets = ROOT / "research" / "evidence-sets"
+        analyses = ROOT / "research" / "analyses"
+        frozen = ROOT / "research" / "campaigns" / "frozen"
+        cases = [
+            ("segment-definition", validate_segment_definition, segments / "synthetic-corner-a.json"),
+            ("segment-definition", validate_segment_definition, segments / "synthetic-corner-4-multi-layout.json"),
+            (
+                "evidence-set-definition",
+                validate_evidence_set_definition,
+                evidence_sets / "synthetic-paired-corner-speed.json",
+            ),
+            (
+                "evidence-set-definition",
+                validate_evidence_set_definition,
+                evidence_sets / "synthetic-unpaired-delivered-cue.json",
+            ),
+            (
+                "inferential-analysis-definition",
+                validate_inferential_analysis_definition,
+                analyses / "synthetic-paired-corner-speed-confirmatory.json",
+            ),
+            (
+                "inferential-analysis-definition",
+                validate_inferential_analysis_definition,
+                analyses / "synthetic-exploratory-subgroup-search.json",
+            ),
+            (
+                "protocol-freeze",
+                validate_protocol_freeze,
+                frozen / "synthetic-inference-controlled.freeze.json",
+            ),
+        ]
+        for kind, validator, artifact_path in cases:
+            with self.subTest(kind=kind, artifact=artifact_path.name):
+                value = read_json(artifact_path)
+                self.assert_schema_valid(kind, value)
+                validator(value)
+
+    def test_generated_scientific_artifacts_conform_to_both_paths(self) -> None:
+        from _support import prepared_campaign, prepared_run
+        from apex_labs.findings.review_package import build_review_package
+        from apex_labs.hypotheses import (
+            bindings_from_run,
+            plan_bindings,
+            record_transition,
+            register_hypothesis,
+            replay,
+        )
+        from apex_labs.science_demo import _finding, _hypothesis, _validation
+
+        with tempfile.TemporaryDirectory(prefix="apex-labs-conformance-") as directory:
+            base = Path(directory)
+            prepared = prepared_campaign(base / "demo")
+            executed = prepared_run(prepared, base, run_id="conformance-run")
+            evidence = read_json(prepared["evidence_dir"] / "evidence-set.json")
+            run = read_json(executed["run_dir"] / "inferential-analysis-run.json")
+            self.assert_schema_valid("evidence-set", evidence)
+            validate_evidence_set(evidence)
+            self.assert_schema_valid("inferential-analysis-run", run)
+            validate_inferential_analysis_run(run)
+
+            identity = evidence["code_identity"]
+            registry = base / "registry"
+            register_hypothesis(
+                _hypothesis(BUILT_AT), registry, recorded_at=BUILT_AT, code_identity=identity
+            )
+            record_transition(
+                registry, "synthetic-corner-speed-demo", to_state="analysis_ready",
+                rationale="Frozen before any run existed.", recorded_at=BUILT_AT,
+                bindings=plan_bindings(evidence, run["definition"], run["definition_sha256"]),
+                code_identity=identity,
+            )
+            record_transition(
+                registry, "synthetic-corner-speed-demo", to_state="tested",
+                rationale="Ran once and independently recomputed.", recorded_at=BUILT_AT,
+                bindings=bindings_from_run(evidence, run, verified=True),
+                reviewer={"state": "pending", "reviewer_id": None, "reviewed_at": None, "notes": []},
+                code_identity=identity,
+            )
+            history = replay(registry, "synthetic-corner-speed-demo")
+            self.assert_schema_valid("hypothesis", history["hypothesis"])
+            validate_hypothesis(history["hypothesis"])
+            for transition in history["transitions"]:
+                self.assert_schema_valid("hypothesis-transition", transition)
+                validate_hypothesis_transition(transition)
+
+            manifest = read_json(prepared["dataset_dirs"][0] / "manifest.json")
+            finding = _finding(evidence, run, identity, manifest)
+            artifact = _validation(finding, evidence, run, identity)
+            self.assert_schema_valid("finding", finding)
+            self.assert_schema_valid("finding-validation", artifact)
+            package = build_review_package(
+                finding, artifact, prepared["evidence_dir"], executed["run_dir"], history,
+                [prepared["paths"]["metric"]], base / "package",
+                package_id="conformance-package", created_at=BUILT_AT,
+                recomputed_and_verified=True, code_identity=identity,
+            )
+            self.assert_schema_valid("finding-review-package", package)
+            validate_finding_review_package(package)
+            relabeled_package = copy.deepcopy(package)
+            relabeled_package["synthetic"] = False
+            self.assert_both_reject(
+                "finding-review-package",
+                validate_finding_review_package,
+                relabeled_package,
+            )
+            for state in (
+                "investigate",
+                "replication_required",
+                "engineering_review_candidate",
+            ):
+                with self.subTest(artifact="finding-review-package", state=state):
+                    changed = copy.deepcopy(package)
+                    changed["product_recommendation"]["state"] = state
+                    self.assert_both_reject(
+                        "finding-review-package",
+                        validate_finding_review_package,
+                        changed,
+                    )
+
+    def test_required_unknown_and_enum_violations_fail_both_paths(self) -> None:
+        cases = [
+            (
+                "segment-definition",
+                validate_segment_definition,
+                ROOT / "research" / "segments" / "synthetic-corner-a.json",
+                "identity_confidence",
+                "probably",
+            ),
+            (
+                "evidence-set-definition",
+                validate_evidence_set_definition,
+                ROOT / "research" / "evidence-sets" / "synthetic-paired-corner-speed.json",
+                "experimental_unit",
+                "telemetry_burst",
+            ),
+            (
+                "inferential-analysis-definition",
+                validate_inferential_analysis_definition,
+                ROOT / "research" / "analyses" / "synthetic-paired-corner-speed-confirmatory.json",
+                "classification",
+                "probably_true",
+            ),
+        ]
+        for kind, validator, artifact_path, field, bad_value in cases:
+            base = read_json(artifact_path)
+            with self.subTest(kind=kind, rule="missing"):
+                missing = copy.deepcopy(base)
+                del missing[field]
+                self.assert_both_reject(kind, validator, missing)
+            with self.subTest(kind=kind, rule="unknown"):
+                unknown = copy.deepcopy(base)
+                unknown["unexpected"] = True
+                self.assert_both_reject(kind, validator, unknown)
+            with self.subTest(kind=kind, rule="enum"):
+                enum = copy.deepcopy(base)
+                enum[field] = bad_value
+                self.assert_both_reject(kind, validator, enum)
+            with self.subTest(kind=kind, rule="version"):
+                version = copy.deepcopy(base)
+                version["schema_version"] = base["schema_version"].replace("/v1", "/v2")
+                with self.assertRaises(ValidationError):
+                    self.assert_schema_valid(kind, version)
+                with self.assertRaises(UnsupportedVersionError):
+                    validator(version)
+
+    def test_the_descriptive_v1_contract_is_unchanged_by_this_milestone(self) -> None:
+        # Backward compatibility: the L4.1 descriptive definition and its schema
+        # still accept exactly what they accepted before inference existed, and
+        # still refuse anything inferential.
+        descriptive = read_json(ROOT / "research" / "analyses" / "synthetic-demo-descriptive.json")
+        self.assert_schema_valid("analysis-definition", descriptive)
+        validate_analysis_definition(descriptive)
+        self.assertEqual(descriptive["classification"], "descriptive_observational")
+        inferential = copy.deepcopy(descriptive)
+        inferential["classification"] = "confirmatory"
+        self.assert_both_reject("analysis-definition", validate_analysis_definition, inferential)
+
+    def test_every_published_schema_has_a_runtime_validator(self) -> None:
+        from apex_labs.cli import ALL_VALIDATORS
+
+        # A few historical CLI keys are shorter than their published schema name.
+        aliases = {
+            "algorithm-recommendation": "algorithm",
+            "apex-research-session-export": "research-export-manifest",
+            "apex-session-bundle-manifest": "apex-session-manifest",
+            "dataset-manifest": "dataset",
+            "metric-definition": "metric",
+            "product-export-definition": "export-definition",
+        }
+        for schema_path in sorted(SCHEMA_DIR.glob("*.schema.json")):
+            name = schema_path.name.removesuffix(".schema.json")
+            with self.subTest(schema=name):
+                self.assertIn(aliases.get(name, name), ALL_VALIDATORS)
 
 
 if __name__ == "__main__":

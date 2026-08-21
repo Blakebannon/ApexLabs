@@ -20,8 +20,20 @@ APEX_SESSION_EXPORT = "apex-session-export/1.0.0"
 ADAPTER_CONFORMANCE = "apex-labs.adapter-conformance/v1"
 ANALYSIS_DEFINITION = "apex-labs.analysis-definition/v1"
 ANALYSIS_RUN = "apex-labs.analysis-run/v1"
+SEGMENT_DEFINITION = "apex-labs.segment-definition/v1"
+EVIDENCE_SET_DEFINITION = "apex-labs.evidence-set-definition/v1"
+EVIDENCE_SET = "apex-labs.evidence-set/v1"
+INFERENTIAL_ANALYSIS_DEFINITION = "apex-labs.inferential-analysis-definition/v1"
+INFERENTIAL_ANALYSIS_RUN = "apex-labs.inferential-analysis-run/v1"
+HYPOTHESIS = "apex-labs.hypothesis/v1"
+HYPOTHESIS_TRANSITION = "apex-labs.hypothesis-transition/v1"
+FINDING_REVIEW_PACKAGE = "apex-labs.finding-review-package/v1"
 NORMALIZATION_VERSION = "1.2.0"
 DESCRIPTIVE_METHOD_ID = "apex-labs.descriptive-statistics/1.0.0"
+EVIDENCE_METHOD_ID = "apex-labs.comparable-evidence/1.0.0"
+INFERENTIAL_METHOD_ID = "apex-labs.robust-inference/1.0.0"
+REVIEW_PACKAGE_METHOD_ID = "apex-labs.finding-review-package/1.0.0"
+PHASE_METHOD_ID = "apex-labs.threshold-phase/1.0.0"
 
 SUPPORTED_CONTRACTS = {
     DATASET_MANIFEST,
@@ -43,4 +55,12 @@ SUPPORTED_CONTRACTS = {
     ADAPTER_CONFORMANCE,
     ANALYSIS_DEFINITION,
     ANALYSIS_RUN,
+    SEGMENT_DEFINITION,
+    EVIDENCE_SET_DEFINITION,
+    EVIDENCE_SET,
+    INFERENTIAL_ANALYSIS_DEFINITION,
+    INFERENTIAL_ANALYSIS_RUN,
+    HYPOTHESIS,
+    HYPOTHESIS_TRANSITION,
+    FINDING_REVIEW_PACKAGE,
 }

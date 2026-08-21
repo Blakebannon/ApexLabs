@@ -13,4 +13,9 @@ These instructions apply to this repository tree.
 - Keep raw/private telemetry and all secrets out of Git. Synthetic fixtures must say synthetic and demo-only in their manifests and findings.
 - Prefer the simplest statistical method that reliably answers the preregistered question. State interval meaning; never invent an uncalibrated confidence score.
 - Do not claim causality from uncontrolled observational data.
-- Run the full test suite after changing contracts, ingestion, provenance, or exports.
+- Declare comparability, segment identity, experimental unit, and resampling unit before building an evidence set. Never combine evidence across incompatible drivers, simulators, cars, tracks, layouts, protocol versions, conditions, coaching states, segment or metric definitions, or normalization contracts.
+- Never treat telemetry frames or single events as independent experimental units, and never resample below the level at which the compared factor varies.
+- Never widen a family of comparisons after seeing results, and never present an adjusted p-value as the probability that a hypothesis is true.
+- Never claim an interpretation stronger than the frozen protocol and evidence design support. A causal candidate is a candidate.
+- Never promote a hypothesis or finding on the strength of a crossed threshold, an LLM opinion, one fastest lap, or one session.
+- Run the full test suite after changing contracts, ingestion, provenance, evidence, inference, lifecycle, or exports.

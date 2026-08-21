@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/hypothesis-transition.schema.json",
+  "title": "Apex Labs hypothesis lifecycle transition v1",
+  "description": "One append-only, hash-chained lifecycle transition. States are never skipped and history is never rewritten; the current state is recomputed by replaying the chain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "transition_id", "sequence_index", "hypothesis_id", "hypothesis_version", "hypothesis_sha256", "recorded_at", "synthetic", "from_state", "to_state", "previous_transition_sha256", "transition_sha256", "rationale", "bindings", "reviewer", "code_identity"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.hypothesis-transition/v1"},
+    "transition_id": {"$ref": "#/$defs/id"},
+    "sequence_index": {"type": "integer", "minimum": 0},
+    "hypothesis_id": {"$ref": "#/$defs/id"},
+    "hypothesis_version": {"type": "string", "minLength": 1},
+    "hypothesis_sha256": {"$ref": "#/$defs/sha256"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "synthetic": {"type": "boolean"},
+    "from_state": {"oneOf": [{"$ref": "#/$defs/state"}, {"type": "null"}]},
+    "to_state": {"$ref": "#/$defs/state"},
+    "previous_transition_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "transition_sha256": {"$ref": "#/$defs/sha256"},
+    "rationale": {"type": "string", "minLength": 1},
+    "bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol", "evidence_set", "analysis_definition", "analysis_run", "interpretation_ceiling", "multiple_comparison", "falsification", "replication"],
+      "properties": {
+        "protocol": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["freeze_id", "freeze_sha256"], "properties": {"freeze_id": {"$ref": "#/$defs/id"}, "freeze_sha256": {"$ref": "#/$defs/sha256"}}}
+          ]
+        },
+        "evidence_set": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["evidence_set_id", "version", "evidence_set_sha256", "synthetic"], "properties": {"evidence_set_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "evidence_set_sha256": {"$ref": "#/$defs/sha256"}, "synthetic": {"type": "boolean"}}}
+          ]
+        },
+        "analysis_definition": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["analysis_id", "version", "definition_sha256", "classification"], "properties": {"analysis_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1}, "definition_sha256": {"$ref": "#/$defs/sha256"}, "classification": {"enum": ["confirmatory", "exploratory"]}}}
+          ]
+        },
+        "analysis_run": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["run_id", "run_sha256", "analysis_state", "verified", "synthetic"], "properties": {"run_id": {"$ref": "#/$defs/id"}, "run_sha256": {"$ref": "#/$defs/sha256"}, "analysis_state": {"enum": ["computed", "inconclusive"]}, "verified": {"type": "boolean"}, "synthetic": {"type": "boolean"}}}
+          ]
+        },
+        "interpretation_ceiling": {"oneOf": [{"enum": ["descriptive", "associational", "intervention_associated", "causal_candidate"]}, {"type": "null"}]},
+        "multiple_comparison": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["family_id", "correction", "member_count"], "properties": {"family_id": {"$ref": "#/$defs/id"}, "correction": {"enum": ["holm_bonferroni", "benjamini_hochberg", "none"]}, "member_count": {"type": "integer", "minimum": 1}}}
+          ]
+        },
+        "falsification": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["tests_run", "fragile_count"], "properties": {"tests_run": {"type": "integer", "minimum": 0}, "fragile_count": {"type": "integer", "minimum": 0}}}
+          ]
+        },
+        "replication": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["state", "scope"], "properties": {"state": {"enum": ["not_required", "required_before_validation", "this_run_is_the_replication"]}, "scope": {"type": "string", "minLength": 1}}}
+          ]
+        }
+      }
+    },
+    "reviewer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "reviewer_id", "reviewed_at", "notes"],
+      "properties": {
+        "state": {"enum": ["unreviewed", "pending", "approved", "rejected"]},
+        "reviewer_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+        "notes": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "code_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"synthetic": {"const": true}}, "required": ["synthetic"]},
+      "then": {
+        "properties": {
+          "bindings": {"properties": {
+            "evidence_set": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {"synthetic": {"const": true}}, "required": ["synthetic"]}]},
+            "analysis_run": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {"synthetic": {"const": true}}, "required": ["synthetic"]}]}
+          }}
+        }
+      },
+      "else": {
+        "properties": {
+          "bindings": {"properties": {
+            "evidence_set": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {"synthetic": {"const": false}}, "required": ["synthetic"]}]},
+            "analysis_run": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {"synthetic": {"const": false}}, "required": ["synthetic"]}]}
+          }}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "state": {"enum": ["generated", "analysis_ready", "tested", "replication_required", "supported_provisionally", "rejected", "inconclusive"]}
+  }
+}

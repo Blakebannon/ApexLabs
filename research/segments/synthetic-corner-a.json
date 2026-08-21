@@ -1,0 +1,46 @@
+{
+  "applies_to": [
+    {
+      "geometry_fingerprint": "ab16578b2ccd9e69c3f8b3c869feb831a2c6e4ab62ef65e56e87c820fb972f45",
+      "geometry_source": "Fabricated geometry descriptor apex-labs-synthetic-geometry/layout-a/turn-a/90m-200m; there is no real track behind it.",
+      "layout": "synthetic-layout-a",
+      "simulator": "synthetic-simulator",
+      "track": "synthetic-track-a"
+    }
+  ],
+  "boundary_sample_resolution": "half_open_start_inclusive",
+  "corner_identity": null,
+  "coverage_requirements": {
+    "minimum_comparable_units": 4,
+    "minimum_concept_coverage_ratio": 0.9,
+    "minimum_records_per_unit": 4,
+    "required_concepts": [
+      "speed",
+      "brake",
+      "lap_distance"
+    ]
+  },
+  "identity_confidence": "declared",
+  "identity_source": "protocol_distance_range",
+  "limitations": [
+    "This is a fabricated distance range, not a verified corner identity. No corner number is claimed or invented.",
+    "The region is defined on one fabricated layout only and may never be extended to another layout by name."
+  ],
+  "overlap_policy": "disjoint_within_definition",
+  "phase": null,
+  "region": {
+    "boundary": {
+      "end_inclusive": false,
+      "start_inclusive": true
+    },
+    "end": 200.0,
+    "kind": "distance_range",
+    "lap_length_m": 1000.0,
+    "start": 90.0,
+    "wraparound": false
+  },
+  "schema_version": "apex-labs.segment-definition/v1",
+  "segment_definition_id": "synthetic-corner-a",
+  "title": "Synthetic corner A, 90 m to 200 m along the fabricated lap",
+  "version": "1.0.0"
+}

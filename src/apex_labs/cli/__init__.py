@@ -9,8 +9,30 @@ from pathlib import Path
 from typing import Any
 
 from apex_labs import __version__
-from apex_labs.analysis import run_analysis, verify_analysis_run
+from apex_labs.analysis import (
+    run_analysis,
+    run_inferential_analysis,
+    verify_analysis_run,
+    verify_inferential_analysis_run,
+)
+from apex_labs.campaigns import (
+    campaign_specs,
+    regenerate_reference_artifacts,
+    run_all_campaigns,
+    run_campaign,
+)
 from apex_labs.demo import verify_synthetic_demo
+from apex_labs.evidence import build_evidence_set, verify_evidence_set
+from apex_labs.findings.review_package import build_review_package, verify_review_package
+from apex_labs.hypotheses import (
+    bindings_from_run,
+    plan_bindings,
+    record_transition,
+    register_hypothesis,
+    replay,
+    verify_registry,
+)
+from apex_labs.science_demo import verify_science_demo
 from apex_labs.errors import ApexLabsError, ContractValidationError
 from apex_labs.experiments import freeze_protocol, verify_protocol_freeze
 from apex_labs.exports import generate_product_export, verify_product_export
@@ -26,10 +48,19 @@ from apex_labs.ingestion import (
     validate_research_bundle,
 )
 from apex_labs.io import canonical_json_bytes, read_json, read_json_lines
+from apex_labs.provenance import sha256_bytes
 from apex_labs.repository_guard import run_repository_guard
 from apex_labs.schemas import (
     validate_analysis_definition,
     validate_analysis_run,
+    validate_evidence_set,
+    validate_evidence_set_definition,
+    validate_finding_review_package,
+    validate_hypothesis,
+    validate_hypothesis_transition,
+    validate_inferential_analysis_definition,
+    validate_inferential_analysis_run,
+    validate_segment_definition,
     validate_experiment,
     validate_finding,
     validate_finding_validation,
@@ -57,6 +88,14 @@ ALL_VALIDATORS = {
     "adapter-conformance": validate_adapter_conformance,
     "analysis-definition": validate_analysis_definition,
     "analysis-run": validate_analysis_run,
+    "segment-definition": validate_segment_definition,
+    "evidence-set-definition": validate_evidence_set_definition,
+    "evidence-set": validate_evidence_set,
+    "inferential-analysis-definition": validate_inferential_analysis_definition,
+    "inferential-analysis-run": validate_inferential_analysis_run,
+    "hypothesis": validate_hypothesis,
+    "hypothesis-transition": validate_hypothesis_transition,
+    "finding-review-package": validate_finding_review_package,
 }
 
 
@@ -189,6 +228,139 @@ def _parser() -> argparse.ArgumentParser:
     )
     verify_analysis.add_argument("run", type=Path, help="analysis-run.json or its directory")
     verify_analysis.add_argument("--dataset", type=Path, required=True)
+
+    evidence = commands.add_parser(
+        "evidence", help="Build or verify a comparable evidence set over verified normalized datasets"
+    )
+    evidence_commands = evidence.add_subparsers(dest="evidence_command", required=True)
+    for name, helptext in (
+        ("build", "Construct a comparable evidence set from declared, verified inputs"),
+        ("verify", "Rebuild an evidence set from its declared inputs and compare it"),
+    ):
+        sub = evidence_commands.add_parser(name, help=helptext)
+        sub.add_argument("definition", type=Path)
+        sub.add_argument("--segment", type=Path, required=True)
+        sub.add_argument("--protocol-freeze", type=Path, required=True)
+        sub.add_argument("--metric", type=Path, required=True)
+        sub.add_argument(
+            "--dataset", type=Path, action="append", required=True,
+            help="Normalized dataset directory; repeat once per contributing dataset",
+        )
+        if name == "build":
+            sub.add_argument("--built-at", required=True)
+            sub.add_argument("--output", "-o", type=Path, required=True)
+        else:
+            sub.add_argument("evidence_set", type=Path, help="evidence-set.json or its directory")
+
+    infer = commands.add_parser(
+        "infer", help="Run or verify a preregistered inferential analysis over one comparable evidence set"
+    )
+    infer_commands = infer.add_subparsers(dest="infer_command", required=True)
+    infer_run = infer_commands.add_parser("run", help="Run a preregistered inferential analysis")
+    infer_run.add_argument("definition", type=Path)
+    infer_run.add_argument("--evidence", type=Path, required=True)
+    infer_run.add_argument("--protocol-freeze", type=Path, required=True)
+    infer_run.add_argument("--run-id", required=True)
+    infer_run.add_argument("--created-at", required=True)
+    infer_run.add_argument("--output", "-o", type=Path, required=True)
+    infer_verify = infer_commands.add_parser(
+        "verify", help="Recompute an inferential run from its bound evidence and compare it"
+    )
+    infer_verify.add_argument("run", type=Path, help="inferential-analysis-run.json or its directory")
+    infer_verify.add_argument("--evidence", type=Path, required=True)
+    infer_verify.add_argument("--protocol-freeze", type=Path, required=True)
+
+    hypothesis = commands.add_parser("hypothesis", help="Manage the append-only hypothesis lifecycle")
+    hypothesis_commands = hypothesis.add_subparsers(dest="hypothesis_command", required=True)
+    hypothesis_register = hypothesis_commands.add_parser(
+        "register", help="Register a hypothesis and open its lifecycle at generated"
+    )
+    hypothesis_register.add_argument("path", type=Path)
+    hypothesis_register.add_argument("--registry", type=Path, required=True)
+    hypothesis_register.add_argument("--recorded-at", required=True)
+    hypothesis_transition = hypothesis_commands.add_parser(
+        "transition", help="Append one lifecycle transition after re-verifying the whole history"
+    )
+    hypothesis_transition.add_argument("hypothesis_id")
+    hypothesis_transition.add_argument("--registry", type=Path, required=True)
+    hypothesis_transition.add_argument("--to-state", required=True)
+    hypothesis_transition.add_argument("--rationale", required=True)
+    hypothesis_transition.add_argument("--recorded-at", required=True)
+    hypothesis_transition.add_argument("--evidence", type=Path, help="Evidence set backing an evidence-bearing state")
+    hypothesis_transition.add_argument("--run", type=Path, help="Verified inferential run backing the transition")
+    hypothesis_transition.add_argument(
+        "--analysis-definition", type=Path,
+        help="Frozen inferential analysis definition; use with --evidence to reach analysis_ready before any run exists",
+    )
+    hypothesis_transition.add_argument("--protocol-freeze", type=Path, help="Frozen protocol for run verification")
+    hypothesis_transition.add_argument("--reviewer-id")
+    hypothesis_transition.add_argument("--reviewer-state", default="pending",
+                                       choices=["unreviewed", "pending", "approved", "rejected"])
+    hypothesis_transition.add_argument("--reviewed-at")
+    hypothesis_state = hypothesis_commands.add_parser(
+        "state", help="Replay one hypothesis history and report its recomputed state"
+    )
+    hypothesis_state.add_argument("hypothesis_id")
+    hypothesis_state.add_argument("--registry", type=Path, required=True)
+    hypothesis_verify = hypothesis_commands.add_parser(
+        "verify", help="Replay and re-verify every registered hypothesis history"
+    )
+    hypothesis_verify.add_argument("--registry", type=Path, required=True)
+
+    package = commands.add_parser(
+        "review-package", help="Assemble or verify a deterministic finding review package for human review"
+    )
+    package_commands = package.add_subparsers(dest="package_command", required=True)
+    package_build = package_commands.add_parser("build", help="Assemble a review package")
+    package_build.add_argument("finding", type=Path)
+    package_build.add_argument("validation", type=Path)
+    package_build.add_argument("--evidence", type=Path, required=True)
+    package_build.add_argument("--run", type=Path, required=True)
+    package_build.add_argument("--registry", type=Path, required=True)
+    package_build.add_argument("--hypothesis", required=True)
+    package_build.add_argument("--metric", type=Path, action="append", required=True)
+    package_build.add_argument("--package-id", required=True)
+    package_build.add_argument("--created-at", required=True)
+    package_build.add_argument("--output", "-o", type=Path, required=True)
+    package_build.add_argument(
+        "--recomputed-and-verified", action="store_true",
+        help="Record that the bound run was independently recomputed before assembly",
+    )
+    package_verify = package_commands.add_parser("verify", help="Verify a review package and re-render its report")
+    package_verify.add_argument("directory", type=Path)
+    package_verify.add_argument("--evidence", type=Path, required=True)
+    package_verify.add_argument("--run", type=Path, required=True)
+
+    campaign = commands.add_parser(
+        "campaign", help="Run known-answer synthetic campaigns; they demonstrate mechanics, never racing science"
+    )
+    campaign_commands = campaign.add_subparsers(dest="campaign_command", required=True)
+    campaign_list = campaign_commands.add_parser("list", help="List the checked-in campaign specifications")
+    campaign_list.add_argument("--root", type=Path, default=Path.cwd())
+    campaign_verify = campaign_commands.add_parser(
+        "verify", help="Run one campaign end to end and compare it with its known answer"
+    )
+    campaign_verify.add_argument("spec", type=Path)
+    campaign_verify.add_argument("--root", type=Path, default=Path.cwd())
+    campaign_verify_all = campaign_commands.add_parser(
+        "verify-all", help="Run every checked-in campaign and compare each with its known answer"
+    )
+    campaign_verify_all.add_argument("--root", type=Path, default=Path.cwd())
+    campaign_regenerate = campaign_commands.add_parser(
+        "regenerate-references",
+        help="Generate clean-commit-bound synthetic reference artifacts into a new review directory",
+    )
+    campaign_regenerate.add_argument("--root", type=Path, default=Path.cwd())
+    campaign_regenerate.add_argument("--output", type=Path, required=True)
+
+    science = commands.add_parser(
+        "verify-science-demo",
+        help="Reproduce the whole synthetic scientific path twice; never scientific evidence",
+    )
+    science.add_argument("--root", type=Path, default=Path.cwd())
+    science.add_argument(
+        "--skip-campaigns", action="store_true", help="Skip the known-answer campaign suite"
+    )
 
     apex_research = commands.add_parser(
         "apex-research", help="Inspect, validate, or normalize a completed local Research Recorder bundle"
@@ -340,6 +512,173 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         }
     if args.command == "verify-analysis":
         return verify_analysis_run(args.run, args.dataset)
+    if args.command == "evidence":
+        if args.evidence_command == "build":
+            artifact = build_evidence_set(
+                args.definition, args.segment, args.protocol_freeze, args.metric,
+                args.dataset, args.output, built_at=args.built_at,
+            )
+            return {
+                "ok": True,
+                "evidence_set_id": artifact["evidence_set_id"],
+                "evidence_set_sha256": artifact["evidence_set_sha256"],
+                "classification": artifact["classification"],
+                "comparability": artifact["comparability"]["status"],
+                "counts": artifact["counts"],
+                "structural_interpretation_ceiling": artifact["structural_interpretation_ceiling"],
+                "post_hoc_exclusions_present": artifact["post_hoc_exclusions_present"],
+                "output": str(args.output),
+            }
+        return verify_evidence_set(
+            args.evidence_set, args.definition, args.segment, args.protocol_freeze,
+            args.metric, args.dataset,
+        )
+    if args.command == "infer":
+        if args.infer_command == "run":
+            artifact = run_inferential_analysis(
+                args.definition, args.evidence, args.protocol_freeze, args.output,
+                run_id=args.run_id, created_at=args.created_at,
+            )
+            primary = next(
+                (item for item in artifact["comparisons"] if item["role"] == "primary"),
+                artifact["comparisons"][0],
+            )
+            return {
+                "ok": True,
+                "run_id": artifact["run_id"],
+                "analysis_id": artifact["definition"]["analysis_id"],
+                "classification": artifact["classification"],
+                "run_sha256": artifact["run_sha256"],
+                "analysis_state": artifact["analysis_state"],
+                "sufficiency": artifact["sufficiency"]["status"],
+                "effective_ceiling": artifact["interpretation"]["effective_ceiling"],
+                "primary_comparison": primary["comparison_id"],
+                "primary_estimate": None if primary["effect"] is None else primary["effect"]["estimate"],
+                "scientific_eligibility": artifact["scientific_eligibility"]["eligible"],
+                "output": str(args.output),
+            }
+        return verify_inferential_analysis_run(args.run, args.evidence, args.protocol_freeze)
+    if args.command == "hypothesis":
+        if args.hypothesis_command == "register":
+            sealed = register_hypothesis(read_json(args.path), args.registry, recorded_at=args.recorded_at)
+            history = replay(args.registry, sealed["hypothesis_id"])
+            return {
+                "ok": True,
+                "hypothesis_id": sealed["hypothesis_id"],
+                "hypothesis_sha256": sealed["hypothesis_sha256"],
+                "state": history["state"],
+                "generation_source": sealed["generation"]["source"],
+                "is_evidence": False,
+            }
+        if args.hypothesis_command == "transition":
+            bindings = None
+            if args.evidence and args.analysis_definition and not args.run:
+                evidence_artifact = validate_evidence_set(
+                    read_json(
+                        args.evidence / "evidence-set.json" if args.evidence.is_dir() else args.evidence
+                    )
+                )
+                analysis_definition = validate_inferential_analysis_definition(
+                    read_json(args.analysis_definition)
+                )
+                bindings = plan_bindings(
+                    evidence_artifact,
+                    analysis_definition,
+                    sha256_bytes(canonical_json_bytes(analysis_definition)),
+                )
+            elif args.evidence and args.run:
+                if not args.protocol_freeze:
+                    raise ContractValidationError(
+                        "--protocol-freeze is required to verify the run backing an evidence-bearing transition"
+                    )
+                evidence_artifact = validate_evidence_set(
+                    read_json(
+                        args.evidence / "evidence-set.json" if args.evidence.is_dir() else args.evidence
+                    )
+                )
+                verification = verify_inferential_analysis_run(args.run, args.evidence, args.protocol_freeze)
+                run_artifact = validate_inferential_analysis_run(
+                    read_json(
+                        args.run / "inferential-analysis-run.json" if args.run.is_dir() else args.run
+                    )
+                )
+                bindings = bindings_from_run(evidence_artifact, run_artifact, verified=verification["valid"])
+            reviewer = {
+                "state": args.reviewer_state,
+                "reviewer_id": args.reviewer_id,
+                "reviewed_at": args.reviewed_at,
+                "notes": [],
+            }
+            transition = record_transition(
+                args.registry, args.hypothesis_id, to_state=args.to_state,
+                rationale=args.rationale, recorded_at=args.recorded_at,
+                bindings=bindings, reviewer=reviewer,
+            )
+            return {
+                "ok": True,
+                "hypothesis_id": transition["hypothesis_id"],
+                "sequence_index": transition["sequence_index"],
+                "from_state": transition["from_state"],
+                "to_state": transition["to_state"],
+                "transition_sha256": transition["transition_sha256"],
+            }
+        if args.hypothesis_command == "state":
+            history = replay(args.registry, args.hypothesis_id)
+            return {
+                "valid": True,
+                "hypothesis_id": args.hypothesis_id,
+                "state": history["state"],
+                "transitions": len(history["transitions"]),
+                "head_transition_sha256": history["head_transition_sha256"],
+            }
+        return verify_registry(args.registry)
+    if args.command == "review-package":
+        if args.package_command == "build":
+            history = replay(args.registry, args.hypothesis)
+            package = build_review_package(
+                read_json(args.finding), read_json(args.validation), args.evidence, args.run,
+                history, args.metric, args.output, package_id=args.package_id,
+                created_at=args.created_at, recomputed_and_verified=args.recomputed_and_verified,
+            )
+            return {
+                "ok": True,
+                "package_id": package["package_id"],
+                "package_sha256": package["package_sha256"],
+                "classification": package["classification"],
+                "finding_status": package["finding"]["status"],
+                "hypothesis_state": package["hypothesis"]["state"],
+                "interpretation_ceiling": package["interpretation_ceiling"],
+                "product_recommendation": package["product_recommendation"]["state"],
+                "automatic_production_change": False,
+                "output": str(args.output),
+            }
+        return verify_review_package(args.directory, args.run, args.evidence)
+    if args.command == "campaign":
+        if args.campaign_command == "list":
+            return {
+                "campaigns": [path.name for path in campaign_specs(args.root)],
+                "classification": "synthetic_demo_only_not_racing_research",
+            }
+        if args.campaign_command == "verify":
+            from tempfile import TemporaryDirectory
+
+            with TemporaryDirectory(prefix="apex-labs-campaign-") as directory:
+                result = run_campaign(args.spec, Path(directory), args.root)
+            if not result["ok"]:
+                raise ContractValidationError(
+                    f"Campaign {result['campaign_id']} did not match its known answer: {result['mismatches']}"
+                )
+            return result
+        if args.campaign_command == "regenerate-references":
+            return regenerate_reference_artifacts(args.root, args.output)
+        result = run_all_campaigns(args.root)
+        if not result["ok"]:
+            raise ContractValidationError(
+                f"Campaigns did not match their known answers: {result['mismatches']}"
+            )
+        return result
+    if args.command == "verify-science-demo":
+        return verify_science_demo(args.root, run_campaigns=not args.skip_campaigns)
     if args.command == "apex-research":
         if args.apex_research_command == "inspect":
             return inspect_research_bundle(args.bundle)

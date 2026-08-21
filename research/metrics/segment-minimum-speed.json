@@ -1,0 +1,20 @@
+{
+  "computation": "Select records inside the declared segment region, discard records whose speed is unavailable, and take the minimum of the remaining values.",
+  "definition": "The lowest normalized speed observed among the records that fall inside the declared segment region on one experimental unit.",
+  "directionality": "higher_is_better",
+  "limitations": [
+    "A higher minimum speed is not automatically faster overall; it says nothing about entry, exit, or lap time.",
+    "The value depends entirely on the declared segment region and cannot be compared across different regions.",
+    "Records whose speed is unavailable are excluded and counted as attrition; they are never read as zero."
+  ],
+  "metric_id": "segment-minimum-speed",
+  "name": "Segment minimum speed",
+  "output_provenance": "derived",
+  "required_inputs": [
+    "speed",
+    "lap_distance"
+  ],
+  "schema_version": "apex-labs.metric-definition/v1",
+  "unit": "m/s",
+  "version": "1.0.0"
+}

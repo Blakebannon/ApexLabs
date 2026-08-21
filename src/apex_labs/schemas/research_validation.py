@@ -313,9 +313,14 @@ def validate_finding_validation(value: Any) -> dict[str, Any]:
         if review_state != "approved" or not reviewers or review["reviewed_at"] is None:
             _fail("$.review", "scientific pass requires an explicit approved review record")
     if synthetic and (
-        scientific_gate == "passed" or review_state == "approved" or product_state == "approved"
+        scientific_gate == "passed"
+        or review_state == "approved"
+        or product_state != "not_requested"
     ):
-        _fail("$", "synthetic evidence cannot pass scientific or product review")
+        _fail(
+            "$",
+            "synthetic evidence cannot pass scientific review or enter product review",
+        )
     if scope_value == "population_supported" and (
         population is None or population_state != "passed" or scientific_gate != "passed"
     ):

@@ -48,6 +48,24 @@
     "review": {"type": "object", "additionalProperties": false, "required": ["state", "reviewers", "reviewed_at", "notes"], "properties": {"state": {"enum": ["unreviewed", "pending", "approved", "rejected"]}, "reviewers": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["reviewer_id", "role"], "properties": {"reviewer_id": {"$ref": "#/$defs/id"}, "role": {"type": "string", "minLength": 1}}}}, "reviewed_at": {"type": ["string", "null"], "format": "date-time"}, "notes": {"$ref": "#/$defs/strings"}}},
     "product_review_state": {"enum": ["not_requested", "pending", "approved", "rejected"]}, "created_at": {"type": "string", "format": "date-time"}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"synthetic": {"const": true}}, "required": ["synthetic"]},
+      "then": {
+        "properties": {
+          "product_review_state": {"const": "not_requested"},
+          "datasets": {"items": {"properties": {"synthetic": {"const": true}}}},
+          "gate_evaluations": {"properties": {"scientific": {"enum": ["failed", "unresolved"]}}},
+          "review": {"properties": {"state": {"enum": ["unreviewed", "pending", "rejected"]}}}
+        }
+      },
+      "else": {
+        "properties": {
+          "datasets": {"items": {"properties": {"synthetic": {"const": false}}}}
+        }
+      }
+    }
+  ],
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
     "strings": {"type": "array", "items": {"type": "string", "minLength": 1}}, "nonempty_strings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},

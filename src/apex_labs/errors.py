@@ -27,3 +27,15 @@ class ExportError(ApexLabsError):
 
 class AnalysisError(ApexLabsError):
     """A descriptive analysis run cannot be generated or verified safely."""
+
+
+class EvidenceError(ApexLabsError):
+    """A comparable evidence set cannot be built or verified safely."""
+
+
+class InferenceError(ApexLabsError):
+    """An inferential analysis cannot be produced or verified safely."""
+
+
+class LifecycleError(ApexLabsError):
+    """A hypothesis or finding lifecycle transition is not permitted."""

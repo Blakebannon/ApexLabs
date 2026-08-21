@@ -1,0 +1,94 @@
+{
+  "schema_version": "apex-labs.experiment/v1",
+  "synthetic": true,
+  "experiment_id": "synthetic-inference-observational",
+  "version": "1.0.0",
+  "status": "preregistered",
+  "research_question": "Can Apex Labs compare two naturally occurring fabricated blocks without any intervention, and refuse every interpretation stronger than association?",
+  "hypothesis": "Two observed blocks of the same fabricated driver can be compared descriptively and associationally without a delivered intervention.",
+  "null_hypothesis": "The observed blocks cannot be compared comparably, or the comparison cannot be reproduced.",
+  "independent_variable": {
+    "name": "observed-block",
+    "operational_definition": "Each contiguous fabricated block is labelled by the condition observed during collection. Nothing was delivered to the driver.",
+    "levels": [
+      "synthetic-observed-early",
+      "synthetic-observed-late"
+    ]
+  },
+  "primary_dependent_metric": {
+    "metric_id": "segment-minimum-speed",
+    "definition": "Lowest speed observed inside the declared segment on one lap.",
+    "unit": "m/s",
+    "provenance_expectation": "derived"
+  },
+  "secondary_metrics": [
+    {
+      "metric_id": "segment-brake-release-distance",
+      "definition": "Along-lap distance at which brake pressure was last at or above the declared threshold inside the segment.",
+      "unit": "m",
+      "provenance_expectation": "derived"
+    }
+  ],
+  "controlled_variables": [
+    "Driver, simulator, car, track, and layout are held fixed across blocks",
+    "Segment definition and metric definition are frozen before construction",
+    "Normalization contract and adapter version are held fixed",
+    "Fingerprint-bound setup/configuration and product-build identities are held fixed",
+    "Block labelling is fixed before any value is inspected"
+  ],
+  "comparability_requirements": [
+    "Compare only within one verified segment geometry on one layout",
+    "Use within-driver pairing across observed blocks of the same participant",
+    "Treat the observed block as the level at which the compared condition varies",
+    "Never describe an observed block difference as an effect of anything Apex Sim Coach did",
+    "Refuse pooling when setup/configuration or product-build identity differs or is unavailable"
+  ],
+  "identity_variation_plans": [],
+  "exclusion_criteria": [
+    "Records positioned outside the declared segment region",
+    "Records whose metric channel is absent or explicitly unavailable",
+    "Records belonging to a lap the source marked invalid",
+    "Records carrying an incident or off-track state",
+    "Records carrying a pit, replay, or discontinuity quality flag",
+    "Units below the declared minimum record count or concept-coverage ratio"
+  ],
+  "minimum_sample_requirements": {
+    "state": "declared",
+    "requirements": [
+      "At least 4 comparable within-driver pairs and at least 2 blocks for a mechanics-level contrast",
+      "At least 12 comparable within-driver pairs and at least 4 blocks before any confirmatory interpretation of a real corpus"
+    ],
+    "rationale": "These are deliberately modest fabricated-demonstration thresholds. They are software requirements for exercising the sufficiency gate, not a scientific power calculation, and no real campaign may inherit them."
+  },
+  "baseline_condition": "The earlier observed fabricated block. No instruction or cue was delivered.",
+  "intervention_conditions": [],
+  "randomization_counterbalancing": "No assignment occurs. Blocks are observed in the order they happened, which is why the design cannot exceed association.",
+  "analysis_methods": [
+    "Report attrition and robust descriptive summaries before any contrast",
+    "Estimate the paired difference at the declared experimental unit",
+    "Resample whole blocks rather than nested laps when forming an interval",
+    "Run the declared leave-one-out and order-effect falsification checks",
+    "Apply the declared familywise correction across the declared comparison family"
+  ],
+  "predeclared_success_criteria": {
+    "state": "declared",
+    "criteria": [
+      "The evidence set is reproducible from its declared inputs",
+      "The association and its interval are reproducible from the bound evidence"
+    ],
+    "falsification_criteria": [
+      "The direction of the association is carried by a single unit",
+      "The association disappears once the block ordering is accounted for"
+    ]
+  },
+  "safety_constraints": [
+    "Use only fabricated data with no real driver, customer, simulator, or production source",
+    "Never infer racing performance from this protocol"
+  ],
+  "notes": [
+    "This protocol exists to demonstrate that an observational comparison is refused any causal interpretation.",
+    "Session order is not a delivered intervention and is never treated as one."
+  ],
+  "created_at": "2026-08-20T00:00:00Z",
+  "apex_labs_source_commit": "UNCOMMITTED"
+}

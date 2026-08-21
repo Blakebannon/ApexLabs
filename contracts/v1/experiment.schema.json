@@ -33,6 +33,10 @@
     "baseline_condition": {"type": "string", "minLength": 1},
     "intervention_conditions": {"$ref": "#/$defs/strings"},
     "randomization_counterbalancing": {"type": "string", "minLength": 1},
+    "identity_variation_plans": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/identity_variation_plan"}
+    },
     "analysis_methods": {"$ref": "#/$defs/nonempty_strings"},
     "predeclared_success_criteria": {
       "type": "object",
@@ -73,6 +77,21 @@
         "state": {"enum": ["to_be_determined", "declared"]},
         "requirements": {"$ref": "#/$defs/strings"},
         "rationale": {"type": "string", "minLength": 1}
+      }
+    },
+    "identity_variation_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan_id", "field", "varying_factor", "rationale", "assignment_or_balancing", "analysis_handling", "confounding_implications", "interpretation_ceiling"],
+      "properties": {
+        "plan_id": {"$ref": "#/$defs/id"},
+        "field": {"enum": ["configuration_identity", "product_build"]},
+        "varying_factor": {"$ref": "#/$defs/id"},
+        "rationale": {"type": "string", "minLength": 1},
+        "assignment_or_balancing": {"type": "string", "minLength": 1},
+        "analysis_handling": {"type": "string", "minLength": 1},
+        "confounding_implications": {"type": "string", "minLength": 1},
+        "interpretation_ceiling": {"enum": ["descriptive", "associational", "intervention_associated"]}
       }
     }
   }

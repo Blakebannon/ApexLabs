@@ -11,9 +11,17 @@ declared source files + dataset manifest
                   |
  content-bound normalized manifest + JSONL
                   |
- frozen protocol/schedule + analysis code
+ frozen protocol/schedule + segment + metric definitions
+                  |
+        comparable evidence set (units, pairs, attrition)
+                  |
+ preregistered inferential analysis definition + run
+                  |
+    append-only hypothesis lifecycle transitions
                   |
  finding + independent validation artifact
+                  |
+      deterministic finding review package
                   |
  deterministic product export package
                   |
@@ -30,12 +38,15 @@ There is deliberately no code path from an Apex Labs finding into production sou
 - `provenance`: source snapshots, path-independent code/schema identity, source fingerprints, and normalized content fingerprints.
 - `experiments`: immutable protocol freeze/verification and append-only amendment artifacts.
 - `findings`: cross-file binding between analyst findings and evidence/review validation artifacts.
-- `analysis`: declared, deterministic, descriptive-only computations over verified normalized datasets, emitting reproducible run artifacts.
+- `analysis`: declared, deterministic computations over verified inputs. `descriptive` covers inventories, availability, robust summaries, and event yield; `statistics` holds the robust, order-independent, machine-independent kernels; `inferential` runs preregistered comparisons over one comparable evidence set.
+- `evidence`: segment identity and membership, the comparability guard, and deterministic comparable-evidence-set construction with full attrition accounting.
+- `hypotheses`: the append-only, hash-chained hypothesis lifecycle whose current state is recomputed by replay.
+- `campaigns`: fabricated known-answer campaigns that drive the real path end to end and compare the outcome with expectations written by hand.
 - `exports`: locked, failure-atomic deterministic package generation and internal-consistency verification.
 - `repository_guard`: heuristic Git-visible privacy/raw-data/secret boundary used locally and in CI.
 - `cli`: thin orchestration; it contains no scientific logic.
 
-The `analysis` package implements only declared descriptive computations (inventories, availability/provenance counts, robust summaries, event yield) with the standard library. Inferential statistics and racing-analysis methods still do not exist because no real preregistered question exists yet. They should be added only with a concrete preregistered method, tests, and dependency justification.
+The `analysis` package is standard library only. Beyond the descriptive computations it now implements a deliberately small inferential foundation: paired and unpaired robust differences, a Theil-Sen ordered trend, a dispersion-ratio consistency comparison, an exact paired sign test, a deterministic cluster percentile bootstrap, and Holm-Bonferroni and Benjamini-Hochberg corrections. No regression, hierarchical model, or machine learning exists, because no real corpus supports one and no preregistered question needs one. Adding a sophisticated model without both is how fragile results get manufactured. See [inferential analysis](inferential-analysis.md).
 
 ## Storage model
 
@@ -73,3 +84,24 @@ an actual reviewed sample/specification for that separate contract.
 Contract identifiers use `apex-labs.<contract>/v1`. Semantic versions identify adapter, normalization, preprocessing, metric, algorithm, experiment, finding, and package releases. Breaking meaning changes require a new contract major version and compatibility tests. Unknown versions are rejected rather than coerced.
 
 A semantic version is not code identity. Normalized provenance also records the exact package-content hash, individual schema hashes, Git commit/state, complete configuration hash, and output-content hash. Real research refuses dirty or uncommitted code even when the declared version appears unchanged.
+
+## Scientific layering
+
+Four artifacts sit between a normalized dataset and a human decision, and none
+implies the next:
+
+1. A **comparable evidence set** decides what may be compared with what, at which
+   experimental and resampling unit, under which preregistered exclusion rules,
+   and reports every stage at which evidence left the funnel.
+2. An **inferential analysis run** answers exactly the preregistered question over
+   exactly that evidence, and reports its estimate, interval, raw and adjusted
+   statistical evidence, sensitivity results, sufficiency, and interpretation
+   ceiling.
+3. A **hypothesis lifecycle** preserves how a proposal moved from generated to a
+   disposition, append-only and hash-chained, with every promotion gated on a
+   completed independently verified run and a recorded reviewer disposition.
+4. A **finding review package** assembles the whole dossier for human scientific
+   review and states its production recommendation conservatively.
+
+There is still deliberately no code path from any of them into production source
+code or configuration.

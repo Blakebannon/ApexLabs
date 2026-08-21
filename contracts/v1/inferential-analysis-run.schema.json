@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/inferential-analysis-run.schema.json",
+  "title": "Apex Labs inferential analysis run v1",
+  "description": "A reproducible inferential result over one comparable evidence set. A result is not a finding, a status, or scientific truth, and an adjusted p-value is never the probability that a hypothesis is true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "created_at", "classification", "synthetic", "method_id", "run_sha256", "definition", "definition_sha256", "evidence_set", "analysis_state", "sufficiency", "comparisons", "multiplicity", "sensitivity", "confounds", "interpretation", "scientific_eligibility", "code_identity", "integrity", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.inferential-analysis-run/v1"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "classification": {"const": "inferential_result_not_a_finding"},
+    "synthetic": {"type": "boolean"},
+    "method_id": {"const": "apex-labs.robust-inference/1.0.0"},
+    "run_sha256": {"$ref": "#/$defs/sha256"},
+    "definition": {"$ref": "inferential-analysis-definition.schema.json"},
+    "definition_sha256": {"$ref": "#/$defs/sha256"},
+    "evidence_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_set_id", "version", "evidence_set_sha256", "definition_sha256", "segment_definition_sha256", "protocol_freeze_sha256", "dataset_fingerprints", "scope", "units_used", "clusters_used"],
+      "properties": {
+        "evidence_set_id": {"$ref": "#/$defs/id"}, "version": {"type": "string", "minLength": 1},
+        "evidence_set_sha256": {"$ref": "#/$defs/sha256"}, "definition_sha256": {"$ref": "#/$defs/sha256"},
+        "segment_definition_sha256": {"$ref": "#/$defs/sha256"}, "protocol_freeze_sha256": {"$ref": "#/$defs/sha256"},
+        "dataset_fingerprints": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sha256"}},
+        "scope": {"enum": ["primary", "holdout"]},
+        "units_used": {"$ref": "#/$defs/count"}, "clusters_used": {"$ref": "#/$defs/count"}
+      }
+    },
+    "analysis_state": {"enum": ["computed", "inconclusive"]},
+    "sufficiency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "source", "available_units", "required_units", "available_pairs", "required_pairs", "available_clusters", "required_clusters", "available_participants", "required_participants", "unpaired_units", "condition_balance", "replication_count", "holdout_available", "total_attrition", "uncertainty_usable", "descriptive_only", "confirmatory_permitted", "unmet_requirements"],
+      "properties": {
+        "status": {"enum": ["sufficient", "insufficient", "undetermined"]},
+        "source": {"enum": ["frozen_protocol", "documented_pilot", "not_declared"]},
+        "available_units": {"$ref": "#/$defs/count"}, "required_units": {"type": ["integer", "null"], "minimum": 1},
+        "available_pairs": {"$ref": "#/$defs/count"}, "required_pairs": {"type": ["integer", "null"], "minimum": 1},
+        "available_clusters": {"$ref": "#/$defs/count"}, "required_clusters": {"type": ["integer", "null"], "minimum": 2},
+        "available_participants": {"$ref": "#/$defs/count"}, "required_participants": {"type": ["integer", "null"], "minimum": 1},
+        "unpaired_units": {"$ref": "#/$defs/count"},
+        "condition_balance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["baseline_units", "intervention_units", "balanced"],
+          "properties": {"baseline_units": {"$ref": "#/$defs/count"}, "intervention_units": {"$ref": "#/$defs/count"}, "balanced": {"type": "boolean"}}
+        },
+        "replication_count": {"$ref": "#/$defs/count"},
+        "holdout_available": {"type": "boolean"},
+        "total_attrition": {"$ref": "#/$defs/count"},
+        "uncertainty_usable": {"type": "boolean"},
+        "descriptive_only": {"type": "boolean"},
+        "confirmatory_permitted": {"type": "boolean"},
+        "unmet_requirements": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "comparisons": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["comparison_id", "role", "method", "metric_id", "unit_of_measure", "state", "subset", "effect", "uncertainty", "statistical_evidence", "practical", "notes"],
+        "properties": {
+          "comparison_id": {"$ref": "#/$defs/id"},
+          "subset": {"type": ["object", "null"]},
+          "role": {"enum": ["primary", "secondary", "exploratory"]},
+          "method": {"enum": ["paired_difference", "unpaired_difference", "trend", "consistency"]},
+          "metric_id": {"$ref": "#/$defs/id"},
+          "unit_of_measure": {"type": "string", "minLength": 1},
+          "state": {"enum": ["computed", "not_computable"]},
+          "effect": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object", "additionalProperties": false,
+                "required": ["effect_size", "estimate", "secondary_estimate", "n", "per_unit_differences", "group_summaries"],
+                "properties": {
+                  "effect_size": {"enum": ["median_paired_difference", "mean_paired_difference", "median_difference", "mean_difference", "theil_sen_slope", "dispersion_ratio"]},
+                  "estimate": {"type": "number"},
+                  "secondary_estimate": {"type": ["number", "null"]},
+                  "n": {"type": "integer", "minimum": 0},
+                  "per_unit_differences": {"type": "array", "items": {"type": "number"}},
+                  "group_summaries": {"type": "object"}
+                }
+              }
+            ]
+          },
+          "uncertainty": {
+            "type": "object", "additionalProperties": false,
+            "required": ["method", "coverage_level", "interval", "draws", "random_seed", "resampling_unit", "clusters", "usable", "semantics", "unusable_reason"],
+            "properties": {
+              "method": {"enum": ["deterministic_cluster_percentile_bootstrap", "none"]},
+              "coverage_level": {"type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+              "interval": {"oneOf": [{"type": "null"}, {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}]},
+              "draws": {"type": ["integer", "null"], "minimum": 0},
+              "random_seed": {"type": ["integer", "null"], "minimum": 0},
+              "resampling_unit": {"$ref": "#/$defs/unit_level"},
+              "clusters": {"$ref": "#/$defs/count"},
+              "usable": {"type": "boolean"},
+              "semantics": {"type": "string", "minLength": 1},
+              "unusable_reason": {"type": ["string", "null"], "minLength": 1}
+            }
+          },
+          "statistical_evidence": {
+            "type": "object", "additionalProperties": false,
+            "required": ["test", "raw_p_value", "detail", "interpretation"],
+            "properties": {
+              "test": {"enum": ["exact_paired_sign_test", "none"]},
+              "raw_p_value": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+              "detail": {"type": "object"},
+              "interpretation": {"type": "string", "minLength": 1}
+            }
+          },
+          "practical": {
+            "type": "object", "additionalProperties": false,
+            "required": ["threshold_magnitude", "threshold_unit", "threshold_source", "estimate_exceeds_threshold", "direction_matches_hypothesis", "interval_excludes_no_effect"],
+            "properties": {
+              "threshold_magnitude": {"type": "number", "minimum": 0},
+              "threshold_unit": {"type": "string", "minLength": 1},
+              "threshold_source": {"enum": ["frozen_protocol", "documented_pilot", "not_declared"]},
+              "estimate_exceeds_threshold": {"type": ["boolean", "null"]},
+              "direction_matches_hypothesis": {"type": ["boolean", "null"]},
+              "interval_excludes_no_effect": {"type": ["boolean", "null"]}
+            }
+          },
+          "notes": {"$ref": "#/$defs/strings"}
+        }
+      }
+    },
+    "multiplicity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family_id", "role", "correction", "members", "alpha", "entries", "interpretation"],
+      "properties": {
+        "family_id": {"$ref": "#/$defs/id"},
+        "role": {"enum": ["confirmatory_primary", "confirmatory_secondary", "exploratory"]},
+        "correction": {"enum": ["holm_bonferroni", "benjamini_hochberg", "none"]},
+        "members": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}},
+        "alpha": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["comparison_id", "raw_p_value", "adjusted_p_value", "rejected_at_alpha"],
+            "properties": {
+              "comparison_id": {"$ref": "#/$defs/id"},
+              "raw_p_value": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+              "adjusted_p_value": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+              "rejected_at_alpha": {"type": "boolean"}
+            }
+          }
+        },
+        "interpretation": {"type": "string", "minLength": 1}
+      }
+    },
+    "sensitivity": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["test_id", "kind", "comparison_id", "outcome", "detail"],
+        "properties": {
+          "test_id": {"$ref": "#/$defs/id"},
+          "kind": {"enum": ["leave_one_unit_out", "leave_one_cluster_out", "outlier_dependence", "order_effect_early_versus_late", "isolation_by_cluster", "direction_sign_stability"]},
+          "comparison_id": {"$ref": "#/$defs/id"},
+          "outcome": {"enum": ["robust", "fragile", "not_computable"]},
+          "detail": {"type": "object"}
+        }
+      }
+    },
+    "confounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["controlled", "measured_covariates", "unavailable"],
+      "properties": {
+        "controlled": {"$ref": "#/$defs/strings"},
+        "measured_covariates": {"$ref": "#/$defs/strings"},
+        "unavailable": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "interpretation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requested_ceiling", "structural_ceiling", "effective_ceiling", "rationale"],
+      "properties": {
+        "requested_ceiling": {"$ref": "#/$defs/ceiling"},
+        "structural_ceiling": {"$ref": "#/$defs/ceiling"},
+        "effective_ceiling": {"$ref": "#/$defs/ceiling"},
+        "rationale": {"type": "string", "minLength": 1}
+      }
+    },
+    "scientific_eligibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["eligible", "reason"],
+      "properties": {"eligible": {"type": "boolean"}, "reason": {"type": "string", "minLength": 1}}
+    },
+    "code_identity": {"$ref": "#/$defs/code_identity"},
+    "integrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_set_verified", "units_used", "clusters_used", "deterministic_resampling"],
+      "properties": {
+        "evidence_set_verified": {"const": true},
+        "units_used": {"$ref": "#/$defs/count"},
+        "clusters_used": {"$ref": "#/$defs/count"},
+        "deterministic_resampling": {"const": "sha256_counter_stream_rejection_sampled"}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+    "count": {"type": "integer", "minimum": 0},
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "unit_level": {"enum": ["telemetry_frame", "event", "segment_opportunity", "lap", "stint", "block", "session", "participant"]},
+    "ceiling": {"enum": ["descriptive", "associational", "intervention_associated", "causal_candidate"]},
+    "code_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1}, "git_commit": {"$ref": "#/$defs/commit"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]}, "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  }
+}

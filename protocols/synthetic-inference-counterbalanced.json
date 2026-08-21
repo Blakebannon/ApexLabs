@@ -1,0 +1,96 @@
+{
+  "schema_version": "apex-labs.experiment/v1",
+  "synthetic": true,
+  "experiment_id": "synthetic-inference-counterbalanced",
+  "version": "1.0.0",
+  "status": "preregistered",
+  "research_question": "Does a counterbalanced fabricated block assignment lift the structural interpretation ceiling to a causal candidate while still requiring review and replication?",
+  "hypothesis": "A within-driver, block-level baseline/intervention contrast over one verified segment can be built, analysed, and preserved deterministically.",
+  "null_hypothesis": "The declared contrast cannot be constructed comparably, or the result cannot be reproduced from the bound evidence.",
+  "independent_variable": {
+    "name": "block-condition",
+    "operational_definition": "Each contiguous fabricated block is labelled either the baseline condition or the intervention condition before any value is inspected.",
+    "levels": [
+      "synthetic-baseline",
+      "synthetic-intervention"
+    ]
+  },
+  "primary_dependent_metric": {
+    "metric_id": "segment-minimum-speed",
+    "definition": "Lowest speed observed inside the declared segment on one lap.",
+    "unit": "m/s",
+    "provenance_expectation": "derived"
+  },
+  "secondary_metrics": [
+    {
+      "metric_id": "segment-brake-release-distance",
+      "definition": "Along-lap distance at which brake pressure was last at or above the declared threshold inside the segment.",
+      "unit": "m",
+      "provenance_expectation": "derived"
+    }
+  ],
+  "controlled_variables": [
+    "Driver, simulator, car, track, and layout are held fixed across blocks",
+    "Segment definition and metric definition are frozen before construction",
+    "Normalization contract and adapter version are held fixed",
+    "Fingerprint-bound setup/configuration and product-build identities are held fixed",
+    "Block labelling is fixed before any value is inspected"
+  ],
+  "comparability_requirements": [
+    "Compare only within one verified segment geometry on one layout",
+    "Use within-driver pairing across blocks of the same participant",
+    "Do not pool blocks whose condition the protocol does not assign to a declared arm",
+    "Treat the block as the level at which the condition varies",
+    "Refuse pooling when setup/configuration or product-build identity differs or is unavailable"
+  ],
+  "identity_variation_plans": [],
+  "exclusion_criteria": [
+    "Records positioned outside the declared segment region",
+    "Records whose metric channel is absent or explicitly unavailable",
+    "Records belonging to a lap the source marked invalid",
+    "Records carrying an incident or off-track state",
+    "Records carrying a pit, replay, or discontinuity quality flag",
+    "Units below the declared minimum record count or concept-coverage ratio"
+  ],
+  "minimum_sample_requirements": {
+    "state": "declared",
+    "requirements": [
+      "At least 4 comparable within-driver pairs and at least 2 blocks for a mechanics-level contrast",
+      "At least 12 comparable within-driver pairs and at least 4 blocks before any confirmatory interpretation of a real corpus"
+    ],
+    "rationale": "These are deliberately modest fabricated-demonstration thresholds. They are software requirements for exercising the sufficiency gate, not a scientific power calculation, and no real campaign may inherit them."
+  },
+  "baseline_condition": "A fabricated block collected without the declared intervention.",
+  "intervention_conditions": [
+    "A fabricated block collected with the declared intervention applied for its full duration"
+  ],
+  "randomization_counterbalancing": "Block order is counterbalanced across the fabricated session using a frozen schedule, so order and condition are not confounded.",
+  "analysis_methods": [
+    "Report attrition and robust descriptive summaries before any contrast",
+    "Estimate the paired difference at the declared experimental unit",
+    "Resample whole blocks rather than nested laps when forming an interval",
+    "Run the declared leave-one-out and order-effect falsification checks",
+    "Apply the declared familywise correction across the declared comparison family"
+  ],
+  "predeclared_success_criteria": {
+    "state": "declared",
+    "criteria": [
+      "The evidence set is reproducible from its declared inputs",
+      "The paired estimate, its interval, and its sensitivity results are reproducible from the bound evidence"
+    ],
+    "falsification_criteria": [
+      "The direction of the paired estimate is carried by a single unit",
+      "The result cannot be reproduced from the bound evidence and code"
+    ]
+  },
+  "safety_constraints": [
+    "Use only fabricated data with no real driver, customer, simulator, or production source",
+    "Never infer racing performance from this protocol"
+  ],
+  "notes": [
+    "This protocol exists only to demonstrate that a counterbalanced design with predeclared criteria reaches the causal_candidate ceiling.",
+    "A causal candidate is still a candidate: it requires scientific review and independent replication, and synthetic evidence can never be promoted."
+  ],
+  "created_at": "2026-08-20T00:00:00Z",
+  "apex_labs_source_commit": "UNCOMMITTED"
+}

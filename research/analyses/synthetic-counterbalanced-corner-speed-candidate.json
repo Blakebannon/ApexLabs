@@ -1,0 +1,138 @@
+{
+  "analysis_id": "synthetic-counterbalanced-corner-speed-candidate",
+  "classification": "confirmatory",
+  "comparisons": [
+    {
+      "comparison_id": "corner-minimum-speed",
+      "directionality": "increase_is_improvement",
+      "effect_size": "median_paired_difference",
+      "method": "paired_difference",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.3,
+        "rationale": "A fabricated smallest difference worth noticing, fixed before any value was inspected so that a statistically distinguishable but trivial difference cannot be presented as meaningful.",
+        "source": "frozen_protocol",
+        "unit": "m/s"
+      },
+      "role": "primary",
+      "subset": null
+    },
+    {
+      "comparison_id": "corner-speed-consistency",
+      "directionality": "two_sided_no_preferred_direction",
+      "effect_size": "dispersion_ratio",
+      "method": "consistency",
+      "metric_id": "segment-minimum-speed",
+      "practical_threshold": {
+        "magnitude": 0.2,
+        "rationale": "A fabricated smallest change in dispersion worth noticing. Lower dispersion is reported, never asserted to be better.",
+        "source": "frozen_protocol",
+        "unit": "ratio"
+      },
+      "role": "secondary",
+      "subset": null
+    }
+  ],
+  "evidence_scope": "primary",
+  "evidence_set": {
+    "definition_sha256": "db3e55c7fcaa50ff439611846f26ead89cb2fbdd09ea94b6ede8c84001bf1d76",
+    "evidence_set_id": "synthetic-counterbalanced-corner-speed",
+    "version": "1.0.0"
+  },
+  "experimental_unit": "lap",
+  "falsification_tests": [
+    {
+      "description": "Recompute the estimate without each pair in turn and report whether the direction ever changes.",
+      "kind": "leave_one_unit_out",
+      "test_id": "leave-one-pair-out"
+    },
+    {
+      "description": "Recompute the estimate without each block in turn; a direction carried by one block is fragile.",
+      "kind": "leave_one_cluster_out",
+      "test_id": "leave-one-block-out"
+    },
+    {
+      "description": "Remove the single pair furthest from the median difference and report whether the direction and practical magnitude survive.",
+      "kind": "outlier_dependence",
+      "test_id": "outlier-dependence"
+    },
+    {
+      "description": "Split the ordered pairs in half and report whether both halves carry the direction.",
+      "kind": "order_effect_early_versus_late",
+      "test_id": "early-versus-late"
+    },
+    {
+      "description": "Estimate within each block separately and report whether the direction is isolated to one of them.",
+      "kind": "isolation_by_cluster",
+      "test_id": "isolation-by-block"
+    }
+  ],
+  "family": {
+    "alpha": 0.05,
+    "correction": "holm_bonferroni",
+    "family_id": "counterbalanced-corner-speed",
+    "members": [
+      "corner-minimum-speed",
+      "corner-speed-consistency"
+    ],
+    "role": "confirmatory_primary"
+  },
+  "grouping": {
+    "kind": "paired",
+    "unpaired_justification": null
+  },
+  "hypothesis": "Intervention-block laps show a higher segment minimum speed than paired baseline-block laps.",
+  "interpretation_ceiling": "causal_candidate",
+  "limitations": [
+    "A causal candidate is a candidate. It requires scientific review and independent replication, and fabricated evidence can never be promoted regardless of its ceiling.",
+    "Every value analysed here is fabricated; no racing conclusion follows from any number in this run.",
+    "A statistical result is not a finding, and a finding is not a product change."
+  ],
+  "missing_data_policy": "exclude_unit_and_report",
+  "null_hypothesis": "Intervention-block laps show no difference in segment minimum speed from paired baseline-block laps.",
+  "outlier_policy": "retain_all_and_report_sensitivity",
+  "primary_metric": {
+    "metric_id": "segment-minimum-speed",
+    "sha256": "8987ddbdfe09906981d9950bf44d80a41f9ed15d4a631a0345bf5d6324d56291",
+    "version": "1.0.0"
+  },
+  "protocol": {
+    "experiment_id": "synthetic-inference-counterbalanced",
+    "experiment_version": "1.0.0",
+    "freeze_id": "synthetic-inference-counterbalanced.freeze",
+    "freeze_sha256": "f7455332440e8cb7686ed517bf717b59516e3db42c980f7e1e8ed777f75035d4"
+  },
+  "replication_policy": {
+    "holdout_inspected": false,
+    "required_scope": "different_session",
+    "state": "required_before_validation"
+  },
+  "resampling_unit": "block",
+  "schema_version": "apex-labs.inferential-analysis-definition/v1",
+  "scientific_question": "Under a counterbalanced fabricated assignment, does the intervention block show a higher segment minimum speed?",
+  "secondary_metrics": [],
+  "sufficiency_rule": {
+    "minimum_experimental_units": 8,
+    "minimum_pairs": 4,
+    "minimum_participants": 1,
+    "minimum_resampling_clusters": 2,
+    "pilot_reference": null,
+    "source": "frozen_protocol",
+    "source_declarations": [
+      "At least 4 comparable within-driver pairs and at least 2 blocks for a mechanics-level contrast"
+    ],
+    "stopping_rule": "Analysis runs once over the complete preregistered block set. There is no interim look and no rule permitting collection to continue until the result becomes attractive."
+  },
+  "synthetic": true,
+  "title": "Counterbalanced paired contrast reaching the causal-candidate ceiling",
+  "uncertainty": {
+    "bootstrap_draws": 2000,
+    "coverage_level": 0.95,
+    "interval_semantics": "Percentile interval over a deterministic cluster bootstrap that resamples whole blocks. It describes sampling variability of this estimator on this evidence and is not a probability statement about the true effect.",
+    "method": "deterministic_cluster_percentile_bootstrap",
+    "minimum_resampling_clusters": 2,
+    "random_seed": 20260820,
+    "resampling_unit": "block"
+  },
+  "version": "1.0.0"
+}

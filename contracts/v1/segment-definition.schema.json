@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/segment-definition.schema.json",
+  "title": "Apex Labs segment definition v1",
+  "description": "A stable, reproducible track region used to make evidence comparable. Corner ordinals are never invented; two geometrically different regions never become comparable by sharing a label.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "segment_definition_id", "version", "title", "identity_source", "identity_confidence", "corner_identity", "applies_to", "region", "phase", "coverage_requirements", "overlap_policy", "boundary_sample_resolution", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.segment-definition/v1"},
+    "segment_definition_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "identity_source": {"enum": ["verified_track_catalog", "verified_corner_identity", "protocol_distance_range", "protocol_lap_fraction_range", "deterministic_phase"]},
+    "identity_confidence": {"enum": ["verified", "declared", "approximate"]},
+    "corner_identity": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["catalog_id", "catalog_version", "corner_reference", "catalog_sha256"],
+          "properties": {
+            "catalog_id": {"$ref": "#/$defs/id"},
+            "catalog_version": {"type": "string", "minLength": 1},
+            "corner_reference": {"type": "string", "minLength": 1},
+            "catalog_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      ]
+    },
+    "applies_to": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["simulator", "track", "layout", "geometry_fingerprint", "geometry_source"],
+        "properties": {
+          "simulator": {"type": "string", "minLength": 1},
+          "track": {"type": "string", "minLength": 1},
+          "layout": {"type": "string", "minLength": 1},
+          "geometry_fingerprint": {"$ref": "#/$defs/sha256"},
+          "geometry_source": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "region": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "start", "end", "wraparound", "lap_length_m", "boundary"],
+      "properties": {
+        "kind": {"enum": ["distance_range", "lap_fraction_range"]},
+        "start": {"type": "number", "minimum": 0},
+        "end": {"type": "number", "minimum": 0},
+        "wraparound": {"type": "boolean"},
+        "lap_length_m": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "boundary": {
+          "type": "object", "additionalProperties": false,
+          "required": ["start_inclusive", "end_inclusive"],
+          "properties": {"start_inclusive": {"type": "boolean"}, "end_inclusive": {"type": "boolean"}}
+        }
+      }
+    },
+    "phase": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["phase_id", "method_id", "definition", "deterministic", "concept", "comparison", "threshold"],
+          "properties": {
+            "phase_id": {"enum": ["braking", "turn_in", "apex_region", "exit"]},
+            "method_id": {"const": "apex-labs.threshold-phase/1.0.0"},
+            "definition": {"type": "string", "minLength": 1},
+            "deterministic": {"const": true},
+            "concept": {"type": "string", "minLength": 1},
+            "comparison": {"enum": ["at_or_above", "below"]},
+            "threshold": {"type": "number"}
+          }
+        }
+      ]
+    },
+    "coverage_requirements": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_concepts", "minimum_records_per_unit", "minimum_concept_coverage_ratio", "minimum_comparable_units"],
+      "properties": {
+        "required_concepts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "minimum_records_per_unit": {"type": "integer", "minimum": 1},
+        "minimum_concept_coverage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "minimum_comparable_units": {"type": "integer", "minimum": 1}
+      }
+    },
+    "overlap_policy": {"enum": ["disjoint_within_definition", "overlap_permitted_declared"]},
+    "boundary_sample_resolution": {"enum": ["half_open_start_inclusive", "closed_both_ends", "half_open_end_inclusive"]},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

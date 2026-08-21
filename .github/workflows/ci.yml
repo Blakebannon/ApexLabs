@@ -30,3 +30,7 @@ jobs:
         run: apex-labs repository-guard --root .
       - name: Reproduce synthetic mechanics twice
         run: apex-labs verify-synthetic-demo --root .
+      - name: Check every known-answer synthetic campaign
+        run: apex-labs campaign verify-all --root .
+      - name: Reproduce the whole synthetic scientific path twice
+        run: apex-labs verify-science-demo --root . --skip-campaigns

@@ -74,3 +74,29 @@ The finding file contains the analyst's proposed status and narrative. A separat
 LLMs may propose questions, code, critiques, or explanations. Deterministic/statistical results and their provenance determine evidence status. Any LLM-generated narrative must remain consistent with the machine-readable result.
 
 Synthetic fixtures and their “findings” are mechanics tests only. They are permanently ineligible for scientific or product approval and are not racing research.
+
+## Implemented scientific machinery
+
+The principles above are now enforced by code as well as stated in prose:
+
+- Comparability is declared before construction and guarded, not inferred. See
+  [comparable evidence](comparable-evidence.md).
+- Experimental and resampling units are declared and checked. Frames and single
+  events are never independent experimental units, and an interval must resample
+  at or above the level at which the compared factor varies.
+- Attrition is a continuous funnel that distinguishes preregistered exclusion,
+  unavailable evidence, structural invalidity, accepted limitations, and post-hoc
+  exclusion. A post-hoc exclusion forecloses confirmatory interpretation.
+- Effect size, uncertainty with stated semantics, practical threshold, raw and
+  adjusted statistical evidence, and sensitivity results are all reported
+  separately, and no one of them decides the outcome. See
+  [inferential analysis](inferential-analysis.md).
+- Multiple-comparison families are fixed in the analysis definition and can be
+  neither extended nor trimmed after results are known.
+- Interpretation ceilings are derived from the frozen protocol, and a stronger
+  requested interpretation is refused before anything is computed.
+- Hypotheses and findings move through gated, append-only lifecycles. See
+  [hypothesis and finding lifecycle](hypothesis-and-finding-lifecycle.md).
+
+What remains before a real campaign is listed in
+[L6 readiness](l6-readiness.md).

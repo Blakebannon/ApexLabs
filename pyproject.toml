@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68", "wheel>=0.41"]
+requires = ["setuptools>=77", "wheel>=0.41"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "apex-labs"
-version = "0.2.0"
+version = "0.3.0"
 description = "Reproducible motorsport-performance and telemetry research infrastructure"
 readme = "README.md"
 requires-python = ">=3.11"

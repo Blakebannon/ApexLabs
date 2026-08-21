@@ -163,3 +163,83 @@ def base_record_stream() -> list[dict[str, Any]]:
             },
         },
     ]
+
+
+CAMPAIGN_DIR = ROOT / "research" / "campaigns"
+FROZEN_PROTOCOL_DIR = CAMPAIGN_DIR / "frozen"
+SEGMENT_DIR = ROOT / "research" / "segments"
+EVIDENCE_DEFINITION_DIR = ROOT / "research" / "evidence-sets"
+ANALYSIS_DIR = ROOT / "research" / "analyses"
+METRIC_DIR = ROOT / "research" / "metrics"
+DEMO_CAMPAIGN = "clear-paired-improvement"
+BUILT_AT = "2026-08-20T00:00:00Z"
+
+
+def campaign_spec_path(campaign_id: str = DEMO_CAMPAIGN) -> Path:
+    return CAMPAIGN_DIR / f"{campaign_id}.campaign.json"
+
+
+def prepared_campaign(workspace: Path, campaign_id: str = DEMO_CAMPAIGN) -> dict[str, Any]:
+    """Materialize, ingest, and build one campaign's evidence in a workspace."""
+    from apex_labs.campaigns import campaign_paths, materialize
+    from apex_labs.evidence import build_evidence_set
+
+    spec = read_json(campaign_spec_path(campaign_id))
+    paths = campaign_paths(spec, ROOT)
+    dataset_dirs = materialize(spec, workspace, ROOT)
+    evidence_dir = workspace / "evidence"
+    evidence = build_evidence_set(
+        paths["evidence_definition"],
+        paths["segment"],
+        paths["protocol_freeze"],
+        paths["metric"],
+        dataset_dirs,
+        evidence_dir,
+        built_at=BUILT_AT,
+        project_root=ROOT,
+    )
+    return {
+        "spec": spec,
+        "paths": paths,
+        "dataset_dirs": dataset_dirs,
+        "evidence_dir": evidence_dir,
+        "evidence": evidence,
+    }
+
+
+def prepared_run(prepared: dict[str, Any], workspace: Path, run_id: str = "support-run") -> dict[str, Any]:
+    from apex_labs.analysis import run_inferential_analysis
+
+    run_dir = workspace / run_id
+    run = run_inferential_analysis(
+        prepared["paths"]["analysis_definition"],
+        prepared["evidence_dir"],
+        prepared["paths"]["protocol_freeze"],
+        run_dir,
+        run_id=run_id,
+        created_at=BUILT_AT,
+        project_root=ROOT,
+    )
+    return {"run_dir": run_dir, "run": run}
+
+
+def synthetic_hypothesis(hypothesis_id: str = "support-hypothesis") -> dict[str, Any]:
+    return {
+        "schema_version": "apex-labs.hypothesis/v1",
+        "hypothesis_id": hypothesis_id,
+        "version": "1.0.0",
+        "created_at": BUILT_AT,
+        "synthetic": True,
+        "title": "Fabricated support hypothesis",
+        "statement": "Fabricated intervention laps show a higher segment minimum speed.",
+        "null_statement": "Fabricated intervention laps show no difference in segment minimum speed.",
+        "scientific_question": "Does the lifecycle behave as declared?",
+        "scope": "session_specific",
+        "generation": {
+            "source": "deterministic_algorithm",
+            "actor": "apex-labs.tests",
+            "detail": "Written by the test suite to exercise the lifecycle.",
+            "is_evidence": False,
+        },
+        "hypothesis_sha256": "0" * 64,
+    }

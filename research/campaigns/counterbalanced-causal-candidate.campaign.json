@@ -1,0 +1,258 @@
+{
+  "analysis_definition": "synthetic-counterbalanced-corner-speed-candidate",
+  "campaign_id": "counterbalanced-causal-candidate",
+  "datasets": [
+    {
+      "block_id": "block-01",
+      "condition_id": "synthetic-baseline",
+      "dataset_id": "ccc-b01",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.0
+        },
+        {
+          "lap": 2,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 3,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.5
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.0
+        }
+      ],
+      "session_id": "session-01"
+    },
+    {
+      "block_id": "block-02",
+      "condition_id": "synthetic-intervention",
+      "dataset_id": "ccc-b02",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 2,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 3,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.75
+        }
+      ],
+      "session_id": "session-01"
+    },
+    {
+      "block_id": "block-03",
+      "condition_id": "synthetic-baseline",
+      "dataset_id": "ccc-b03",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.0
+        },
+        {
+          "lap": 2,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 3,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.5
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.0
+        }
+      ],
+      "session_id": "session-02"
+    },
+    {
+      "block_id": "block-04",
+      "condition_id": "synthetic-intervention",
+      "dataset_id": "ccc-b04",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 2,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 3,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.75
+        }
+      ],
+      "session_id": "session-02"
+    },
+    {
+      "block_id": "block-05",
+      "condition_id": "synthetic-baseline",
+      "dataset_id": "ccc-b05",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.0
+        },
+        {
+          "lap": 2,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 3,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.5
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.0
+        }
+      ],
+      "session_id": "session-03"
+    },
+    {
+      "block_id": "block-06",
+      "condition_id": "synthetic-intervention",
+      "dataset_id": "ccc-b06",
+      "laps": [
+        {
+          "lap": 1,
+          "speed_offset": 0.5
+        },
+        {
+          "lap": 2,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 3,
+          "speed_offset": 0.25
+        },
+        {
+          "lap": 4,
+          "speed_offset": 1.0
+        },
+        {
+          "lap": 5,
+          "speed_offset": -0.25
+        },
+        {
+          "lap": 6,
+          "speed_offset": 0.75
+        }
+      ],
+      "session_id": "session-03"
+    }
+  ],
+  "evidence_definition": "synthetic-counterbalanced-corner-speed",
+  "expectations": {
+    "product_recommendation": "none",
+    "analysis_state": "computed",
+    "effective_ceiling": "causal_candidate",
+    "evidence": {
+      "pairs": 18,
+      "structural_ceiling": "causal_candidate"
+    },
+    "notes": "A causal candidate is a candidate. It requires review and replication, and fabricated evidence can never be promoted.",
+    "primary": {
+      "estimate": 0.5
+    },
+    "scientific_eligibility": false
+  },
+  "metric": "segment-minimum-speed",
+  "outcome": "analysed",
+  "profile": {
+    "base_brake": [
+      0.9,
+      0.8,
+      0.4,
+      0.0,
+      0.0
+    ],
+    "base_speed_mps": [
+      45.0,
+      40.0,
+      34.0,
+      36.0,
+      42.0
+    ],
+    "outside_after_m": [
+      250.0,
+      400.0
+    ],
+    "outside_before_m": [
+      10.0,
+      50.0
+    ],
+    "segment_distances_m": [
+      100.0,
+      120.0,
+      140.0,
+      160.0,
+      180.0
+    ]
+  },
+  "protocol_freeze": "synthetic-inference-counterbalanced",
+  "purpose": "Demonstrates the strongest ceiling the software will grant, and that the ceiling still carries review and replication requirements and cannot promote fabricated evidence.",
+  "segment": "synthetic-corner-a",
+  "session": {
+    "car": "synthetic-car-a",
+    "driver_id": "synthetic-driver-001",
+    "layout": "synthetic-layout-a",
+    "simulator": "synthetic-simulator",
+    "track": "synthetic-track-a"
+  },
+  "synthetic": true,
+  "title": "A counterbalanced fabricated design that reaches the causal-candidate ceiling"
+}

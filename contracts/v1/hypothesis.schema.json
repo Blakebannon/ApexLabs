@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/hypothesis.schema.json",
+  "title": "Apex Labs hypothesis v1",
+  "description": "The immutable head of an append-only hypothesis record. Generation source is recorded; an LLM-generated hypothesis is a proposal, never evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "hypothesis_id", "version", "created_at", "synthetic", "title", "statement", "null_statement", "scientific_question", "scope", "generation", "hypothesis_sha256"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.hypothesis/v1"},
+    "hypothesis_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "synthetic": {"type": "boolean"},
+    "title": {"type": "string", "minLength": 1},
+    "statement": {"type": "string", "minLength": 1},
+    "null_statement": {"type": "string", "minLength": 1},
+    "scientific_question": {"type": "string", "minLength": 1},
+    "scope": {"enum": ["driver_specific", "car_specific", "track_specific", "corner_archetype_specific", "simulator_specific", "session_specific", "algorithmic", "population_hypothesis", "population_supported"]},
+    "generation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "actor", "detail", "is_evidence"],
+      "properties": {
+        "source": {"enum": ["deterministic_algorithm", "human", "llm"]},
+        "actor": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1},
+        "is_evidence": {"const": false}
+      }
+    },
+    "hypothesis_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
