@@ -46,11 +46,15 @@ from apex_labs.schemas.versions import (
 )
 
 ADAPTER_ID = "apex-research-recorder"
-ADAPTER_VERSION = "1.0.0"
+ADAPTER_VERSION = "1.1.0"
 PROFILE_ID = "apex-labs-research-recorder-profile/1.0.0"
 PROFILE_SHA256 = "20b547de4ef89d8b4a33bd8eb1bed282268b4b8e0b5f521108279e13961b800f"
 BASE_SCHEMA_SHA256 = "5432cf9034b72bc8dc9c99c45c76dac07e320036460b0a7e4092c029bbf698b6"
 COMPLETE_VERSION = "apex-research-complete/v1"
+COLD_PRESSURE_DERIVATION = (
+    "garage-set cold inflation pressure from {source} (kPa) multiplied by 1000; "
+    "this is setup state, not live running tyre pressure, which iRacing does not expose"
+)
 MAX_SAMPLES = 5_000_000
 MAX_CSV_FIELD_BYTES = 64 * 1024
 SENSITIVE_TEXT = re.compile(
@@ -407,7 +411,14 @@ def validate_research_bundle(root: Path, collection_record_path: Path | None = N
         return result
 
 
-def _qualified(value: float | int | bool | None, concept: str, source: str, *, scale: float = 1.0) -> dict[str, Any]:
+def _qualified(
+    value: float | int | bool | None,
+    concept: str,
+    source: str,
+    *,
+    scale: float = 1.0,
+    derivation: str | None = None,
+) -> dict[str, Any]:
     if value is None:
         return {"value": None, "provenance": "unavailable", "unit": CANONICAL_UNITS[concept]}
     converted = (
@@ -426,7 +437,7 @@ def _qualified(value: float | int | bool | None, concept: str, source: str, *, s
         "value": converted,
         "provenance": "derived",
         "unit": CANONICAL_UNITS[concept],
-        "derivation": f"{source} multiplied by {scale:g}",
+        "derivation": derivation or f"{source} multiplied by {scale:g}",
     }
 
 
@@ -451,7 +462,7 @@ def _fields(row: dict[str, str], observed_origin: datetime) -> dict[str, Any]:
         "lap_time": _qualified(_number(row["lap_time_s"], "lap_time_s"), "lap_time", "LapCurrentLapTime"),
         "lap_fraction": _qualified(_number(row["lap_distance_fraction"], "lap_distance_fraction"), "lap_fraction", "LapDistPct"),
         "speed": _qualified(_number(row["speed_mps"], "speed_mps"), "speed", "Speed"),
-        "longitudinal_acceleration": _qualified(_number(row["longitudinal_acceleration_mps2"], "longitudinal_acceleration_mps2"), "longitudinal_acceleration", "LonAccel"),
+        "longitudinal_acceleration": _qualified(_number(row["longitudinal_acceleration_mps2"], "longitudinal_acceleration_mps2"), "longitudinal_acceleration", "LongAccel"),
         "lateral_acceleration": _qualified(_number(row["lateral_acceleration_mps2"], "lateral_acceleration_mps2"), "lateral_acceleration", "LatAccel"),
         "yaw_rate": _qualified(_number(row["yaw_rate_radps"], "yaw_rate_radps"), "yaw_rate", "YawRate"),
         "steering_angle": _qualified(_number(row["steering_angle_rad"], "steering_angle_rad"), "steering_angle", "SteeringWheelAngle"),
@@ -463,10 +474,26 @@ def _fields(row: dict[str, str], observed_origin: datetime) -> dict[str, Any]:
         "tire_temperature_front_right": _qualified(_number(row["tire_temp_rf_c"], "tire_temp_rf_c"), "tire_temperature_front_right", "RFtempCM"),
         "tire_temperature_rear_left": _qualified(_number(row["tire_temp_lr_c"], "tire_temp_lr_c"), "tire_temperature_rear_left", "LRtempCM"),
         "tire_temperature_rear_right": _qualified(_number(row["tire_temp_rr_c"], "tire_temp_rr_c"), "tire_temperature_rear_right", "RRtempCM"),
-        "tire_pressure_front_left": _qualified(_number(row["tire_pressure_lf_kpa"], "tire_pressure_lf_kpa"), "tire_pressure_front_left", "LFcoldPressure", scale=1000.0),
-        "tire_pressure_front_right": _qualified(_number(row["tire_pressure_rf_kpa"], "tire_pressure_rf_kpa"), "tire_pressure_front_right", "RFcoldPressure", scale=1000.0),
-        "tire_pressure_rear_left": _qualified(_number(row["tire_pressure_lr_kpa"], "tire_pressure_lr_kpa"), "tire_pressure_rear_left", "LRcoldPressure", scale=1000.0),
-        "tire_pressure_rear_right": _qualified(_number(row["tire_pressure_rr_kpa"], "tire_pressure_rr_kpa"), "tire_pressure_rear_right", "RRcoldPressure", scale=1000.0),
+        "tire_pressure_front_left": _qualified(
+            _number(row["tire_pressure_lf_kpa"], "tire_pressure_lf_kpa"),
+            "tire_pressure_front_left", "LFcoldPressure", scale=1000.0,
+            derivation='garage-set cold inflation pressure from LFcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+        ),
+        "tire_pressure_front_right": _qualified(
+            _number(row["tire_pressure_rf_kpa"], "tire_pressure_rf_kpa"),
+            "tire_pressure_front_right", "RFcoldPressure", scale=1000.0,
+            derivation='garage-set cold inflation pressure from RFcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+        ),
+        "tire_pressure_rear_left": _qualified(
+            _number(row["tire_pressure_lr_kpa"], "tire_pressure_lr_kpa"),
+            "tire_pressure_rear_left", "LRcoldPressure", scale=1000.0,
+            derivation='garage-set cold inflation pressure from LRcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+        ),
+        "tire_pressure_rear_right": _qualified(
+            _number(row["tire_pressure_rr_kpa"], "tire_pressure_rr_kpa"),
+            "tire_pressure_rear_right", "RRcoldPressure", scale=1000.0,
+            derivation='garage-set cold inflation pressure from RRcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+        ),
         "session_state": _qualified(_integer(row["session_state"], "session_state"), "session_state", "SessionState"),
         "incident_state": _qualified(_integer(row["incident_count"], "incident_count"), "incident_state", "PlayerCarMyIncidentCount"),
     }
@@ -480,7 +507,7 @@ def _capabilities(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "timestamp": ("timestamp", "SessionTime"), "brake": ("brake", "Brake"),
         "throttle": ("throttle", "Throttle"), "steering_angle": ("steering_angle", "SteeringWheelAngle"),
         "speed": ("speed", "Speed"), "gear": ("gear", "Gear"), "rpm": ("rpm", "RPM"),
-        "longitudinal_acceleration": ("longitudinal_acceleration", "LonAccel"),
+        "longitudinal_acceleration": ("longitudinal_acceleration", "LongAccel"),
         "lateral_acceleration": ("lateral_acceleration", "LatAccel"), "yaw_rate": ("yaw_rate", "YawRate"),
     }
     for channel, (concept, source) in mapping.items():
@@ -496,7 +523,10 @@ def _capabilities(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "tire_pressure_front_left": "LFcoldPressure", "tire_pressure_front_right": "RFcoldPressure",
             "tire_pressure_rear_left": "LRcoldPressure", "tire_pressure_rear_right": "RRcoldPressure",
         }.items():
-            capabilities[concept] = {"provenance": "derived", "unit": CANONICAL_UNITS[concept], "derivation": f"{source} kPa multiplied by 1000"}
+            capabilities[concept] = {
+                "provenance": "derived", "unit": CANONICAL_UNITS[concept],
+                "derivation": COLD_PRESSURE_DERIVATION.format(source=source),
+            }
     return dict(sorted(capabilities.items()))
 
 

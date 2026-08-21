@@ -31,3 +31,16 @@ not proof that Labs reviewed or froze it.
 
 The direction is strictly product bundle to Labs ingestion. This command has no product-repo
 locator, writeback, PR, configuration, deployment, uploader, or finding-promotion capability.
+
+Source-channel attribution is checked against a committed simulator capability
+snapshot, so the adapter cannot name a variable the simulator does not expose.
+That guard corrected `longitudinal_acceleration`, previously attributed to
+`LonAccel`; the iRacing variable is `LongAccel`. Because that attribution is part
+of normalized record content, the adapter version moved to `1.1.0`.
+
+Tyre pressure is derived from `LFcoldPressure` and its siblings, which are
+garage-set cold pressures. The derivation says so explicitly: iRacing exposes no
+hot or running tyre pressure, so live inflation pressure is unavailable and is
+never inferred from the cold value.
+
+See [iracing-capability-reconciliation.md](iracing-capability-reconciliation.md).

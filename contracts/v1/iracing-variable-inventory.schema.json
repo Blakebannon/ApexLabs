@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/iracing-variable-inventory.schema.json",
+  "title": "Sanitized iRacing variable-table inventory",
+  "description": "Simulator capability metadata captured from a live iRacing variable table. Carries no telemetry values and no participant identifiers. It is a point-in-time snapshot of one simulator build in one session, never eternal simulator truth, and it supports no scientific finding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "values_sampled", "direct_identifiers_included", "variables"],
+  "properties": {
+    "schema_version": {"const": "apex-iracing-variable-inventory/1.0.0"},
+    "values_sampled": {
+      "const": false,
+      "description": "Apex Labs accepts metadata-only inventories. An inventory that sampled values is refused, not filtered."
+    },
+    "direct_identifiers_included": {
+      "const": false,
+      "description": "An inventory declaring direct identifiers is refused outright."
+    },
+    "variables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "sdk_type", "count", "unit", "description"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "sdk_type": {"enum": ["Bool", "Int", "BitField", "Float", "Double"]},
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Array element count. 1 is a scalar; 6 marks a 360 Hz sub-sample channel; 72 marks a per-car array."
+          },
+          "unit": {
+            "type": ["string", "null"],
+            "description": "SDK unit token. A value beginning with 'irsdk_' names an enumeration or bitfield whose value dictionary this inventory does NOT carry."
+          },
+          "description": {"type": "string"}
+        }
+      }
+    }
+  }
+}

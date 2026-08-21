@@ -31,3 +31,13 @@ plan id and cannot use free text as a waiver. Synthetic conditions in the
 finding, validation, review-package, and product-export schemas prohibit product
 review and every recommendation state except `none` or `do_not_implement` as
 applicable. Runtime cross-file gates preserve that restriction transitively.
+
+`iracing-variable-inventory` describes a sanitized simulator variable table:
+name, SDK type, array count, unit token, and description, with `values_sampled`
+and `direct_identifiers_included` both required to be false. It is simulator
+capability metadata and never telemetry. A snapshot proves what one build
+exposed in one session, so it is dated and hash-bound rather than treated as
+standing simulator truth, and it supports no scientific finding because no
+values were sampled. A unit token beginning `irsdk_` identifies an enumeration
+whose value dictionary the inventory does **not** carry, which is why Labs
+preserves such values verbatim instead of decoding them.

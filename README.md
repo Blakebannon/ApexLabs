@@ -16,6 +16,7 @@ It is not the Apex Sim Coach application, a live coach, a notebook dumping groun
 - Deterministic atomic product exports carrying findings and validation artifacts.
 - A Git-visible repository guard for raw data, privacy, credential, binary, and fixture-policy risks. It is heuristic and does not replace human review or a dedicated secret scanner.
 - Declared, deterministic, descriptive-only analysis runs (record inventory, channel availability/provenance, robust value summaries, per-lap event yield) whose artifacts bind dataset fingerprint, definition, metric, and code identity and are independently reproducible.
+- Simulator capability reconciliation: a dated, hash-bound sanitized variable-table snapshot, an evidence-backed channel capability map, and a rehearsal/campaign readiness gate. Every claim is re-checked against the snapshot, so Labs cannot name a simulator variable that does not exist. A snapshot proves capability, never driving.
 - A synthetic mechanics demonstration that produces no racing conclusion.
 
 ## Comparable evidence, inference, and the finding lifecycle

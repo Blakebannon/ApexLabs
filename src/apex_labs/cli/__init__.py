@@ -21,6 +21,12 @@ from apex_labs.campaigns import (
     run_all_campaigns,
     run_campaign,
 )
+from apex_labs.capability import (
+    build_capability_map,
+    load_variable_inventory,
+    rehearsal_readiness,
+    validate_variable_inventory,
+)
 from apex_labs.demo import verify_synthetic_demo
 from apex_labs.evidence import build_evidence_set, verify_evidence_set
 from apex_labs.findings.review_package import build_review_package, verify_review_package
@@ -96,6 +102,7 @@ ALL_VALIDATORS = {
     "hypothesis": validate_hypothesis,
     "hypothesis-transition": validate_hypothesis_transition,
     "finding-review-package": validate_finding_review_package,
+    "iracing-variable-inventory": validate_variable_inventory,
 }
 
 
@@ -361,6 +368,24 @@ def _parser() -> argparse.ArgumentParser:
     science.add_argument(
         "--skip-campaigns", action="store_true", help="Skip the known-answer campaign suite"
     )
+
+    capability = commands.add_parser(
+        "capability",
+        help="Reconcile a sanitized simulator variable inventory against the recorder profile",
+    )
+    capability_commands = capability.add_subparsers(dest="capability_command", required=True)
+    capability_inspect = capability_commands.add_parser(
+        "inspect", help="Summarize a sanitized iRacing variable inventory"
+    )
+    capability_inspect.add_argument("inventory", type=Path)
+    capability_map = capability_commands.add_parser(
+        "map", help="Build the evidence-backed channel capability map"
+    )
+    capability_map.add_argument("inventory", type=Path)
+    capability_readiness = capability_commands.add_parser(
+        "readiness", help="Report rehearsal and campaign channel readiness"
+    )
+    capability_readiness.add_argument("inventory", type=Path)
 
     apex_research = commands.add_parser(
         "apex-research", help="Inspect, validate, or normalize a completed local Research Recorder bundle"
@@ -679,6 +704,14 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         return result
     if args.command == "verify-science-demo":
         return verify_science_demo(args.root, run_campaigns=not args.skip_campaigns)
+    if args.command == "capability":
+        inventory = load_variable_inventory(args.inventory)
+        if args.capability_command == "inspect":
+            return inventory.summary()
+        if args.capability_command == "map":
+            return build_capability_map(inventory)
+        return rehearsal_readiness(inventory)
+
     if args.command == "apex-research":
         if args.apex_research_command == "inspect":
             return inspect_research_bundle(args.bundle)
