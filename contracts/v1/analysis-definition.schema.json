@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/analysis-definition.schema.json",
+  "title": "Apex Labs analysis definition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "analysis_id", "version", "title", "purpose", "classification", "computations", "limitations"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.analysis-definition/v1"},
+    "analysis_id": {"$ref": "#/$defs/id"},
+    "version": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "classification": {"const": "descriptive_observational"},
+    "computations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/computation"}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "record_type": {"enum": ["session", "lap", "segment", "telemetry_sample", "distance_bin", "driver_input_event"]},
+    "numeric_concept": {"enum": ["timestamp", "lap_time", "lap_distance", "lap_fraction", "track_position_x", "track_position_y", "track_position_z", "speed", "longitudinal_acceleration", "lateral_acceleration", "vertical_acceleration", "yaw_rate", "steering_angle", "steering_input", "throttle", "brake", "clutch", "gear", "rpm", "wheel_speed_front_left", "wheel_speed_front_right", "wheel_speed_rear_left", "wheel_speed_rear_right", "tire_pressure_front_left", "tire_pressure_front_right", "tire_pressure_rear_left", "tire_pressure_rear_right", "tire_temperature_front_left", "tire_temperature_front_right", "tire_temperature_rear_left", "tire_temperature_rear_right", "fuel_mass", "air_temperature", "track_temperature", "track_wetness"]},
+    "computation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "record_inventory"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "concept_availability"},
+            "record_type": {"anyOf": [{"$ref": "#/$defs/record_type"}, {"type": "null"}]}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type", "concept", "group_by"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "descriptive_summary"},
+            "record_type": {"$ref": "#/$defs/record_type"},
+            "concept": {"$ref": "#/$defs/numeric_concept"},
+            "group_by": {"enum": ["dataset", "lap"]}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "event_yield"},
+            "record_type": {"enum": ["segment", "telemetry_sample", "distance_bin", "driver_input_event"]}
+          }
+        }
+      ]
+    }
+  }
+}

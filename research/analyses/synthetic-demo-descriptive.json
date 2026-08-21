@@ -1,0 +1,42 @@
+{
+  "schema_version": "apex-labs.analysis-definition/v1",
+  "analysis_id": "synthetic-demo-descriptive",
+  "version": "1.0.0",
+  "title": "Synthetic mechanics descriptive demonstration",
+  "purpose": "Demonstrates the deterministic descriptive analysis path over the synthetic demo fixture by quantifying record inventory, channel availability and provenance, value distributions, and per-lap sample yield. It exists to exercise plumbing and to estimate event yield and attrition mechanics; it makes no racing-performance claim.",
+  "classification": "descriptive_observational",
+  "computations": [
+    {
+      "computation_id": "inventory",
+      "kind": "record_inventory"
+    },
+    {
+      "computation_id": "sample-availability",
+      "kind": "concept_availability",
+      "record_type": "telemetry_sample"
+    },
+    {
+      "computation_id": "brake-distribution",
+      "kind": "descriptive_summary",
+      "record_type": "telemetry_sample",
+      "concept": "brake",
+      "group_by": "dataset"
+    },
+    {
+      "computation_id": "speed-per-lap",
+      "kind": "descriptive_summary",
+      "record_type": "telemetry_sample",
+      "concept": "speed",
+      "group_by": "lap"
+    },
+    {
+      "computation_id": "sample-yield",
+      "kind": "event_yield",
+      "record_type": "telemetry_sample"
+    }
+  ],
+  "limitations": [
+    "Descriptive summaries carry no hypothesis test, interval, or confidence claim and cannot support any finding status stronger than the evidence gates allow.",
+    "Synthetic demonstration data cannot support any racing-performance conclusion."
+  ]
+}

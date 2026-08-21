@@ -50,6 +50,14 @@ NORMALIZED_CONCEPTS = {
     "track_wetness",
 }
 
+# Value typing shared by record validation and descriptive analysis.
+BOOLEAN_CONCEPTS = {"lap_valid", "abs_active", "traction_control_active", "off_track_state"}
+INTEGER_CONCEPTS = {"gear"}
+TEXT_CONCEPTS = {"session_state", "incident_state"}
+
+# Concepts whose values a descriptive numeric summary may legitimately aggregate.
+NUMERIC_SUMMARY_CONCEPTS = NORMALIZED_CONCEPTS - BOOLEAN_CONCEPTS - TEXT_CONCEPTS
+
 RECORD_TYPES = {
     "session",
     "lap",

@@ -30,11 +30,12 @@ There is deliberately no code path from an Apex Labs finding into production sou
 - `provenance`: source snapshots, path-independent code/schema identity, source fingerprints, and normalized content fingerprints.
 - `experiments`: immutable protocol freeze/verification and append-only amendment artifacts.
 - `findings`: cross-file binding between analyst findings and evidence/review validation artifacts.
+- `analysis`: declared, deterministic, descriptive-only computations over verified normalized datasets, emitting reproducible run artifacts.
 - `exports`: locked, failure-atomic deterministic package generation and internal-consistency verification.
 - `repository_guard`: heuristic Git-visible privacy/raw-data/secret boundary used locally and in CI.
 - `cli`: thin orchestration; it contains no scientific logic.
 
-Statistics and racing-analysis packages do not exist yet because Milestone 0 has no real analysis to implement. They should be added only with a concrete preregistered method, tests, and dependency justification.
+The `analysis` package implements only declared descriptive computations (inventories, availability/provenance counts, robust summaries, event yield) with the standard library. Inferential statistics and racing-analysis methods still do not exist because no real preregistered question exists yet. They should be added only with a concrete preregistered method, tests, and dependency justification.
 
 ## Storage model
 

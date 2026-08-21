@@ -11,11 +11,14 @@ from typing import Any, Callable
 from apex_labs.errors import ContractValidationError, UnsupportedVersionError
 from apex_labs.io import canonical_json_bytes, validate_contract_path
 from apex_labs.normalization.concepts import (
+    BOOLEAN_CONCEPTS,
     CANONICAL_CONVENTIONS,
     CANONICAL_UNITS,
+    INTEGER_CONCEPTS,
     NORMALIZED_CONCEPTS,
     PROVENANCE_KINDS,
     RECORD_TYPES,
+    TEXT_CONCEPTS,
 )
 from apex_labs.schemas import versions
 
@@ -35,9 +38,9 @@ _SCOPES = {
     "population_supported",
 }
 _LIMITED_SCOPES = _SCOPES - {"algorithmic", "population_supported"}
-_BOOLEAN_CONCEPTS = {"lap_valid", "abs_active", "traction_control_active", "off_track_state"}
-_INTEGER_CONCEPTS = {"gear"}
-_TEXT_CONCEPTS = {"session_state", "incident_state"}
+_BOOLEAN_CONCEPTS = BOOLEAN_CONCEPTS
+_INTEGER_CONCEPTS = INTEGER_CONCEPTS
+_TEXT_CONCEPTS = TEXT_CONCEPTS
 
 
 def _fail(path: str, message: str) -> None:

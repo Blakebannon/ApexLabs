@@ -20,6 +20,7 @@ from _support import (
 from apex_labs.errors import ContractValidationError, UnsupportedVersionError
 from apex_labs.io import parse_json_bytes, read_json
 from apex_labs.schemas import (
+    validate_analysis_definition,
     validate_dataset_manifest,
     validate_experiment,
     validate_export_definition,
@@ -83,6 +84,11 @@ class ContractConformanceTests(unittest.TestCase):
             ("finding", validate_finding, FINDING),
             ("finding-validation", validate_finding_validation, VALIDATION),
             ("product-export-definition", validate_export_definition, EXPORT_DEFINITION),
+            (
+                "analysis-definition",
+                validate_analysis_definition,
+                ROOT / "research" / "analyses" / "synthetic-demo-descriptive.json",
+            ),
             (
                 "apex-session-bundle-manifest",
                 validate_apex_session_manifest,

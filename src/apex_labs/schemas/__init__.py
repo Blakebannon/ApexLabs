@@ -17,6 +17,10 @@ from apex_labs.schemas.research_validation import (
     validate_protocol_amendment,
     validate_protocol_freeze,
 )
+from apex_labs.schemas.analysis_validation import (
+    validate_analysis_definition,
+    validate_analysis_run,
+)
 from apex_labs.schemas.apex_session_validation import (
     validate_apex_session_manifest,
     validate_collection_record,
@@ -27,6 +31,8 @@ from apex_labs.schemas.apex_session_validation import (
 )
 
 __all__ = [
+    "validate_analysis_definition",
+    "validate_analysis_run",
     "validate_dataset_manifest",
     "validate_experiment",
     "validate_export_definition",

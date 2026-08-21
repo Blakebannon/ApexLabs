@@ -18,7 +18,10 @@ PRODUCT_ANNOTATIONS = "apex-labs.product-annotations/v1"
 APEX_RESEARCH_EXPORT = "apex-research-session-export/1.0.0"
 APEX_SESSION_EXPORT = "apex-session-export/1.0.0"
 ADAPTER_CONFORMANCE = "apex-labs.adapter-conformance/v1"
+ANALYSIS_DEFINITION = "apex-labs.analysis-definition/v1"
+ANALYSIS_RUN = "apex-labs.analysis-run/v1"
 NORMALIZATION_VERSION = "1.2.0"
+DESCRIPTIVE_METHOD_ID = "apex-labs.descriptive-statistics/1.0.0"
 
 SUPPORTED_CONTRACTS = {
     DATASET_MANIFEST,
@@ -38,4 +41,6 @@ SUPPORTED_CONTRACTS = {
     PRODUCT_ANNOTATIONS,
     APEX_RESEARCH_EXPORT,
     ADAPTER_CONFORMANCE,
+    ANALYSIS_DEFINITION,
+    ANALYSIS_RUN,
 }

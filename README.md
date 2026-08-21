@@ -15,9 +15,10 @@ It is not the Apex Sim Coach application, a live coach, a notebook dumping groun
 - Independent finding-validation artifacts separating analyst claims, computed evidence, structural/reproducibility gates, scientific review, and product review.
 - Deterministic atomic product exports carrying findings and validation artifacts.
 - A Git-visible repository guard for raw data, privacy, credential, binary, and fixture-policy risks. It is heuristic and does not replace human review or a dedicated secret scanner.
+- Declared, deterministic, descriptive-only analysis runs (record inventory, channel availability/provenance, robust value summaries, per-lap event yield) whose artifacts bind dataset fingerprint, definition, metric, and code identity and are independently reproducible.
 - A synthetic mechanics demonstration that produces no racing conclusion.
 
-No racing-performance analysis is implemented in this milestone.
+No inferential or racing-performance analysis is implemented in this milestone; analysis runs are descriptive summaries, never scientific evidence.
 
 ## Quick start
 
@@ -39,6 +40,8 @@ Without installing, set `PYTHONPATH=src` and run `python -m apex_labs`.
 apex-labs inspect tests/fixtures/synthetic_demo/dataset.manifest.json
 apex-labs ingest tests/fixtures/synthetic_demo/dataset.manifest.json --output .apex-labs/demo-normalized
 apex-labs inspect .apex-labs/demo-normalized/manifest.json
+apex-labs analyze research/analyses/synthetic-demo-descriptive.json --dataset .apex-labs/demo-normalized --run-id demo-run-001 --created-at 2026-08-20T00:00:00Z --output .apex-labs/demo-analysis
+apex-labs verify-analysis .apex-labs/demo-analysis --dataset .apex-labs/demo-normalized
 apex-labs experiment validate protocols/first-controlled-campaign.json
 apex-labs experiment verify-freeze tests/fixtures/synthetic_demo/protocol.freeze.json
 apex-labs findings validate research/findings
@@ -66,7 +69,7 @@ apex-labs apex-session validate "D:\external-data\session.zip" --collection-reco
 9. Export selected findings and validation state as an evidence package.
 10. Require human and production-engineering review in the separate Apex Sim Coach repository.
 
-See [architecture](docs/architecture.md), [scientific method](docs/scientific-method.md), [data contracts](docs/data-contracts.md), and [product handoff](docs/apex-sim-coach-handoff.md).
+See [architecture](docs/architecture.md), [scientific method](docs/scientific-method.md), [data contracts](docs/data-contracts.md), [analysis runs](docs/analysis-runs.md), and [product handoff](docs/apex-sim-coach-handoff.md).
 
 ## Data policy
 

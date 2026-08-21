@@ -23,3 +23,7 @@ class IngestionError(ApexLabsError):
 
 class ExportError(ApexLabsError):
     """A product export cannot be generated safely."""
+
+
+class AnalysisError(ApexLabsError):
+    """A descriptive analysis run cannot be generated or verified safely."""

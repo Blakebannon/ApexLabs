@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from apex_labs import __version__
+from apex_labs.analysis import run_analysis, verify_analysis_run
 from apex_labs.demo import verify_synthetic_demo
 from apex_labs.errors import ApexLabsError, ContractValidationError
 from apex_labs.experiments import freeze_protocol, verify_protocol_freeze
@@ -27,6 +28,8 @@ from apex_labs.ingestion import (
 from apex_labs.io import canonical_json_bytes, read_json, read_json_lines
 from apex_labs.repository_guard import run_repository_guard
 from apex_labs.schemas import (
+    validate_analysis_definition,
+    validate_analysis_run,
     validate_experiment,
     validate_finding,
     validate_finding_validation,
@@ -52,6 +55,8 @@ ALL_VALIDATORS = {
     "research-export-manifest": validate_research_export_manifest,
     "research-recorder-manifest": validate_research_recorder_manifest,
     "adapter-conformance": validate_adapter_conformance,
+    "analysis-definition": validate_analysis_definition,
+    "analysis-run": validate_analysis_run,
 }
 
 
@@ -167,6 +172,24 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Permit dirty-code real-sample mechanics validation; output is scientifically ineligible",
     )
+    analyze = commands.add_parser(
+        "analyze", help="Run a declared descriptive analysis over a verified normalized dataset"
+    )
+    analyze.add_argument("definition", type=Path)
+    analyze.add_argument("--dataset", type=Path, required=True, help="Normalized dataset directory")
+    analyze.add_argument("--run-id", required=True)
+    analyze.add_argument("--created-at", required=True)
+    analyze.add_argument("--output", "-o", type=Path, required=True)
+    analyze.add_argument(
+        "--metric", type=Path, action="append", default=[],
+        help="Metric definition to bind into the run artifact; repeatable",
+    )
+    verify_analysis = commands.add_parser(
+        "verify-analysis", help="Reproduce an analysis run from its bound dataset and compare results"
+    )
+    verify_analysis.add_argument("run", type=Path, help="analysis-run.json or its directory")
+    verify_analysis.add_argument("--dataset", type=Path, required=True)
+
     apex_research = commands.add_parser(
         "apex-research", help="Inspect, validate, or normalize a completed local Research Recorder bundle"
     )
@@ -295,6 +318,28 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "research_eligibility": manifest["research_eligibility"],
             "output": str(args.output),
         }
+    if args.command == "analyze":
+        artifact = run_analysis(
+            args.definition,
+            args.dataset,
+            args.output,
+            run_id=args.run_id,
+            created_at=args.created_at,
+            metric_paths=args.metric,
+        )
+        return {
+            "ok": True,
+            "run_id": artifact["run_id"],
+            "analysis_id": artifact["definition"]["analysis_id"],
+            "classification": artifact["classification"],
+            "dataset_id": artifact["dataset"]["dataset_id"],
+            "run_sha256": artifact["run_sha256"],
+            "records_validated": artifact["integrity"]["records_validated"],
+            "result_count": len(artifact["results"]),
+            "output": str(args.output),
+        }
+    if args.command == "verify-analysis":
+        return verify_analysis_run(args.run, args.dataset)
     if args.command == "apex-research":
         if args.apex_research_command == "inspect":
             return inspect_research_bundle(args.bundle)

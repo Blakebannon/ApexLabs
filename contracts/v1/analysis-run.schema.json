@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/analysis-run.schema.json",
+  "title": "Apex Labs analysis run v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "created_at", "classification", "synthetic", "method_id", "run_sha256", "definition", "definition_sha256", "dataset", "metric_definitions", "code_identity", "integrity", "results"],
+  "properties": {
+    "schema_version": {"const": "apex-labs.analysis-run/v1"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "created_at": {"type": "string", "minLength": 1},
+    "classification": {"const": "descriptive_summary_not_scientific_evidence"},
+    "synthetic": {"type": "boolean"},
+    "method_id": {"const": "apex-labs.descriptive-statistics/1.0.0"},
+    "run_sha256": {"$ref": "#/$defs/sha256"},
+    "definition": {"$ref": "https://apex-labs.local/contracts/v1/analysis-definition.schema.json"},
+    "definition_sha256": {"$ref": "#/$defs/sha256"},
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "fingerprint", "normalized_manifest_sha256", "records_sha256", "synthetic"],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/id"},
+        "fingerprint": {"$ref": "#/$defs/sha256"},
+        "normalized_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "records_sha256": {"$ref": "#/$defs/sha256"},
+        "synthetic": {"type": "boolean"}
+      }
+    },
+    "metric_definitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric_id", "version", "sha256"],
+        "properties": {
+          "metric_id": {"$ref": "#/$defs/id"},
+          "version": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "code_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_version", "git_commit", "git_state", "code_and_schema_sha256", "schema_sha256"],
+      "properties": {
+        "package_version": {"type": "string", "minLength": 1},
+        "git_commit": {"type": "string", "pattern": "^(?:[0-9a-f]{7,40}|UNCOMMITTED)$"},
+        "git_state": {"enum": ["clean", "dirty", "uncommitted"]},
+        "code_and_schema_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha256"}}
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["records_validated", "record_counts_verified", "quality_flags_verified", "fingerprint_verified"],
+      "properties": {
+        "records_validated": {"type": "integer", "minimum": 0},
+        "record_counts_verified": {"const": true},
+        "quality_flags_verified": {"const": true},
+        "fingerprint_verified": {"const": true}
+      }
+    },
+    "results": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/result"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "record_type": {"enum": ["session", "lap", "segment", "telemetry_sample", "distance_bin", "driver_input_event"]},
+    "count": {"type": "integer", "minimum": 0},
+    "count_map": {"type": "object", "additionalProperties": {"$ref": "#/$defs/count"}},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "minimum", "maximum", "mean", "median", "q1", "q3", "mad"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 1},
+        "minimum": {"type": "number"},
+        "maximum": {"type": "number"},
+        "mean": {"type": "number"},
+        "median": {"type": "number"},
+        "q1": {"type": "number"},
+        "q3": {"type": "number"},
+        "mad": {"type": "number", "minimum": 0}
+      }
+    },
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "measured", "derived", "estimated", "unavailable"],
+      "properties": {
+        "present": {"$ref": "#/$defs/count"},
+        "measured": {"$ref": "#/$defs/count"},
+        "derived": {"$ref": "#/$defs/count"},
+        "estimated": {"$ref": "#/$defs/count"},
+        "unavailable": {"$ref": "#/$defs/count"}
+      }
+    },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_counts", "quality_flag_counts"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "record_inventory"},
+            "record_counts": {"$ref": "#/$defs/count_map"},
+            "quality_flag_counts": {"$ref": "#/$defs/count_map"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type", "records_scanned", "concepts"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "concept_availability"},
+            "record_type": {"anyOf": [{"$ref": "#/$defs/record_type"}, {"type": "null"}]},
+            "records_scanned": {"$ref": "#/$defs/count"},
+            "concepts": {"type": "object", "additionalProperties": {"$ref": "#/$defs/availability"}}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type", "concept", "group_by", "attrition"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "descriptive_summary"},
+            "record_type": {"$ref": "#/$defs/record_type"},
+            "concept": {"type": "string", "minLength": 1},
+            "group_by": {"enum": ["dataset", "lap"]},
+            "attrition": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["records_scanned", "records_of_type", "field_present", "values_included", "values_unavailable"],
+              "properties": {
+                "records_scanned": {"$ref": "#/$defs/count"},
+                "records_of_type": {"$ref": "#/$defs/count"},
+                "field_present": {"$ref": "#/$defs/count"},
+                "values_included": {"$ref": "#/$defs/count"},
+                "values_unavailable": {"$ref": "#/$defs/count"}
+              }
+            },
+            "summary": {"anyOf": [{"$ref": "#/$defs/summary"}, {"type": "null"}]},
+            "per_lap": {"type": "object", "additionalProperties": {"anyOf": [{"$ref": "#/$defs/summary"}, {"type": "null"}]}}
+          },
+          "allOf": [
+            {"if": {"properties": {"group_by": {"const": "dataset"}}}, "then": {"required": ["summary"]}},
+            {"if": {"properties": {"group_by": {"const": "lap"}}}, "then": {"required": ["per_lap"]}}
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["computation_id", "kind", "record_type", "total", "per_lap"],
+          "properties": {
+            "computation_id": {"$ref": "#/$defs/id"},
+            "kind": {"const": "event_yield"},
+            "record_type": {"enum": ["segment", "telemetry_sample", "distance_bin", "driver_input_event"]},
+            "total": {"$ref": "#/$defs/count"},
+            "per_lap": {"$ref": "#/$defs/count_map"},
+            "per_event_type": {"$ref": "#/$defs/count_map"}
+          }
+        }
+      ]
+    }
+  }
+}
