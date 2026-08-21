@@ -46,7 +46,7 @@ from apex_labs.schemas.versions import (
 )
 
 ADAPTER_ID = "apex-research-recorder"
-ADAPTER_VERSION = "1.1.0"
+ADAPTER_VERSION = "1.2.0"
 PROFILE_ID = "apex-labs-research-recorder-profile/1.0.0"
 PROFILE_SHA256 = "20b547de4ef89d8b4a33bd8eb1bed282268b4b8e0b5f521108279e13961b800f"
 BASE_SCHEMA_SHA256 = "5432cf9034b72bc8dc9c99c45c76dac07e320036460b0a7e4092c029bbf698b6"
@@ -63,17 +63,63 @@ SENSITIVE_TEXT = re.compile(
     r"driveruserid|subsessionid|machine.?fingerprint|[A-Z]:\\Users\\)"
 )
 
+# Exact ordered samples.csv header. The Apex Sim Coach recorder pins the identical list in
+# ResearchContract.SampleColumns; the two must change together or every bundle is rejected.
 SAMPLE_HEADERS = [
     "capture_sequence", "simulator_tick", "observed_utc", "session_time_s", "lap",
     "lap_time_s", "lap_distance_fraction", "brake", "throttle", "steering_angle_rad",
-    "speed_mps", "gear", "rpm", "longitudinal_acceleration_mps2",
-    "lateral_acceleration_mps2", "yaw_rate_radps", "fuel_liters", "fuel_fraction",
-    "tire_temp_lf_c", "tire_temp_rf_c", "tire_temp_lr_c", "tire_temp_rr_c",
-    "tire_pressure_lf_kpa", "tire_pressure_rf_kpa", "tire_pressure_lr_kpa",
-    "tire_pressure_rr_kpa", "on_pit_road", "incident_count", "session_state",
-    "track_surface", "is_replay", "read_error_count",
+    "speed_mps", "gear", "rpm", "longitudinal_acceleration_mps2", "lateral_acceleration_mps2",
+    "yaw_rate_radps", "fuel_liters", "fuel_fraction", "tire_temp_lf_left_c",
+    "tire_temp_lf_middle_c", "tire_temp_lf_right_c", "tire_temp_rf_left_c",
+    "tire_temp_rf_middle_c", "tire_temp_rf_right_c", "tire_temp_lr_left_c",
+    "tire_temp_lr_middle_c", "tire_temp_lr_right_c", "tire_temp_rr_left_c",
+    "tire_temp_rr_middle_c", "tire_temp_rr_right_c", "tire_wear_lf_left_pct",
+    "tire_wear_lf_middle_pct", "tire_wear_lf_right_pct", "tire_wear_rf_left_pct",
+    "tire_wear_rf_middle_pct", "tire_wear_rf_right_pct", "tire_wear_lr_left_pct",
+    "tire_wear_lr_middle_pct", "tire_wear_lr_right_pct", "tire_wear_rr_left_pct",
+    "tire_wear_rr_middle_pct", "tire_wear_rr_right_pct", "tire_cold_pressure_lf_kpa",
+    "tire_cold_pressure_rf_kpa", "tire_cold_pressure_lr_kpa", "tire_cold_pressure_rr_kpa",
+    "tire_odometer_lf_m", "tire_odometer_rf_m", "tire_odometer_lr_m", "tire_odometer_rr_m",
+    "tire_compound", "brake_bias_setting", "abs_setting", "traction_control_setting",
+    "abs_active", "pit_speed_limiter_active", "steering_ffb_enabled", "air_temp_c",
+    "air_pressure_pa", "air_density_kgm3", "relative_humidity_pct", "precipitation_pct",
+    "fog_level_pct", "wind_velocity_mps", "wind_direction_rad", "skies_index",
+    "weather_declared_wet", "track_temp_crew_c", "track_wetness", "track_surface_material",
+    "session_flags", "pace_mode", "pits_open", "car_distance_ahead_m", "car_distance_behind_m",
+    "car_left_right", "on_pit_road", "incident_count", "session_state", "track_surface",
+    "is_replay", "read_error_count",
 ]
 
+INTEGER_COLUMNS = frozenset((
+        "car_left_right",
+        "gear",
+        "incident_count",
+        "lap",
+        "pace_mode",
+        "read_error_count",
+        "session_flags",
+        "session_state",
+        "skies_index",
+        "tire_compound",
+        "track_surface",
+        "track_surface_material",
+        "track_wetness",
+    ))
+
+BOOLEAN_COLUMNS = frozenset((
+        "abs_active",
+        "is_replay",
+        "on_pit_road",
+        "pit_speed_limiter_active",
+        "pits_open",
+        "steering_ffb_enabled",
+        "weather_declared_wet",
+    ))
+
+# Columns each declared channel owns. A channel the recorder declares unavailable must
+# leave every one of its columns empty. wheel_state, damage and setup own no columns:
+# the simulator exposes nothing for them, and brake_bias_setting is driver-adjustable
+# control state declared in configuration-setup.json rather than part of a full setup.
 CHANNEL_COLUMNS = {
     "timestamp": ("session_time_s",),
     "brake": ("brake",),
@@ -86,12 +132,132 @@ CHANNEL_COLUMNS = {
     "lateral_acceleration": ("lateral_acceleration_mps2",),
     "yaw_rate": ("yaw_rate_radps",),
     "tire_state": (
-        "tire_temp_lf_c", "tire_temp_rf_c", "tire_temp_lr_c", "tire_temp_rr_c",
-        "tire_pressure_lf_kpa", "tire_pressure_rf_kpa", "tire_pressure_lr_kpa",
-        "tire_pressure_rr_kpa",
+        "tire_temp_lf_left_c", "tire_temp_lf_middle_c", "tire_temp_lf_right_c",
+        "tire_temp_rf_left_c", "tire_temp_rf_middle_c", "tire_temp_rf_right_c",
+        "tire_temp_lr_left_c", "tire_temp_lr_middle_c", "tire_temp_lr_right_c",
+        "tire_temp_rr_left_c", "tire_temp_rr_middle_c", "tire_temp_rr_right_c",
+        "tire_wear_lf_left_pct", "tire_wear_lf_middle_pct", "tire_wear_lf_right_pct",
+        "tire_wear_rf_left_pct", "tire_wear_rf_middle_pct", "tire_wear_rf_right_pct",
+        "tire_wear_lr_left_pct", "tire_wear_lr_middle_pct", "tire_wear_lr_right_pct",
+        "tire_wear_rr_left_pct", "tire_wear_rr_middle_pct", "tire_wear_rr_right_pct",
+        "tire_cold_pressure_lf_kpa", "tire_cold_pressure_rf_kpa", "tire_cold_pressure_lr_kpa",
+        "tire_cold_pressure_rr_kpa", "tire_odometer_lf_m", "tire_odometer_rf_m",
+        "tire_odometer_lr_m", "tire_odometer_rr_m", "tire_compound",
     ),
-    "fuel": ("fuel_liters", "fuel_fraction"),
+    "fuel": (
+        "fuel_liters", "fuel_fraction",
+    ),
+    "assists": (
+        "abs_setting", "traction_control_setting", "abs_active", "pit_speed_limiter_active",
+        "steering_ffb_enabled",
+    ),
+    "flags": (
+        "session_flags", "session_state", "pace_mode", "pits_open",
+    ),
+    "weather": (
+        "air_temp_c", "air_pressure_pa", "air_density_kgm3", "relative_humidity_pct",
+        "precipitation_pct", "fog_level_pct", "wind_velocity_mps", "wind_direction_rad",
+        "skies_index", "weather_declared_wet",
+    ),
+    "traffic": (
+        "car_distance_ahead_m", "car_distance_behind_m", "car_left_right",
+    ),
+    "track_conditions": (
+        "track_temp_crew_c", "track_wetness", "track_surface", "track_surface_material",
+    ),
 }
+
+
+# Sample columns carried into the bundle and validated, but deliberately NOT promoted to a
+# normalized concept in this contract version. They are retained as declared source provenance
+# so a later concept review can promote them deliberately rather than by accident.
+RETAINED_SOURCE_COLUMNS = tuple(
+    column for column in SAMPLE_HEADERS
+    if column not in {
+        "capture_sequence", "simulator_tick", "observed_utc", "read_error_count", "lap",
+        "session_time_s", "lap_time_s", "lap_distance_fraction", "brake", "throttle",
+        "steering_angle_rad", "speed_mps", "gear", "rpm",
+        "longitudinal_acceleration_mps2", "lateral_acceleration_mps2", "yaw_rate_radps",
+        "tire_temp_lf_middle_c", "tire_temp_rf_middle_c",
+        "tire_temp_lr_middle_c", "tire_temp_rr_middle_c",
+        "tire_cold_pressure_lf_kpa", "tire_cold_pressure_rf_kpa",
+        "tire_cold_pressure_lr_kpa", "tire_cold_pressure_rr_kpa",
+        "session_state", "incident_count",
+        "air_temp_c", "track_temp_crew_c", "abs_active", "track_surface",
+    }
+)
+
+# The value the product-declared irsdk_TrkLoc dictionary gives to being off track.
+OFF_TRACK_MEANING = "off_track"
+
+
+def _enum_dictionaries(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Read the recorder's declared enum semantics without trusting them blindly."""
+    declared = metadata.get("enum_dictionaries")
+    if declared is None:
+        return {}
+    if not isinstance(declared, dict):
+        raise ContractValidationError("recorder-metadata.json: enum_dictionaries must be an object")
+    for column, entry in declared.items():
+        if column not in SAMPLE_HEADERS:
+            raise ContractValidationError(
+                f"recorder-metadata.json: enum dictionary names unknown column {column!r}"
+            )
+        if not isinstance(entry, dict):
+            raise ContractValidationError(f"recorder-metadata.json: enum dictionary {column!r} must be an object")
+        required = {"enumeration", "kind", "dictionary_provenance", "unknown_value_behavior", "limitation"}
+        if not required.issubset(entry):
+            raise ContractValidationError(
+                f"recorder-metadata.json: enum dictionary {column!r} is missing declared semantics"
+            )
+        if entry["dictionary_provenance"] not in {"product_declared", "sdk_variable_description", "unavailable"}:
+            raise ContractValidationError(
+                f"recorder-metadata.json: enum dictionary {column!r} has an unsupported provenance"
+            )
+        if entry["unknown_value_behavior"] != "preserve_raw_value":
+            raise ContractValidationError(
+                f"recorder-metadata.json: enum dictionary {column!r} must preserve unknown raw values"
+            )
+        values = entry.get("values")
+        if entry["dictionary_provenance"] == "unavailable":
+            if values is not None:
+                raise ContractValidationError(
+                    f"recorder-metadata.json: enum dictionary {column!r} declares no provenance but supplies values"
+                )
+        elif not isinstance(values, dict) or not values:
+            raise ContractValidationError(
+                f"recorder-metadata.json: enum dictionary {column!r} claims provenance without a value table"
+            )
+    return declared
+
+
+def _off_track_values(
+    dictionaries: dict[str, Any],
+) -> tuple[frozenset[int], frozenset[int], str] | None:
+    """Resolve which track_surface values mean off-track, or None when undecidable.
+
+    Labs never guesses an enumeration. Without a declared dictionary the concept stays
+    unavailable, and a value absent from the dictionary stays unavailable too.
+    """
+    entry = dictionaries.get("track_surface")
+    if entry is None or entry["dictionary_provenance"] == "unavailable":
+        return None
+    known: dict[int, str] = {}
+    for raw, meaning in entry["values"].items():
+        try:
+            known[int(raw)] = str(meaning)
+        except (TypeError, ValueError) as exc:
+            raise ContractValidationError(
+                "recorder-metadata.json: track_surface dictionary keys must be integers"
+            ) from exc
+    if OFF_TRACK_MEANING not in known.values():
+        return None
+    off_track = frozenset(value for value, meaning in known.items() if meaning == OFF_TRACK_MEANING)
+    return off_track, frozenset(known), (
+        f"track_surface resolved through the {entry['enumeration']} dictionary declared by the "
+        f"recorder with {entry['dictionary_provenance']} provenance; values outside that dictionary "
+        "stay unavailable"
+    )
 
 
 @dataclass(frozen=True)
@@ -131,9 +297,20 @@ def _snapshot_research_bundle(root: Path, *, temporary_parent: Path | None = Non
         yield snapshot
 
 
+# The Research Recorder writes .NET round-trip timestamps with 100-nanosecond precision
+# (seven fractional digits). That is valid ISO 8601, but datetime.fromisoformat accepts at
+# most six, so excess fractional digits are truncated for parsing only. The declared text is
+# never rewritten: the artifact keeps the recorder's exact bytes.
+_EXCESS_FRACTION = re.compile(r"(\.\d{6})\d+")
+
+
+def _parsable_timestamp(text: str) -> str:
+    return _EXCESS_FRACTION.sub(r"", text).replace("Z", "+00:00")
+
+
 def _timestamp(value: str, field: str) -> datetime:
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(_parsable_timestamp(value))
     except ValueError as exc:
         raise ContractValidationError(f"{field}: invalid ISO-8601 timestamp") from exc
     if parsed.tzinfo is None:
@@ -213,9 +390,9 @@ def _validate_samples(audit_root: Path, manifest: dict[str, Any], metadata: dict
         for field in SAMPLE_HEADERS:
             if field in {"capture_sequence", "simulator_tick", "observed_utc"}:
                 continue
-            if field in {"lap", "gear", "incident_count", "session_state", "track_surface", "read_error_count"}:
+            if field in INTEGER_COLUMNS:
                 _integer(row[field], f"samples.csv row {row_number} {field}")
-            elif field in {"on_pit_road", "is_replay"}:
+            elif field in BOOLEAN_COLUMNS:
                 _boolean(row[field], f"samples.csv row {row_number} {field}")
             else:
                 _number(row[field], f"samples.csv row {row_number} {field}")
@@ -441,7 +618,30 @@ def _qualified(
     }
 
 
-def _fields(row: dict[str, str], observed_origin: datetime) -> dict[str, Any]:
+
+def _qualified_text(value: int | None, concept: str, source: str, note: str) -> dict[str, Any]:
+    """Carry an integer-valued text concept without pretending it has been decoded.
+
+    session_state and incident_state are text concepts. The raw simulator integer is preserved
+    verbatim as its decimal string; no enumeration is decoded here, because the inventory
+    proves the enum identity but carries no value dictionary.
+    """
+    if value is None:
+        return {"value": None, "provenance": "unavailable", "unit": CANONICAL_UNITS[concept]}
+    return {
+        "value": str(value),
+        "provenance": "measured",
+        "unit": CANONICAL_UNITS[concept],
+        "source_channel": source,
+        "quality_flags": [note],
+    }
+
+
+def _fields(
+    row: dict[str, str],
+    observed_origin: datetime,
+    off_track: tuple[frozenset[int], frozenset[int], str] | None,
+) -> dict[str, Any]:
     session_time = _number(row["session_time_s"], "session_time_s")
     observed = _timestamp(row["observed_utc"], "observed_utc")
     if session_time is None:
@@ -470,37 +670,87 @@ def _fields(row: dict[str, str], observed_origin: datetime) -> dict[str, Any]:
         "brake": _qualified(_number(row["brake"], "brake"), "brake", "Brake"),
         "gear": _qualified(_integer(row["gear"], "gear"), "gear", "Gear"),
         "rpm": _qualified(_number(row["rpm"], "rpm"), "rpm", "RPM"),
-        "tire_temperature_front_left": _qualified(_number(row["tire_temp_lf_c"], "tire_temp_lf_c"), "tire_temperature_front_left", "LFtempCM"),
-        "tire_temperature_front_right": _qualified(_number(row["tire_temp_rf_c"], "tire_temp_rf_c"), "tire_temperature_front_right", "RFtempCM"),
-        "tire_temperature_rear_left": _qualified(_number(row["tire_temp_lr_c"], "tire_temp_lr_c"), "tire_temperature_rear_left", "LRtempCM"),
-        "tire_temperature_rear_right": _qualified(_number(row["tire_temp_rr_c"], "tire_temp_rr_c"), "tire_temperature_rear_right", "RRtempCM"),
+        "tire_temperature_front_left": _qualified(
+            _number(row["tire_temp_lf_middle_c"], "tire_temp_lf_middle_c"),
+            "tire_temperature_front_left", "LFtempCM"),
+        "tire_temperature_front_right": _qualified(
+            _number(row["tire_temp_rf_middle_c"], "tire_temp_rf_middle_c"),
+            "tire_temperature_front_right", "RFtempCM"),
+        "tire_temperature_rear_left": _qualified(
+            _number(row["tire_temp_lr_middle_c"], "tire_temp_lr_middle_c"),
+            "tire_temperature_rear_left", "LRtempCM"),
+        "tire_temperature_rear_right": _qualified(
+            _number(row["tire_temp_rr_middle_c"], "tire_temp_rr_middle_c"),
+            "tire_temperature_rear_right", "RRtempCM"),
+        # Cold, garage-set pressure. iRacing exposes no hot/running tire pressure.
         "tire_pressure_front_left": _qualified(
-            _number(row["tire_pressure_lf_kpa"], "tire_pressure_lf_kpa"),
+            _number(row["tire_cold_pressure_lf_kpa"], "tire_cold_pressure_lf_kpa"),
             "tire_pressure_front_left", "LFcoldPressure", scale=1000.0,
-            derivation='garage-set cold inflation pressure from LFcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+            derivation=COLD_PRESSURE_DERIVATION.format(source="LFcoldPressure"),
         ),
         "tire_pressure_front_right": _qualified(
-            _number(row["tire_pressure_rf_kpa"], "tire_pressure_rf_kpa"),
+            _number(row["tire_cold_pressure_rf_kpa"], "tire_cold_pressure_rf_kpa"),
             "tire_pressure_front_right", "RFcoldPressure", scale=1000.0,
-            derivation='garage-set cold inflation pressure from RFcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+            derivation=COLD_PRESSURE_DERIVATION.format(source="RFcoldPressure"),
         ),
         "tire_pressure_rear_left": _qualified(
-            _number(row["tire_pressure_lr_kpa"], "tire_pressure_lr_kpa"),
+            _number(row["tire_cold_pressure_lr_kpa"], "tire_cold_pressure_lr_kpa"),
             "tire_pressure_rear_left", "LRcoldPressure", scale=1000.0,
-            derivation='garage-set cold inflation pressure from LRcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+            derivation=COLD_PRESSURE_DERIVATION.format(source="LRcoldPressure"),
         ),
         "tire_pressure_rear_right": _qualified(
-            _number(row["tire_pressure_rr_kpa"], "tire_pressure_rr_kpa"),
+            _number(row["tire_cold_pressure_rr_kpa"], "tire_cold_pressure_rr_kpa"),
             "tire_pressure_rear_right", "RRcoldPressure", scale=1000.0,
-            derivation='garage-set cold inflation pressure from RRcoldPressure (kPa) multiplied by 1000; this is setup state, not live running tyre pressure, which iRacing does not expose',
+            derivation=COLD_PRESSURE_DERIVATION.format(source="RRcoldPressure"),
         ),
-        "session_state": _qualified(_integer(row["session_state"], "session_state"), "session_state", "SessionState"),
-        "incident_state": _qualified(_integer(row["incident_count"], "incident_count"), "incident_state", "PlayerCarMyIncidentCount"),
+        "air_temperature": _qualified(_number(row["air_temp_c"], "air_temp_c"), "air_temperature", "AirTemp"),
+        # Crew-measured track temperature, not a per-point surface temperature.
+        "track_temperature": _qualified(_number(row["track_temp_crew_c"], "track_temp_crew_c"), "track_temperature", "TrackTempCrew"),
+        # ABS INTERVENTION. The dcABS setting is a different question and is not this concept.
+        "abs_active": _qualified(_boolean(row["abs_active"], "abs_active"), "abs_active", "BrakeABSactive"),
+        "session_state": _qualified_text(
+            _integer(row["session_state"], "session_state"), "session_state", "SessionState",
+            "raw-irsdk-sessionstate-value-not-decoded",
+        ),
+        "incident_state": _qualified_text(
+            _integer(row["incident_count"], "incident_count"), "incident_state",
+            "PlayerCarMyIncidentCount", "participant-own-incident-count",
+        ),
     }
+    fields["off_track_state"] = _off_track_state(row, off_track)
     return fields
 
 
-def _capabilities(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _off_track_state(
+    row: dict[str, str], off_track: tuple[frozenset[int], frozenset[int], str] | None
+) -> dict[str, Any]:
+    """Resolve off-track only through a declared enumeration dictionary.
+
+    Without a dictionary, or for a value the dictionary does not define, the concept stays
+    unavailable. An unknown simulator value never acquires a meaning here.
+    """
+    unavailable = {"value": None, "provenance": "unavailable", "unit": CANONICAL_UNITS["off_track_state"]}
+    if off_track is None:
+        return unavailable
+    surface = _integer(row["track_surface"], "track_surface")
+    if surface is None:
+        return unavailable
+    values, known, derivation = off_track
+    if surface not in known:
+        # A value the declared dictionary does not define never acquires a meaning.
+        return unavailable
+    return {
+        "value": surface in values,
+        "provenance": "derived",
+        "unit": CANONICAL_UNITS["off_track_state"],
+        "derivation": derivation,
+    }
+
+
+def _capabilities(
+    manifest: dict[str, Any],
+    off_track: tuple[frozenset[int], frozenset[int], str] | None = None,
+) -> dict[str, dict[str, Any]]:
     capabilities = {name: {"provenance": "unavailable", "unit": CANONICAL_UNITS[name]} for name in NORMALIZED_CONCEPTS}
     available = {item["name"] for item in manifest["channels"] if item["availability"] == "available"}
     mapping = {
@@ -527,6 +777,28 @@ def _capabilities(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
                 "provenance": "derived", "unit": CANONICAL_UNITS[concept],
                 "derivation": COLD_PRESSURE_DERIVATION.format(source=source),
             }
+    if "weather" in available:
+        capabilities["air_temperature"] = {
+            "provenance": "measured", "unit": CANONICAL_UNITS["air_temperature"],
+            "source_channel": "AirTemp",
+        }
+    if "track_conditions" in available:
+        capabilities["track_temperature"] = {
+            "provenance": "measured", "unit": CANONICAL_UNITS["track_temperature"],
+            "source_channel": "TrackTempCrew",
+        }
+    if "assists" in available:
+        # ABS intervention only. dcABS is a driver setting and is deliberately not this concept,
+        # and iRacing exposes no traction-control intervention variable at all.
+        capabilities["abs_active"] = {
+            "provenance": "measured", "unit": CANONICAL_UNITS["abs_active"],
+            "source_channel": "BrakeABSactive",
+        }
+    if off_track is not None:
+        capabilities["off_track_state"] = {
+            "provenance": "derived", "unit": CANONICAL_UNITS["off_track_state"],
+            "derivation": off_track[2],
+        }
     return dict(sorted(capabilities.items()))
 
 
@@ -534,6 +806,7 @@ def _normalized_records(audit: ResearchBundleAudit, dataset_id: str) -> Iterator
     manifest = audit.manifest
     session = manifest["session"]
     source_hash = next(item["sha256"] for item in manifest["files"] if item["path"] == "samples.csv")
+    off_track = _off_track_values(_enum_dictionaries(audit.metadata))
     provenance = {
         "source_file": "samples.csv", "source_file_sha256": source_hash,
         "adapter_id": ADAPTER_ID, "adapter_version": ADAPTER_VERSION,
@@ -571,7 +844,7 @@ def _normalized_records(audit: ResearchBundleAudit, dataset_id: str) -> Iterator
             "session_id": session["session_id"], "record_id": f"{session['session_id']}-sample-{sample_index}",
             "sequence_index": sequence_index,
             "source_provenance": {**provenance, "row_start": row_number, "row_end": row_number, "source_timestamp": row["observed_utc"]},
-            "lap_id": lap_id, "sample_index": sample_index, "fields": _fields(row, observed_origin),
+            "lap_id": lap_id, "sample_index": sample_index, "fields": _fields(row, observed_origin, off_track),
         }
         sequence_index += 1
 
@@ -700,7 +973,12 @@ def _ingest_research_snapshot(
             "conventions": CANONICAL_CONVENTIONS, "integrity_summary": integrity,
             "records_file": "records.jsonl", "records_sha256": sha256_file(records_path),
             "record_counts": dict(tracker.counts), "source_files": source_files,
-            "capabilities": _capabilities(audit.manifest), "unknown_source_channels": [],
+            "capabilities": _capabilities(
+                audit.manifest, _off_track_values(_enum_dictionaries(audit.metadata))
+            ),
+            # Columns carried and validated but deliberately not promoted to a normalized
+            # concept in this contract version. Retained as declared source provenance.
+            "unknown_source_channels": list(RETAINED_SOURCE_COLUMNS),
             "collection_record": {
                 "path": "collection-record.json", "sha256": sha256_file(collection_output),
             },

@@ -19,10 +19,13 @@ already carries per-channel `availability`, `provenance`, `unit`,
 additional declarations. Every promotion below fits those existing semantics, so
 `apex-labs-research-recorder-profile/1.0.0` is retained.
 
-Two things did change on the Labs side, both scoped to the research adapter:
+The reconciliation is now **implemented on both sides**; see
+[recorder-synchronization.md](recorder-synchronization.md).
 
-- `apex-research-recorder` adapter version `1.0.0` to `1.1.0`, because the
-  corrected source-channel attribution changes normalized record content.
+Labs-side changes are scoped to the research adapter:
+
+- `apex-research-recorder` adapter version `1.0.0` to `1.1.0` for the corrected
+  source-channel attribution, then to `1.2.0` for the synchronized sample shape.
 - The tyre-pressure derivation string now states cold-garage semantics
   explicitly.
 

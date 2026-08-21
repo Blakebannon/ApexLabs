@@ -36,7 +36,8 @@ Source-channel attribution is checked against a committed simulator capability
 snapshot, so the adapter cannot name a variable the simulator does not expose.
 That guard corrected `longitudinal_acceleration`, previously attributed to
 `LonAccel`; the iRacing variable is `LongAccel`. Because that attribution is part
-of normalized record content, the adapter version moved to `1.1.0`.
+of normalized record content, the adapter version moved to `1.1.0`, and then to
+`1.2.0` when the synchronized 82-column sample shape landed.
 
 Tyre pressure is derived from `LFcoldPressure` and its siblings, which are
 garage-set cold pressures. The derivation says so explicitly: iRacing exposes no
@@ -44,3 +45,14 @@ hot or running tyre pressure, so live inflation pressure is unavailable and is
 never inferred from the cold value.
 
 See [iracing-capability-reconciliation.md](iracing-capability-reconciliation.md).
+
+`SAMPLE_HEADERS` is matched by exact equality against the recorder's
+`ResearchContract.SampleColumns`, and the pinned profile records neither list, so the two must
+change together. `tests/fixtures/research_recorder_v1` holds a bundle emitted by the real
+recorder, and the cross-repository tests drive those exact bytes through validation, collection
+binding and ingestion, so a one-sided change fails a test rather than a live rehearsal.
+
+Columns without an existing normalized concept are validated and retained in the manifest's
+`unknown_source_channels` rather than being promoted. Promoting traffic, flag, tyre-wear or
+assist-setting evidence to normalized concepts is a deliberate later concept review, not a side
+effect of capture.

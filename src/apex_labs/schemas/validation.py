@@ -103,10 +103,21 @@ def _enum(value: Any, allowed: set[str], path: str) -> str:
     return text
 
 
+# The Research Recorder writes .NET round-trip timestamps with 100-nanosecond precision
+# (seven fractional digits). That is valid ISO 8601, but datetime.fromisoformat accepts at
+# most six, so excess fractional digits are truncated for parsing only. The declared text is
+# never rewritten: the artifact keeps the recorder's exact bytes.
+_EXCESS_FRACTION = re.compile(r"(\.\d{6})\d+")
+
+
+def _parsable_timestamp(text: str) -> str:
+    return _EXCESS_FRACTION.sub(r"", text).replace("Z", "+00:00")
+
+
 def _timestamp(value: Any, path: str) -> str:
     text = _string(value, path)
     try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(_parsable_timestamp(text))
     except ValueError as exc:
         _fail(path, "must be an ISO 8601 timestamp")
         raise AssertionError from exc

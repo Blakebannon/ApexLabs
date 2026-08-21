@@ -206,7 +206,7 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
     },
     {
         "channel": "longitudinal_acceleration",
-        "previous_classification": "declared available if 'LonAccel' was present; that variable does not exist, so every recording would have declared it unavailable",
+        "previous_classification": "declared available if 'LonAccel' was present; that variable does not exist, so every recording would have declared it unavailable. Corrected to LongAccel in the synchronized recorder.",
         "classification": DIRECTLY_AVAILABLE,
         "provenance": "measured",
         "variables": (_v("LongAccel", "Float", 1, "m/s^2"),),
@@ -216,8 +216,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
             "Sign convention is not proven by metadata and requires live-value confirmation.",
         ),
         "privacy": (),
-        "recorder_supported_now": False,
-        "recorder_action": "correct_existing_mapping",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": True,
         "required_for_campaign": True,
         "scientific_reason": "The braking and brake-release blocks are the campaign's primary controlled conditions; deceleration evidence is not substitutable.",
@@ -276,7 +276,7 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
     },
     {
         "channel": "tire_state",
-        "previous_classification": "available, limited to middle carcass temperature and cold pressure",
+        "previous_classification": "available, limited to middle carcass temperature and cold pressure; the recorder now captures across-tread temperature, wear, odometer and compound",
         "classification": PARTIAL,
         "provenance": "measured",
         "variables": _TIRE_CARCASS_TEMPS + _TIRE_WEAR + _TIRE_COLD_PRESSURES + _TIRE_ODOMETERS + (
@@ -297,7 +297,7 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
         ),
         "privacy": (),
         "recorder_supported_now": True,
-        "recorder_action": "add_new_capture",
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Tyre temperature, wear, compound, and age are first-order confounds for any lap- or corner-level performance comparison across a 25-to-35 minute stint.",
@@ -348,8 +348,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
             "Driver-adjustable values change during a session; they are a time-varying control state, not a static setup declaration.",
         ),
         "privacy": (),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Brake bias and assist settings are directly relevant to the braking blocks, and an undocumented mid-campaign setup change would silently break comparability.",
@@ -377,8 +377,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
             "SteeringFFBEnabled describes the participant's force-feedback rig, not the vehicle, and is hardware context only.",
         ),
         "privacy": (),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "ABS intervention during braking would change what a braking-technique block actually measures; without it, an intervention-driven result could be misread as a technique effect.",
@@ -426,8 +426,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
         "privacy": (
             "CarIdxSessionFlags and CarIdxPaceFlags carry per-opponent flag state for up to 72 cars and are excluded from the initial corpus.",
         ),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Caution, pacing, and session-state periods must be excludable. Without them, a yellow-flag lap can silently enter a comparison and corrupt it. The recorder declares the channel unavailable honestly today, so a mechanics rehearsal is unaffected; the campaign is not.",
@@ -460,8 +460,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
             "SolarAltitude and SolarAzimuth are available but are classified as derived secondary context, not environment state.",
         ),
         "privacy": (),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Air density and temperature move grip and aerodynamic performance across a ten-hour campaign; without them a session-order effect and a weather effect are indistinguishable.",
@@ -490,8 +490,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
             "The 27 CarIdx* arrays covering up to 72 cars are deliberately excluded from the initial corpus.",
             "Opponent identity, radio participant variables (RadioTransmitCarIdx, RadioTransmitFrequencyIdx, RadioTransmitRadioIdx), and session identifiers that could resolve to public results are never captured.",
         ),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Clear-air versus compromised laps is the single largest uncontrolled confound in naturalistic driving blocks; three scalars close most of it at negligible volume and privacy cost.",
@@ -521,8 +521,8 @@ CHANNEL_RECONCILIATION: tuple[dict[str, Any], ...] = (
         "privacy": (
             "CarIdxTrackSurface and CarIdxTrackSurfaceMaterial expose per-opponent location for up to 72 cars and are excluded.",
         ),
-        "recorder_supported_now": False,
-        "recorder_action": "add_new_capture",
+        "recorder_supported_now": True,
+        "recorder_action": "none",
         "required_for_rehearsal": False,
         "required_for_campaign": True,
         "scientific_reason": "Track temperature drives grip evolution across a stint, and off-track or wet samples must be excludable rather than silently pooled.",
@@ -835,6 +835,16 @@ def build_capability_map(inventory: VariableInventory) -> dict[str, Any]:
                 "simulator truth, it proves capability rather than behaviour, and it supports no scientific "
                 "finding because no telemetry values were sampled."
             ),
+        },
+        "recorder_synchronization": {
+            "state": "implemented",
+            "description": (
+                "The Apex Sim Coach Research Recorder and Apex Labs were synchronized in one "
+                "coordinated checkpoint: the LongAccel correction, the expanded tire state, and "
+                "weather, track-condition, flag, traffic, assist and partial-configuration "
+                "capture all landed together with the matching Labs sample header."
+            ),
+            "profile_id_unchanged": RECORDER_PROFILE_ID,
         },
         "channels": channels,
         "auxiliary_evidence": auxiliary,

@@ -1,6 +1,14 @@
 # Apex Sim Coach Research Recorder — capability handoff
 
-`RECORDER UPDATE REQUIRED — PRODUCT REVIEW`
+**STATUS: DISCHARGED.** Every correction and capture addition below was implemented in the
+Apex Sim Coach Research Recorder and matched in Apex Labs in one coordinated checkpoint, ahead
+of the 30-minute rehearsal, so the rehearsal exercises the same recorder shape the ~10-hour
+campaign will freeze. This document is retained as the record of what was requested and why.
+
+Two further defects surfaced while implementing it, both pre-existing and both fatal to a real
+rehearsal: the recorder emitted .NET 100-nanosecond timestamps that Labs could not parse, and
+the adapter emitted integers for the `session_state` and `incident_state` text concepts. Both
+are fixed. See [recorder-synchronization.md](recorder-synchronization.md).
 
 A review artifact for a separate, owner-reviewed product checkpoint. Apex Labs
 never opens, patches, configures, or deploys the Apex Sim Coach repository, and

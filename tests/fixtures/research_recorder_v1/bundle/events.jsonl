@@ -1,0 +1,2 @@
+{"schema_version":"apex-research-event/1.0.0","sequence":0,"observed_utc":"2000-01-01T00:00:00.0000000Z","session_time_s":null,"kind":"collection-condition","data":{"block_id":"synthetic-block","coaching_state":"disabled","condition_id":"synthetic-disabled-control","protocol_identity":"synthetic-protocol-freeze"}}
+{"schema_version":"apex-research-event/1.0.0","sequence":1,"observed_utc":"2000-01-01T00:00:01.0000000Z","session_time_s":null,"kind":"coaching-disabled-control","data":{"authorization_count":0,"coaching_state":"disabled","delivery_receipt_count":0}}

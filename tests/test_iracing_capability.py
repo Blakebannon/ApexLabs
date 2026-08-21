@@ -423,23 +423,49 @@ class ReadinessGateTests(unittest.TestCase):
         self.assertEqual(self.readiness["expected_channels"], list(REQUIRED_CHANNELS))
         self.assertEqual(self.readiness["inventory_profile_mismatch"], [])
 
-    def test_the_blocking_gap_is_the_corrected_acceleration_mapping(self) -> None:
-        self.assertEqual(
-            self.readiness["missing_required_evidence_for_rehearsal"], ["longitudinal_acceleration"]
+    def test_the_synchronized_recorder_clears_the_rehearsal_gate(self) -> None:
+        # The LongAccel correction and the capture expansion landed together in the
+        # coordinated recorder checkpoint, so nothing required is still missing.
+        self.assertEqual(self.readiness["missing_required_evidence_for_rehearsal"], [])
+        self.assertEqual(self.readiness["missing_required_evidence_for_campaign"], [])
+        self.assertEqual(self.readiness["verdict"], "READY FOR 30-MINUTE REHEARSAL")
+        self.assertTrue(self.readiness["ready_for_rehearsal"])
+
+    def test_a_regressed_mapping_would_block_the_rehearsal_again(self) -> None:
+        # The gate is not hard-coded to pass: losing a required channel re-blocks it.
+        from apex_labs.capability import reconciliation
+
+        regressed = tuple(
+            {**entry, "recorder_supported_now": False}
+            if entry["channel"] == "longitudinal_acceleration" else entry
+            for entry in reconciliation.CHANNEL_RECONCILIATION
         )
-        self.assertEqual(self.readiness["verdict"], "RECORDER UPDATE REQUIRED BEFORE REHEARSAL")
-        self.assertFalse(self.readiness["ready_for_rehearsal"])
+        original = reconciliation.CHANNEL_RECONCILIATION
+        reconciliation.CHANNEL_RECONCILIATION = regressed
+        try:
+            blocked = rehearsal_readiness(self.inventory)
+        finally:
+            reconciliation.CHANNEL_RECONCILIATION = original
+        self.assertEqual(
+            blocked["missing_required_evidence_for_rehearsal"], ["longitudinal_acceleration"]
+        )
+        self.assertEqual(blocked["verdict"], "RECORDER UPDATE REQUIRED BEFORE REHEARSAL")
 
     def test_optional_environmental_and_traffic_evidence_never_blocks_a_rehearsal(self) -> None:
         blocking = set(self.readiness["missing_required_evidence_for_rehearsal"])
         self.assertFalse(blocking & {"weather", "traffic", "track_conditions", "assists", "setup", "flags"})
 
-    def test_partial_capture_is_reported_rather_than_hidden_by_availability(self) -> None:
-        # tire_state is declared available today but carries only part of the
-        # evidence the inventory proves exists.
+    def test_no_channel_is_left_partially_captured(self) -> None:
+        # tire_state previously carried only middle carcass temperature and cold
+        # pressure. The recorder now captures across-tread temperature, wear,
+        # odometer and compound, so no expansion remains outstanding.
         self.assertIn("tire_state", self.readiness["currently_supported_channels"])
-        self.assertIn("tire_state", self.readiness["partially_captured_channels"])
-        self.assertIn("tire_state", self.readiness["channels_requiring_capture_expansion"])
+        self.assertEqual(self.readiness["partially_captured_channels"], [])
+        self.assertEqual(self.readiness["channels_requiring_capture_expansion"], [])
+
+    def test_only_the_evidence_backed_unavailable_channels_are_uncaptured(self) -> None:
+        supported = set(self.readiness["currently_supported_channels"])
+        self.assertEqual(set(REQUIRED_CHANNELS) - supported, {"wheel_state", "damage"})
 
     def test_expected_unavailable_channels_are_declared_not_missing(self) -> None:
         self.assertEqual(sorted(self.readiness["expected_unavailable_channels"]), ["damage", "wheel_state"])
@@ -450,37 +476,21 @@ class ReadinessGateTests(unittest.TestCase):
         self.assertFalse(self.readiness["contract_version_change_required"])
         self.assertIn("1.0.0", self.readiness["recorder_profile_id"])
 
-    def test_the_handoff_names_the_blocking_correction_and_its_sequencing(self) -> None:
+    def test_the_handoff_is_discharged_but_keeps_its_standing_requirements(self) -> None:
         handoff = product_recorder_handoff(build_capability_map(self.inventory))
-        blocking = {entry["channel"]: entry for entry in handoff["blocking_corrections"]}
-        self.assertEqual(list(blocking), ["longitudinal_acceleration"])
-        self.assertEqual(blocking["longitudinal_acceleration"]["iracing_variables"], ["LongAccel"])
-        self.assertTrue(blocking["longitudinal_acceleration"]["required_for_rehearsal"])
-        additions = {entry["channel"] for entry in handoff["capture_additions"]}
-        self.assertLessEqual({"weather", "traffic", "track_conditions", "flags", "assists"}, additions)
+        # Every correction and addition has been implemented in the recorder.
+        self.assertEqual(handoff["blocking_corrections"], [])
+        self.assertEqual(handoff["capture_additions"], [])
+        # The constraints that made them safe remain stated for any future change.
         self.assertIn("must land in the product recorder and in Labs together", handoff["sequencing_requirement"])
         self.assertIn("authoritative SDK value dictionary", handoff["enum_dictionary_requirement"])
 
-    def test_a_repaired_mapping_would_clear_the_rehearsal_gate(self) -> None:
-        # The gate is not hard-coded to fail: with the recorder corrected, the
-        # same evidence reports readiness.
-        from apex_labs.capability import reconciliation
-
-        patched = tuple(
-            {**entry, "recorder_supported_now": True}
-            if entry["channel"] == "longitudinal_acceleration" else entry
-            for entry in reconciliation.CHANNEL_RECONCILIATION
+    def test_the_map_records_that_both_repositories_were_synchronized(self) -> None:
+        synchronization = build_capability_map(self.inventory)["recorder_synchronization"]
+        self.assertEqual(synchronization["state"], "implemented")
+        self.assertEqual(
+            synchronization["profile_id_unchanged"], "apex-labs-research-recorder-profile/1.0.0"
         )
-        original = reconciliation.CHANNEL_RECONCILIATION
-        reconciliation.CHANNEL_RECONCILIATION = patched
-        try:
-            repaired = rehearsal_readiness(self.inventory)
-        finally:
-            reconciliation.CHANNEL_RECONCILIATION = original
-        self.assertEqual(repaired["missing_required_evidence_for_rehearsal"], [])
-        self.assertEqual(repaired["verdict"], "READY FOR 30-MINUTE REHEARSAL")
-        self.assertTrue(repaired["ready_for_rehearsal"])
-
 
 class CapabilityCliTests(unittest.TestCase):
     def test_the_cli_exposes_inspect_map_and_readiness(self) -> None:
