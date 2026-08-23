@@ -40,6 +40,7 @@ from apex_labs.schemas.lifecycle_validation import (
 from apex_labs.schemas.apex_session_validation import (
     validate_apex_session_manifest,
     validate_collection_record,
+    validate_exploratory_intake,
     validate_product_annotations,
     validate_research_export_manifest,
     validate_research_recorder_manifest,
@@ -74,6 +75,7 @@ __all__ = [
     "validate_algorithm_recommendation",
     "validate_apex_session_manifest",
     "validate_collection_record",
+    "validate_exploratory_intake",
     "validate_product_annotations",
     "validate_research_export_manifest",
     "validate_research_recorder_manifest",

@@ -522,7 +522,8 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
         },
         optional={
             "source_bundle", "source_semantics", "research_eligibility", "collection_record",
-            "product_annotations", "adapter_conformance",
+            "product_annotations", "adapter_conformance", "scientific_eligibility",
+            "exploratory_intake",
         },
     )
     _id(obj["dataset_id"], "$.dataset_id")
@@ -687,7 +688,112 @@ def validate_normalized_manifest(value: Any) -> dict[str, Any]:
             _fail("$.research_eligibility.classification", "synthetic native bundles must remain synthetic_demo")
     if adapter["id"] == "apex-research-recorder" and "collection_record" not in obj:
         _fail("$.collection_record", "research-recorder normalization must bind its Labs collection record")
+    _scientific_eligibility(obj, adapter, collection)
     return obj
+
+
+def _scientific_eligibility(
+    obj: dict[str, Any], adapter: dict[str, Any], collection: dict[str, Any]
+) -> None:
+    """Enforce the permanent scientific stratum of a normalized dataset.
+
+    The point of this block is that a reader can never be misled about what a
+    dataset is allowed to support, and that the answer cannot be changed later.
+    Three rules do the work: a real research dataset must state a stratum at all;
+    the stratum must agree with whether a frozen protocol is actually bound; and
+    the exploratory stratum's prohibitions are not editable, so an exploratory
+    dataset cannot be re-declared as primary by hand. Because the whole block is
+    an ingredient of the dataset fingerprint, editing it invalidates the dataset
+    rather than upgrading it.
+    """
+    declared = obj.get("scientific_eligibility")
+    has_protocol = collection["protocol_snapshot"] is not None
+    if declared is None:
+        # Real research-recorder normalization must always say what it is. Older
+        # adapters and synthetic fixtures keep their existing behaviour untouched.
+        if adapter["id"] == "apex-research-recorder" and not obj["synthetic"]:
+            _fail(
+                "$.scientific_eligibility",
+                "real research-recorder normalization must declare its scientific stratum",
+            )
+        return
+
+    eligibility = _object(declared, "$.scientific_eligibility")
+    _keys(
+        eligibility,
+        "$.scientific_eligibility",
+        required={
+            "stratum", "prospective_protocol", "collected_before_protocol_freeze",
+            "retained_after_outcome_known", "descriptive_analysis", "hypothesis_generation",
+            "confirmatory", "causal", "primary_effect_estimate", "primary_corpus_pooling",
+            "reason",
+        },
+    )
+    stratum = _enum(
+        eligibility["stratum"],
+        {"primary_frozen_corpus", "exploratory_pilot", "synthetic_mechanics"},
+        "$.scientific_eligibility.stratum",
+    )
+    for field in (
+        "prospective_protocol", "collected_before_protocol_freeze", "retained_after_outcome_known",
+        "descriptive_analysis", "hypothesis_generation", "confirmatory", "causal",
+        "primary_effect_estimate", "primary_corpus_pooling",
+    ):
+        _boolean(eligibility[field], f"$.scientific_eligibility.{field}")
+    _string(eligibility["reason"], "$.scientific_eligibility.reason")
+
+    if stratum == "exploratory_pilot":
+        if has_protocol:
+            _fail(
+                "$.scientific_eligibility.stratum",
+                "an exploratory pilot dataset must not bind a frozen protocol; a later protocol "
+                "snapshot cannot retroactively upgrade retrospectively admitted evidence",
+            )
+        if "exploratory_intake" not in obj:
+            _fail(
+                "$.exploratory_intake",
+                "exploratory normalization must bind its hash-verified exploratory intake",
+            )
+        if eligibility["prospective_protocol"] or not eligibility["collected_before_protocol_freeze"]:
+            _fail(
+                "$.scientific_eligibility",
+                "exploratory pilot evidence was collected before any protocol freeze by definition",
+            )
+        for field in ("confirmatory", "causal", "primary_effect_estimate", "primary_corpus_pooling"):
+            if eligibility[field]:
+                _fail(
+                    f"$.scientific_eligibility.{field}",
+                    "exploratory pilot evidence can never claim this use",
+                )
+    elif stratum == "primary_frozen_corpus":
+        if not has_protocol:
+            _fail(
+                "$.scientific_eligibility.stratum",
+                "primary corpus evidence requires the bound frozen protocol snapshot",
+            )
+        if not eligibility["prospective_protocol"] or eligibility["collected_before_protocol_freeze"]:
+            _fail(
+                "$.scientific_eligibility",
+                "primary corpus evidence is collected under a prospective frozen protocol",
+            )
+    else:  # synthetic_mechanics
+        if not obj["synthetic"]:
+            _fail(
+                "$.scientific_eligibility.stratum",
+                "synthetic mechanics stratum requires a synthetic dataset",
+            )
+        for field in ("confirmatory", "causal", "primary_effect_estimate", "primary_corpus_pooling"):
+            if eligibility[field]:
+                _fail(
+                    f"$.scientific_eligibility.{field}",
+                    "synthetic mechanics evidence can never claim this use",
+                )
+
+    if "exploratory_intake" in obj and stratum != "exploratory_pilot":
+        _fail(
+            "$.exploratory_intake",
+            "only the exploratory pilot stratum binds an exploratory intake",
+        )
 
 
 def _metric(value: Any, path: str) -> None:

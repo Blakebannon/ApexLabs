@@ -23,3 +23,13 @@ The sidecar does not itself prove consent, correct operator entry, or protocol
 adherence. It makes those claims explicit and integrity-bound so they can be
 reviewed. Formal controlled collection still requires independent review of the
 frozen campaign protocol and generated schedule.
+
+## Sessions collected before a protocol existed
+
+An observational collection record describes a session with no preregistered assignment, and it
+is correct for exactly that. On its own it does not admit a real session to normalization: real
+ingestion still requires a reviewed protocol freeze. A session that was driven before any freeze
+existed is admitted instead by a separate `apex-labs.exploratory-intake/v1` artifact, which binds
+this record by identity and SHA-256 and permanently limits the resulting dataset to descriptive
+analysis and hypothesis generation. See `docs/apex-research-recorder-adapter.md`. Editing this
+record after the intake was reviewed invalidates the intake, which is the intended behaviour.

@@ -223,12 +223,21 @@ def validate_analysis_run(value: Any) -> dict[str, Any]:
         dataset,
         "$.dataset",
         required={"dataset_id", "fingerprint", "normalized_manifest_sha256", "records_sha256", "synthetic"},
+        optional={"scientific_eligibility"},
     )
     _id(dataset["dataset_id"], "$.dataset.dataset_id")
     for field in ("fingerprint", "normalized_manifest_sha256", "records_sha256"):
         _sha(dataset[field], f"$.dataset.{field}")
     if _boolean(dataset["synthetic"], "$.dataset.synthetic") != synthetic:
         _fail("$.dataset.synthetic", "must agree with the run synthetic classification")
+    stratum = dataset.get("scientific_eligibility")
+    if stratum is not None and not _boolean(
+        stratum["descriptive_analysis"], "$.dataset.scientific_eligibility.descriptive_analysis"
+    ):
+        _fail(
+            "$.dataset.scientific_eligibility.descriptive_analysis",
+            "a descriptive run requires a dataset whose stratum permits descriptive analysis",
+        )
     metrics = _list(obj["metric_definitions"], "$.metric_definitions")
     seen_metrics: set[tuple[str, str]] = set()
     for index, metric in enumerate(metrics):

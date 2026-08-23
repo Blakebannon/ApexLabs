@@ -14,6 +14,7 @@ FINDING_VALIDATION = "apex-labs.finding-validation/v1"
 METRIC_DEFINITION = "apex-labs.metric-definition/v1"
 ALGORITHM_RECOMMENDATION = "apex-labs.algorithm-recommendation/v1"
 COLLECTION_RECORD = "apex-labs.collection-record/v1"
+EXPLORATORY_INTAKE = "apex-labs.exploratory-intake/v1"
 PRODUCT_ANNOTATIONS = "apex-labs.product-annotations/v1"
 APEX_RESEARCH_EXPORT = "apex-research-session-export/1.0.0"
 APEX_SESSION_EXPORT = "apex-session-export/1.0.0"
@@ -50,6 +51,7 @@ SUPPORTED_CONTRACTS = {
     METRIC_DEFINITION,
     ALGORITHM_RECOMMENDATION,
     COLLECTION_RECORD,
+    EXPLORATORY_INTAKE,
     PRODUCT_ANNOTATIONS,
     APEX_RESEARCH_EXPORT,
     ADAPTER_CONFORMANCE,

@@ -291,6 +291,17 @@ def _dataset_context(
     records_considered: int,
 ) -> dict[str, Any]:
     collection = manifest["collection_context"]
+    # Exploratory pilot evidence is refused here BY NAME rather than only falling
+    # foul of the missing-condition rule below. Both refusals are correct, but a
+    # reader of the error needs to know the dataset is permanently out of scope
+    # for comparable evidence, not that someone forgot to declare a condition.
+    eligibility = manifest.get("scientific_eligibility")
+    if eligibility is not None and not eligibility["primary_corpus_pooling"]:
+        raise EvidenceError(
+            f"Dataset {manifest['dataset_id']} is {eligibility['stratum']} evidence and is "
+            "permanently excluded from comparable evidence sets and primary pooling; "
+            "it supports descriptive analysis and hypothesis generation only"
+        )
     condition_id = collection["condition_id"]
     block_id = collection["block_id"]
     if condition_id is None or block_id is None:

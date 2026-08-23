@@ -63,6 +63,8 @@
     "source_bundle": {"$ref": "#/$defs/source_bundle"},
     "source_semantics": {"$ref": "#/$defs/source_semantics"},
     "research_eligibility": {"$ref": "#/$defs/research_eligibility"},
+    "scientific_eligibility": {"$ref": "#/$defs/scientific_eligibility"},
+    "exploratory_intake": {"$ref": "#/$defs/integrity_bound_file"},
     "collection_record": {"$ref": "#/$defs/integrity_bound_file"},
     "product_annotations": {"$ref": "#/$defs/integrity_bound_file"},
     "adapter_conformance": {"$ref": "#/$defs/integrity_bound_file"},
@@ -93,6 +95,25 @@
     "unknown_source_channels": {"type": "array", "items": {"type": "string", "minLength": 1}}
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {"scientific_eligibility": {"properties": {"stratum": {"const": "exploratory_pilot"}}, "required": ["stratum"]}},
+        "required": ["scientific_eligibility"]
+      },
+      "then": {
+        "required": ["exploratory_intake"],
+        "properties": {"collection_context": {"properties": {"protocol_snapshot": {"type": "null"}}}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"scientific_eligibility": {"properties": {"stratum": {"const": "primary_frozen_corpus"}}, "required": ["stratum"]}},
+        "required": ["scientific_eligibility"]
+      },
+      "then": {
+        "properties": {"collection_context": {"properties": {"protocol_snapshot": {"type": "object"}}}}
+      }
+    },
     {
       "if": {"required": ["source_bundle"]},
       "then": {
@@ -147,6 +168,39 @@
         "scientific_promotion_eligible": {"type": "boolean"},
         "reason": {"type": "string", "minLength": 1}
       }
+    },
+    "scientific_eligibility": {
+      "description": "The permanent scientific stratum of a normalized dataset. Bound into the dataset fingerprint, so it cannot be edited after the fact and a later protocol snapshot cannot silently upgrade an exploratory dataset.",
+      "type": "object", "additionalProperties": false,
+      "required": ["stratum", "prospective_protocol", "collected_before_protocol_freeze", "retained_after_outcome_known", "descriptive_analysis", "hypothesis_generation", "confirmatory", "causal", "primary_effect_estimate", "primary_corpus_pooling", "reason"],
+      "properties": {
+        "stratum": {"enum": ["primary_frozen_corpus", "exploratory_pilot", "synthetic_mechanics"]},
+        "prospective_protocol": {"type": "boolean"},
+        "collected_before_protocol_freeze": {"type": "boolean"},
+        "retained_after_outcome_known": {"type": "boolean"},
+        "descriptive_analysis": {"type": "boolean"},
+        "hypothesis_generation": {"type": "boolean"},
+        "confirmatory": {"type": "boolean"},
+        "causal": {"type": "boolean"},
+        "primary_effect_estimate": {"type": "boolean"},
+        "primary_corpus_pooling": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"stratum": {"const": "exploratory_pilot"}}, "required": ["stratum"]},
+          "then": {
+            "properties": {
+              "prospective_protocol": {"const": false},
+              "collected_before_protocol_freeze": {"const": true},
+              "confirmatory": {"const": false},
+              "causal": {"const": false},
+              "primary_effect_estimate": {"const": false},
+              "primary_corpus_pooling": {"const": false}
+            }
+          }
+        }
+      ]
     },
     "integrity_bound_file": {
       "type": "object", "additionalProperties": false,

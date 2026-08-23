@@ -14,6 +14,18 @@ non-scientific product-annotation wrapper, and the proposed future
 file, null, coaching-evidence, configuration-hash, and completion conventions.
 It tightens conformance without invalidating historical base-v1 manifests.
 
+`exploratory-intake` is the one way a REAL session collected before any protocol
+freeze reaches normalization. It is deliberately a separate contract rather than a
+relaxation of `protocol-freeze`: every field that would describe a prospective plan
+is pinned to the value that denies one, the only reviewer disposition is
+`approved_exploratory_only`, and it must bind the exact bundle manifest and
+collection-record hashes it admits. A dataset admitted this way carries a
+`scientific_eligibility` block with `stratum: exploratory_pilot` that is an
+ingredient of the dataset fingerprint, so descriptive analysis and hypothesis
+generation are permitted while confirmatory claims, causal claims, primary effect
+estimates and primary-corpus pooling are permanently refused. The primary gate is
+unchanged: without a reviewed freeze or a valid intake, real ingestion still fails.
+
 Scientific contracts added for comparable evidence and inference are
 `segment-definition`, `evidence-set-definition`, `evidence-set`,
 `inferential-analysis-definition`, `inferential-analysis-run`, `hypothesis`,

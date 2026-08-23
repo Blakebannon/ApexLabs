@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-labs.local/contracts/v1/exploratory-intake.schema.json",
+  "title": "Apex Labs exploratory intake v1",
+  "description": "Retrospective admission of a REAL session that was collected before any protocol freeze existed. It is deliberately not a protocol freeze and can never become one: it declares that no prospective plan, randomization or schedule governed the collection, and it binds that admission to the exact bundle and collection record by hash. Its only power is to admit evidence into the exploratory stratum; it can never authorise confirmatory, causal, or primary-corpus use.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "intake_id",
+    "version",
+    "created_at",
+    "synthetic",
+    "source_session_id",
+    "source_manifest_sha256",
+    "collection_record_id",
+    "collection_record_sha256",
+    "collection_classification",
+    "eligibility",
+    "collection_timeline",
+    "deviations",
+    "permitted_uses",
+    "prohibited_uses",
+    "review"
+  ],
+  "properties": {
+    "schema_version": { "const": "apex-labs.exploratory-intake/v1" },
+    "intake_id": { "$ref": "#/$defs/id" },
+    "version": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "synthetic": {
+      "const": false,
+      "description": "Synthetic fixtures never need retrospective admission; they already ingest without a protocol."
+    },
+
+    "source_session_id": { "type": "string", "minLength": 1 },
+    "source_manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "collection_record_id": { "$ref": "#/$defs/id" },
+    "collection_record_sha256": { "$ref": "#/$defs/sha256" },
+
+    "collection_classification": {
+      "const": "observational",
+      "description": "An experimental classification asserts assignment to declared blocks, which by definition cannot exist for a session collected before any protocol was frozen."
+    },
+
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "descriptive_analysis_eligible",
+        "hypothesis_generation_eligible",
+        "confirmatory_eligible",
+        "causal_eligible",
+        "primary_effect_estimate_eligible",
+        "primary_corpus_pooling_eligible"
+      ],
+      "properties": {
+        "classification": { "const": "exploratory_pilot" },
+        "descriptive_analysis_eligible": { "const": true },
+        "hypothesis_generation_eligible": { "const": true },
+        "confirmatory_eligible": { "const": false },
+        "causal_eligible": { "const": false },
+        "primary_effect_estimate_eligible": { "const": false },
+        "primary_corpus_pooling_eligible": { "const": false }
+      }
+    },
+
+    "collection_timeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collected_before_protocol_freeze",
+        "prospective_protocol_existed",
+        "randomization_performed",
+        "retained_after_outcome_known",
+        "retention_decision_rationale"
+      ],
+      "properties": {
+        "collected_before_protocol_freeze": {
+          "const": true,
+          "description": "The whole point of this artifact. A session collected AFTER a freeze must bind that freeze instead."
+        },
+        "prospective_protocol_existed": { "const": false },
+        "randomization_performed": { "const": false },
+        "retained_after_outcome_known": {
+          "type": "boolean",
+          "description": "Whether the decision to keep and analyse this session was taken once the result and the operator's impression were already known. True is a selection-bias disclosure, never a disqualification; it must be stated rather than hidden."
+        },
+        "retention_decision_rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "deviations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Everything about this collection that departs from how the frozen corpus will be collected. At least one entry is required: a retrospectively admitted session always deviates in at least the absence of a prospective plan."
+    },
+
+    "permitted_uses": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+
+    "prohibited_uses": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_id", "status", "reviewed_at", "statement"],
+      "properties": {
+        "reviewer_id": {
+          "$ref": "#/$defs/id",
+          "description": "Pseudonymous reviewer identity, following the same convention as every other Labs artifact. Never a name, address, or account."
+        },
+        "status": {
+          "enum": ["approved_exploratory_only"],
+          "description": "The only disposition this artifact can carry. There is deliberately no approval value that widens scope."
+        },
+        "reviewed_at": { "type": "string", "format": "date-time" },
+        "statement": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

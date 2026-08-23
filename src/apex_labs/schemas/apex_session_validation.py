@@ -451,3 +451,119 @@ def validate_research_recorder_manifest(value: Any) -> dict[str, Any]:
             f"extra={sorted(set(actual_files) - set(expected_files))}"
         )
     return obj
+
+
+def validate_exploratory_intake(value: Any) -> dict[str, Any]:
+    """Validate an ``apex-labs.exploratory-intake/v1`` retrospective admission.
+
+    This artifact is the ONLY way a real session collected before any protocol
+    freeze reaches normalization, and it is deliberately shaped so that it cannot
+    be mistaken for — or grow into — a protocol freeze. Every field that would
+    describe a prospective plan is pinned to the value that denies one: no
+    protocol existed, no randomization ran, the classification is observational,
+    and the only reviewer disposition available is ``approved_exploratory_only``.
+    The eligibility block is likewise pinned, so an intake cannot be authored that
+    claims confirmatory, causal, primary-estimate or pooling rights.
+
+    It carries no bypass of its own: the caller still has to prove that the hashes
+    here match the exact bundle manifest and collection record being ingested.
+    """
+    from apex_labs.errors import ContractValidationError
+
+    obj = _object(value, "$")
+    _version(obj, versions.EXPLORATORY_INTAKE)
+    _keys(
+        obj,
+        "$",
+        required={
+            "schema_version", "intake_id", "version", "created_at", "synthetic",
+            "source_session_id", "source_manifest_sha256", "collection_record_id",
+            "collection_record_sha256", "collection_classification", "eligibility",
+            "collection_timeline", "deviations", "permitted_uses", "prohibited_uses",
+            "review",
+        },
+    )
+    _id(obj["intake_id"], "$.intake_id")
+    _string(obj["version"], "$.version")
+    _timestamp(obj["created_at"], "$.created_at")
+    if _boolean(obj["synthetic"], "$.synthetic"):
+        raise ContractValidationError(
+            "$.synthetic: synthetic fixtures ingest without a protocol already and must not "
+            "claim retrospective exploratory admission"
+        )
+    _string(obj["source_session_id"], "$.source_session_id")
+    _sha(obj["source_manifest_sha256"], "$.source_manifest_sha256")
+    _id(obj["collection_record_id"], "$.collection_record_id")
+    _sha(obj["collection_record_sha256"], "$.collection_record_sha256")
+    if _enum(
+        obj["collection_classification"], {"observational", "experimental"},
+        "$.collection_classification",
+    ) != "observational":
+        raise ContractValidationError(
+            "$.collection_classification: an experimental classification asserts assignment to "
+            "declared blocks, which cannot exist for a session collected before any protocol freeze"
+        )
+
+    eligibility = _object(obj["eligibility"], "$.eligibility")
+    _keys(
+        eligibility,
+        "$.eligibility",
+        required={
+            "classification", "descriptive_analysis_eligible", "hypothesis_generation_eligible",
+            "confirmatory_eligible", "causal_eligible", "primary_effect_estimate_eligible",
+            "primary_corpus_pooling_eligible",
+        },
+    )
+    _enum(eligibility["classification"], {"exploratory_pilot"}, "$.eligibility.classification")
+    for field in ("descriptive_analysis_eligible", "hypothesis_generation_eligible"):
+        if not _boolean(eligibility[field], f"$.eligibility.{field}"):
+            raise ContractValidationError(
+                f"$.eligibility.{field}: exploratory intake exists to permit this use"
+            )
+    for field in (
+        "confirmatory_eligible", "causal_eligible",
+        "primary_effect_estimate_eligible", "primary_corpus_pooling_eligible",
+    ):
+        if _boolean(eligibility[field], f"$.eligibility.{field}"):
+            raise ContractValidationError(
+                f"$.eligibility.{field}: retrospectively admitted evidence can never claim this use"
+            )
+
+    timeline = _object(obj["collection_timeline"], "$.collection_timeline")
+    _keys(
+        timeline,
+        "$.collection_timeline",
+        required={
+            "collected_before_protocol_freeze", "prospective_protocol_existed",
+            "randomization_performed", "retained_after_outcome_known",
+            "retention_decision_rationale",
+        },
+    )
+    if not _boolean(timeline["collected_before_protocol_freeze"], "$.collection_timeline.collected_before_protocol_freeze"):
+        raise ContractValidationError(
+            "$.collection_timeline.collected_before_protocol_freeze: a session collected after a "
+            "freeze must bind that freeze instead of being admitted retrospectively"
+        )
+    for field in ("prospective_protocol_existed", "randomization_performed"):
+        if _boolean(timeline[field], f"$.collection_timeline.{field}"):
+            raise ContractValidationError(
+                f"$.collection_timeline.{field}: contradicts retrospective exploratory admission"
+            )
+    # Deliberately only REQUIRED to be stated, never required to be false. Retaining a
+    # session once its outcome was known is a real selection-bias disclosure; forcing it
+    # to be false would simply teach operators to lie about the one fact a reader of this
+    # evidence most needs.
+    _boolean(timeline["retained_after_outcome_known"], "$.collection_timeline.retained_after_outcome_known")
+    _string(timeline["retention_decision_rationale"], "$.collection_timeline.retention_decision_rationale")
+
+    _strings(obj["deviations"], "$.deviations", nonempty=True)
+    _strings(obj["permitted_uses"], "$.permitted_uses", nonempty=True)
+    _strings(obj["prohibited_uses"], "$.prohibited_uses", nonempty=True)
+
+    review = _object(obj["review"], "$.review")
+    _keys(review, "$.review", required={"reviewer_id", "status", "reviewed_at", "statement"})
+    _id(review["reviewer_id"], "$.review.reviewer_id")
+    _enum(review["status"], {"approved_exploratory_only"}, "$.review.status")
+    _timestamp(review["reviewed_at"], "$.review.reviewed_at")
+    _string(review["statement"], "$.review.statement")
+    return obj

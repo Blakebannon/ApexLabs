@@ -29,6 +29,48 @@ mechanics rehearsal only; that run is not scientific evidence. Synthetic fixture
 a protocol snapshot. A protocol identity written by the recorder is an explicit operator input,
 not proof that Labs reviewed or froze it.
 
+## Exploratory pilot intake
+
+A real session that was already driven before any protocol existed has exactly one other way
+in: `--exploratory-intake`, carrying an `apex-labs.exploratory-intake/v1` artifact. It is
+deliberately NOT a protocol freeze and cannot become one. Every field that would describe a
+prospective plan is pinned to the value that denies one — no protocol, no randomization,
+observational classification — and the only reviewer disposition the contract offers is
+`approved_exploratory_only`.
+
+The intake is worthless unless it is welded to the exact bytes it approves, so ingestion
+re-checks the session id, the completed manifest SHA-256, and the collection record's identity
+and SHA-256 against the files actually being ingested. Editing the collection record after
+review invalidates the intake. The two doors are mutually exclusive: supplying a protocol
+snapshot and an intake together is refused as a contradiction rather than silently preferring
+one, because a session cannot both have been governed by a prospective plan and have predated
+one.
+
+What it buys is narrow. The normalized dataset carries a `scientific_eligibility` block with
+`stratum: exploratory_pilot`, permitting descriptive analysis and hypothesis generation and
+permanently forbidding confirmatory claims, causal claims, primary effect estimates, and
+pooling into the frozen primary corpus. That block is an ingredient of the dataset fingerprint,
+so it cannot be edited into something wider without invalidating the dataset, and the validator
+refuses an exploratory dataset that claims a frozen protocol — a later protocol snapshot can
+never retroactively upgrade retrospectively admitted evidence. Comparable-evidence construction
+refuses the stratum by name.
+
+This path adds no bypass of the primary gate. A real bundle presented with neither a protocol
+snapshot nor a valid intake fails exactly as it did before, including under
+`--integration-validation`, which only ever relaxed the clean-tree requirement.
+
+```powershell
+apex-labs validate exploratory-intake "D:\ApexResearch\exploratory-intake.json"
+apex-labs apex-research ingest "D:\ApexResearch\sessions\<session-id>" `
+  --collection-record "D:\ApexResearch\collection-record.json" `
+  --exploratory-intake "D:\ApexResearch\exploratory-intake.json" `
+  --output "D:\ApexResearch
+ormalized\<session-id>"
+```
+
+Pilot sessions may be compared with other pilot sessions. They remain a distinct exploratory
+stratum and never merge into the primary corpus.
+
 The direction is strictly product bundle to Labs ingestion. This command has no product-repo
 locator, writeback, PR, configuration, deployment, uploader, or finding-promotion capability.
 

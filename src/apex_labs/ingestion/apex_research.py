@@ -33,6 +33,7 @@ from apex_labs.provenance import (
 )
 from apex_labs.schemas import (
     validate_collection_record,
+    validate_exploratory_intake,
     validate_normalized_manifest,
     validate_normalized_record,
     validate_protocol_freeze,
@@ -557,6 +558,97 @@ def _bind_collection(collection: dict[str, Any], audit: ResearchBundleAudit) -> 
             raise IntegrityError("Collection block/condition does not bind the recorder labels")
 
 
+def _bind_exploratory_intake(
+    intake: dict[str, Any],
+    collection: dict[str, Any],
+    collection_record_path: Path,
+    audit: ResearchBundleAudit,
+) -> None:
+    """Prove the intake admits THIS bundle and THIS collection record, and nothing else.
+
+    An intake is worthless unless it is welded to the exact bytes it approves.
+    Every check here is an equality against content that already exists: the
+    session id and manifest hash come from the completed bundle, and the
+    collection-record hash is taken from the file on disk rather than from
+    anything the intake itself asserts. Copying an intake next to a different
+    bundle, editing the collection record after review, or approving a session
+    whose collection record claims an experimental design all fail here.
+    """
+    session_id = audit.manifest["session"]["session_id"]
+    if intake["source_session_id"] != session_id:
+        raise IntegrityError(
+            "Exploratory intake does not admit this session: "
+            f"declared {intake['source_session_id']!r}, bundle {session_id!r}"
+        )
+    if intake["source_manifest_sha256"] != audit.manifest_sha256:
+        raise IntegrityError("Exploratory intake does not bind the exact completed research manifest")
+    if intake["collection_record_id"] != collection["collection_record_id"]:
+        raise IntegrityError("Exploratory intake does not bind this collection record identity")
+    if intake["collection_record_sha256"] != sha256_file(collection_record_path):
+        raise IntegrityError("Exploratory intake does not bind the exact collection record bytes")
+    if intake["collection_classification"] != collection["collection_classification"]:
+        raise IntegrityError(
+            "Exploratory intake and collection record disagree about collection classification"
+        )
+    # A collection record that names a frozen protocol is claiming prospective
+    # governance; retrospective admission is then a contradiction, not a shortcut.
+    if collection["protocol"] is not None:
+        raise IntegrityError(
+            "Exploratory intake cannot admit a collection record that declares a frozen protocol"
+        )
+    if collection["synthetic"]:
+        raise IntegrityError("Synthetic collections ingest without a protocol and need no intake")
+
+
+def _exploratory_eligibility(intake: dict[str, Any]) -> dict[str, Any]:
+    """The permanent, fingerprint-bound stratum derived from a verified intake.
+
+    Derived from the intake rather than accepted from an operator, so the
+    normalized dataset states exactly what the reviewed artifact permitted and
+    nothing wider.
+    """
+    timeline = intake["collection_timeline"]
+    eligibility = intake["eligibility"]
+    return {
+        "stratum": "exploratory_pilot",
+        "prospective_protocol": timeline["prospective_protocol_existed"],
+        "collected_before_protocol_freeze": timeline["collected_before_protocol_freeze"],
+        "retained_after_outcome_known": timeline["retained_after_outcome_known"],
+        "descriptive_analysis": eligibility["descriptive_analysis_eligible"],
+        "hypothesis_generation": eligibility["hypothesis_generation_eligible"],
+        "confirmatory": eligibility["confirmatory_eligible"],
+        "causal": eligibility["causal_eligible"],
+        "primary_effect_estimate": eligibility["primary_effect_estimate_eligible"],
+        "primary_corpus_pooling": eligibility["primary_corpus_pooling_eligible"],
+        "reason": (
+            f"Retrospectively admitted under exploratory intake {intake['intake_id']} "
+            f"(reviewed {intake['review']['reviewed_at']}, {intake['review']['status']}). "
+            "Collected before any protocol freeze; descriptive analysis and hypothesis "
+            "generation only."
+        ),
+    }
+
+
+def _primary_eligibility(protocol_document: dict[str, Any]) -> dict[str, Any]:
+    """The stratum of a dataset collected under a reviewed prospective freeze."""
+    return {
+        "stratum": "primary_frozen_corpus",
+        "prospective_protocol": True,
+        "collected_before_protocol_freeze": False,
+        "retained_after_outcome_known": False,
+        "descriptive_analysis": True,
+        "hypothesis_generation": True,
+        "confirmatory": True,
+        "causal": True,
+        "primary_effect_estimate": True,
+        "primary_corpus_pooling": True,
+        "reason": (
+            f"Collected under frozen protocol {protocol_document['freeze_id']} "
+            f"({protocol_document['freeze_sha256']})."
+        ),
+    }
+
+
 def _audit_report(audit: ResearchBundleAudit) -> dict[str, Any]:
     channels = {item["name"]: item["availability"] for item in audit.manifest["channels"]}
     return {
@@ -857,6 +949,7 @@ def ingest_research_bundle(
     project_root: Path | None = None,
     integration_validation: bool = False,
     protocol_snapshot_path: Path | None = None,
+    exploratory_intake_path: Path | None = None,
 ) -> dict[str, Any]:
     with _snapshot_research_bundle(root, temporary_parent=output_dir.resolve().parent) as snapshot:
         return _ingest_research_snapshot(
@@ -866,6 +959,7 @@ def ingest_research_bundle(
             project_root=project_root,
             integration_validation=integration_validation,
             protocol_snapshot_path=protocol_snapshot_path,
+            exploratory_intake_path=exploratory_intake_path,
         )
 
 
@@ -877,6 +971,7 @@ def _ingest_research_snapshot(
     project_root: Path | None = None,
     integration_validation: bool = False,
     protocol_snapshot_path: Path | None = None,
+    exploratory_intake_path: Path | None = None,
 ) -> dict[str, Any]:
     audit = audit_research_bundle(root)
     collection = validate_collection_record(read_json(collection_record_path))
@@ -887,9 +982,31 @@ def _ingest_research_snapshot(
     protocol_context = {"protocol_snapshot": None, "condition_id": None, "block_id": None, "schedule_assignment_id": None}
     protocol_document: dict[str, Any] | None = None
     protocol_bytes: bytes | None = None
+    intake_document: dict[str, Any] | None = None
+    intake_bytes: bytes | None = None
     if not collection["synthetic"]:
-        if protocol_snapshot_path is None or collection["protocol"] is None:
+        # Two mutually exclusive doors into real ingestion, and no third one. The
+        # PRIMARY door is unchanged: a reviewed protocol freeze bound to the
+        # collection record. The EXPLORATORY door admits a session that was
+        # collected before any freeze existed, and it costs a hash-bound intake
+        # artifact that permanently forfeits confirmatory, causal, primary-estimate
+        # and pooling use. Presenting both would be a contradiction — a session
+        # cannot simultaneously have been governed by a prospective plan and have
+        # predated one — so it is refused rather than silently preferred.
+        if protocol_snapshot_path is not None and exploratory_intake_path is not None:
+            raise IngestionError(
+                "A session cannot be both protocol-governed and retrospectively admitted; "
+                "supply either --protocol-snapshot or --exploratory-intake"
+            )
+        if exploratory_intake_path is not None:
+            intake_bytes = exploratory_intake_path.read_bytes()
+            intake_document = validate_exploratory_intake(
+                parse_json_bytes(intake_bytes, source=str(exploratory_intake_path)))
+            _bind_exploratory_intake(intake_document, collection, collection_record_path, audit)
+        elif protocol_snapshot_path is None or collection["protocol"] is None:
             raise IngestionError("Real research ingestion requires --protocol-snapshot and a bound collection protocol")
+    if not collection["synthetic"] and intake_document is None:
+        assert protocol_snapshot_path is not None
         protocol_bytes = protocol_snapshot_path.read_bytes()
         protocol_document = validate_protocol_freeze(
             parse_json_bytes(protocol_bytes, source=str(protocol_snapshot_path)))
@@ -942,6 +1059,10 @@ def _ingest_research_snapshot(
         collection_output.write_bytes(canonical_json_bytes(collection))
         if protocol_document is not None and protocol_bytes is not None:
             (staged / "protocol-freeze.json").write_bytes(protocol_bytes)
+        if intake_document is not None and intake_bytes is not None:
+            # Verbatim source bytes, not a re-serialization: the intake's own hash is
+            # what a reviewer checks, and re-encoding it would break that comparison.
+            (staged / "exploratory-intake.json").write_bytes(intake_bytes)
         source_files = [
             {"path": entry["path"], "sha256": entry["sha256"], "role": entry["role"],
              "media_type": "text/csv" if entry["path"].endswith(".csv") else "application/x-ndjson" if entry["path"].endswith(".jsonl") else "application/json"}
@@ -949,6 +1070,8 @@ def _ingest_research_snapshot(
         ]
         if protocol_document is not None:
             source_files.append({"path": "protocol-freeze.json", "sha256": sha256_file(staged / "protocol-freeze.json"), "role": "protocol", "media_type": "application/json"})
+        if intake_document is not None:
+            source_files.append({"path": "exploratory-intake.json", "sha256": sha256_file(staged / "exploratory-intake.json"), "role": "exploratory-intake", "media_type": "application/json"})
         source_basis = {
             "manifest_sha256": audit.manifest_sha256, "files": source_files,
             "collection_record_sha256": sha256_file(collection_output),
@@ -983,6 +1106,16 @@ def _ingest_research_snapshot(
                 "path": "collection-record.json", "sha256": sha256_file(collection_output),
             },
         }
+        # The scientific stratum travels with the dataset from the moment it exists.
+        # Synthetic fixtures keep their historic shape and declare nothing.
+        if intake_document is not None:
+            manifest["scientific_eligibility"] = _exploratory_eligibility(intake_document)
+            manifest["exploratory_intake"] = {
+                "path": "exploratory-intake.json",
+                "sha256": sha256_file(staged / "exploratory-intake.json"),
+            }
+        elif protocol_document is not None:
+            manifest["scientific_eligibility"] = _primary_eligibility(protocol_document)
         manifest["dataset_fingerprint"] = build_dataset_fingerprint(normalized_dataset_fingerprint_basis(manifest))
         validate_normalized_manifest(manifest)
         write_json(staged / "manifest.json", manifest)

@@ -59,13 +59,18 @@ def _load_metric_bindings(metric_paths: Iterable[Path]) -> list[dict[str, Any]]:
 
 
 def _dataset_reference(manifest: dict[str, Any], manifest_path: Path) -> dict[str, Any]:
-    return {
+    reference = {
         "dataset_id": manifest["dataset_id"],
         "fingerprint": manifest["dataset_fingerprint"],
         "normalized_manifest_sha256": sha256_file(manifest_path),
         "records_sha256": manifest["records_sha256"],
         "synthetic": manifest["synthetic"],
     }
+    # The stratum travels into the run artifact, so a reader of the results never
+    # has to go back to the dataset to discover that this was pilot evidence.
+    if "scientific_eligibility" in manifest:
+        reference["scientific_eligibility"] = manifest["scientific_eligibility"]
+    return reference
 
 
 def _verified_dataset(dataset_dir: Path) -> tuple[dict[str, Any], Path, Path]:

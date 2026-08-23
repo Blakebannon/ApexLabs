@@ -113,6 +113,10 @@ def normalized_dataset_fingerprint_basis(manifest: dict[str, Any]) -> dict[str, 
     for field in (
         "source_bundle", "source_semantics", "research_eligibility", "collection_record",
         "product_annotations", "adapter_conformance",
+        # The scientific stratum and the intake that authorised it are fingerprint
+        # ingredients on purpose: editing either one changes the dataset fingerprint,
+        # so an exploratory dataset cannot be quietly relabelled as primary evidence.
+        "scientific_eligibility", "exploratory_intake",
     ):
         if field in manifest:
             basis[field] = manifest[field]

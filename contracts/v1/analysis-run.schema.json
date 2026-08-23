@@ -24,7 +24,8 @@
         "fingerprint": {"$ref": "#/$defs/sha256"},
         "normalized_manifest_sha256": {"$ref": "#/$defs/sha256"},
         "records_sha256": {"$ref": "#/$defs/sha256"},
-        "synthetic": {"type": "boolean"}
+        "synthetic": {"type": "boolean"},
+        "scientific_eligibility": {"$ref": "normalized-manifest.schema.json#/$defs/scientific_eligibility"}
       }
     },
     "metric_definitions": {

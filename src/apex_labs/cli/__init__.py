@@ -74,6 +74,7 @@ from apex_labs.schemas import (
     validate_protocol_freeze,
     validate_apex_session_manifest,
     validate_collection_record,
+    validate_exploratory_intake,
     validate_product_annotations,
     validate_research_export_manifest,
     validate_research_recorder_manifest,
@@ -88,6 +89,7 @@ ALL_VALIDATORS = {
     "protocol-freeze": validate_protocol_freeze,
     "apex-session-manifest": validate_apex_session_manifest,
     "collection-record": validate_collection_record,
+    "exploratory-intake": validate_exploratory_intake,
     "product-annotations": validate_product_annotations,
     "research-export-manifest": validate_research_export_manifest,
     "research-recorder-manifest": validate_research_recorder_manifest,
@@ -400,6 +402,15 @@ def _parser() -> argparse.ArgumentParser:
     research_ingest.add_argument("bundle", type=Path)
     research_ingest.add_argument("--collection-record", type=Path, required=True)
     research_ingest.add_argument("--protocol-snapshot", type=Path)
+    research_ingest.add_argument(
+        "--exploratory-intake", type=Path,
+        help=(
+            "Hash-bound apex-labs.exploratory-intake/v1 admitting a real session collected "
+            "before any protocol freeze. Mutually exclusive with --protocol-snapshot; the "
+            "resulting dataset is permanently exploratory (descriptive and hypothesis "
+            "generation only, never confirmatory, causal, or primary-corpus evidence)"
+        ),
+    )
     research_ingest.add_argument("--output", "-o", type=Path, required=True)
     research_ingest.add_argument(
         "--integration-validation", action="store_true",
@@ -723,6 +734,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             args.collection_record,
             integration_validation=args.integration_validation,
             protocol_snapshot_path=args.protocol_snapshot,
+            exploratory_intake_path=args.exploratory_intake,
         )
         return {
             "ok": True,
@@ -731,6 +743,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "record_counts": manifest["record_counts"],
             "output": str(args.output),
             "direction": "research-bundle-to-labs-only",
+            "scientific_eligibility": manifest.get("scientific_eligibility"),
         }
     raise AssertionError(f"Unhandled command: {args.command}")
 
