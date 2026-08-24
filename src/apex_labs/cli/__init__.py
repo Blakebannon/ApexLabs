@@ -27,6 +27,7 @@ from apex_labs.capability import (
     rehearsal_readiness,
     validate_variable_inventory,
 )
+from apex_labs.corpus.admission import admit_corpus, coaching_binding_since
 from apex_labs.demo import verify_synthetic_demo
 from apex_labs.evidence import build_evidence_set, verify_evidence_set
 from apex_labs.findings.review_package import build_review_package, verify_review_package
@@ -389,6 +390,45 @@ def _parser() -> argparse.ArgumentParser:
     )
     capability_readiness.add_argument("inventory", type=Path)
 
+    corpus = commands.add_parser(
+        "corpus", help="Admit completed bundles into a frozen corpus, or refuse them with reasons"
+    )
+    corpus_commands = corpus.add_subparsers(dest="corpus_command", required=True)
+    corpus_admit = corpus_commands.add_parser(
+        "admit",
+        help=(
+            "Evaluate completed bundles against a verified protocol freeze and its frozen schedule. "
+            "Validation proves a bundle is internally consistent; admission proves it is the recording "
+            "the protocol asked for"
+        ),
+    )
+    corpus_admit.add_argument("--protocol-snapshot", type=Path, required=True)
+    corpus_admit.add_argument(
+        "--apex-data-root", type=Path,
+        help=(
+            "Apex data root, read-only. REQUIRED to admit a control block: "
+            "'--coaching disabled' is a recorder declaration, not a product control, so only the "
+            "Apex store can show that nothing was delivered during the recording"
+        ),
+    )
+    corpus_admit.add_argument(
+        "bundle", type=Path, nargs="+", help="Completed research bundle directories"
+    )
+
+    corpus_binding = corpus_commands.add_parser(
+        "coaching-binding",
+        help=(
+            "Read-only: report which Apex coaching sessions have written events since an "
+            "instant. The operator condition for the Practice-to-Qualifying rollover, where "
+            "the recorder's own binding probe has already latched and prints nothing"
+        ),
+    )
+    corpus_binding.add_argument("--apex-data-root", type=Path, required=True)
+    corpus_binding.add_argument(
+        "--since", required=True,
+        help="UTC instant, ISO-8601. Use the SESSION TRANSITION line's wall-clock time",
+    )
+
     apex_research = commands.add_parser(
         "apex-research", help="Inspect, validate, or normalize a completed local Research Recorder bundle"
     )
@@ -722,6 +762,12 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         if args.capability_command == "map":
             return build_capability_map(inventory)
         return rehearsal_readiness(inventory)
+
+    if args.command == "corpus":
+        if args.corpus_command == "coaching-binding":
+            return coaching_binding_since(args.apex_data_root, args.since)
+        return admit_corpus(
+            list(args.bundle), args.protocol_snapshot, apex_data_root=args.apex_data_root)
 
     if args.command == "apex-research":
         if args.apex_research_command == "inspect":

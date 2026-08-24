@@ -1,0 +1,146 @@
+{
+  "schema_version": "apex-labs.experiment/v1",
+  "synthetic": false,
+  "experiment_id": "corpus-2026-10-coached-delivery",
+  "version": "2.0.0",
+  "status": "draft",
+  "research_question": "Within a single driver, does Apex Sim Coach delivering live coaching cues change clean-lap time relative to an otherwise identical uncoached session on one fixed car and track; and how does Apex behave across its full range of operating modes, cars, tracks and lap profiles?",
+  "hypothesis": "In the controlled stratum, blocks recorded with coaching delivery enabled produce a lower median clean-lap time than the paired block recorded with delivery disabled, within the same driver, car, track, layout, product build and setup identity. The engineering stratum carries no hypothesis; it is observational breadth.",
+  "null_hypothesis": "Enabling coaching delivery produces no difference in median clean-lap time relative to the paired uncoached block; any observed paired difference is consistent with within-driver lap-to-lap and day-to-day variation.",
+  "independent_variable": {
+    "name": "coaching-delivery",
+    "operational_definition": "Whether the Apex Sim Coach coaching host delivers spoken cues during the recording. Set once per recorder invocation by --coaching enabled|disabled, which is the only granularity the recorder supports: exactly one collection-condition marker is emitted at StartAsync and there is no mid-session block or condition transition. One recording is one block and one arm. CRITICAL: --coaching disabled is a RECORDER declaration, not a product control. It stops the recorder importing coaching evidence; it does not stop Apex coaching. A control block is executed by Apex NOT coaching at all (Start Coaching never pressed, or Stop Coaching pressed first), and is verified against the Apex store by the corpus-admission gate.",
+    "levels": [
+      "coached-delivery-on",
+      "coached-delivery-off"
+    ]
+  },
+  "primary_dependent_metric": {
+    "metric_id": "clean-lap-time-block-median",
+    "definition": "Median duration of clean laps inside a block's eligible window, where a lap is timed line-crossing to line-crossing on the simulator clock, and clean means the lap has no off-track sample and gains no incident point. The eligible window excludes the opening observation period in BOTH arms so the arms compare like-for-like time on track.",
+    "unit": "seconds",
+    "provenance_expectation": "derived"
+  },
+  "secondary_metrics": [
+    {
+      "metric_id": "clean-lap-dispersion",
+      "definition": "Interquartile range of clean-lap durations inside a block's eligible window, as a consistency measure independent of central tendency.",
+      "unit": "seconds",
+      "provenance_expectation": "derived"
+    },
+    {
+      "metric_id": "clean-lap-yield",
+      "definition": "Count of clean laps surviving the preregistered exclusion rules inside a block's eligible window, reported per block and per arm.",
+      "unit": "count",
+      "provenance_expectation": "derived"
+    },
+    {
+      "metric_id": "delivered-cue-count",
+      "definition": "Count of coaching directives with a Delivered receipt inside a block's eligible window. Expected to be zero in every control block; a non-zero value is a protocol deviation, not a result.",
+      "unit": "count",
+      "provenance_expectation": "measured"
+    }
+  ],
+  "controlled_variables": [
+    "STRATUM A ONLY: one car (toyotagr86), one track and layout (track 'nurburgring gpshort', layout 'nurburgring gpshort' -- the truthful recorder identity iRacing reports, not an operator override), measured session type Offline Testing, for all twelve controlled recordings",
+    "One participant throughout both strata; no between-driver comparison is attempted",
+    "One frozen car setup per car, declared by the recorder configuration-setup hash",
+    "One product build and source revision across the whole campaign; a mid-campaign product change ends the campaign",
+    "One simulator build across the whole campaign",
+    "Driver hardware, pedal calibration and force-feedback settings unchanged",
+    "Recording length fixed at 30 minutes per bundle",
+    "Arm order counterbalanced within each controlled pair against session-order, learning and fatigue effects"
+  ],
+  "comparability_requirements": [
+    "STRATUM SEPARATION IS ABSOLUTE. Only stratum A (controlled-primary, primary_analysis_eligible true) may contribute to the preregistered primary comparison. Stratum B is descriptive and observational engineering evidence and may never enter the primary estimate, however similar a stratum B recording looks to a stratum A one.",
+    "Compare only blocks sharing driver, simulator, car, track, layout, protocol version, setup identity, product build and normalization contract",
+    "Pair within session-pair and within day: a paired difference is only formed between the two blocks of the same pair",
+    "Use the block as the experimental unit; telemetry frames and individual laps are never independent experimental units because the arm varies at block level",
+    "Resample at block level or above",
+    "Exclude the opening observation window from both arms by the same rule, in simulator-clock seconds from the first sample",
+    "Do not pool across pairs until the per-pair differences have been inspected for a day effect"
+  ],
+  "exclusion_criteria": [
+    "Any stratum B recording, for every purpose connected with the primary comparison",
+    "The opening observation window of every recording: the first 510 simulator-clock seconds after the first sample, excluded in BOTH arms. The product hands over from observation to coaching at a lap boundary after three to four completed laps, so a coached block has no cue delivery in this window and comparing it against uncoached running would compare warm-up with warm-up",
+    "Out-laps and in-laps, and any lap not entered and left by an incrementing lap counter",
+    "Laps containing any off-track sample",
+    "Laps gaining one or more incident points",
+    "Laps containing any pit-road sample",
+    "Any block yielding fewer than 4 clean laps after the above rules",
+    "Any pair in which either block is excluded",
+    "Any recording whose bundle fails product validation, Apex Labs validation, or the corpus-admission gate",
+    "Any recording where the realized arm does not match the frozen schedule entry",
+    "Any control block that the Apex store shows was in fact coached during its recording window"
+  ],
+  "minimum_sample_requirements": {
+    "state": "declared",
+    "requirements": [
+      "At least 5 complete pairs contribute to the primary comparison",
+      "At least 10 blocks contribute to the primary comparison",
+      "At least 4 clean laps contribute to each contributing block",
+      "At least 48 clean laps contribute in total across contributing primary blocks",
+      "Exactly 1 participant contributes; no population inference is attempted",
+      "At least 6 engineering recordings are admitted, covering all four measured session types"
+    ],
+    "rationale": "Sized from documented pilot pilot-yield-nurburgring-gpshort-gr86-2026-08: 25.4 timed laps per hour, a 0.70 clean-lap fraction, a 0.645 s within-session clean-lap standard deviation and a 510 s observation window on this exact car and track. Twelve 30-minute controlled recordings yield an expected 6.4 clean laps per block and about 77 clean laps across the stratum. HONEST POWER STATEMENT: with six pairs the implied minimum detectable effect is approximately 0.41 s per lap at two-sided alpha 0.05 and 80 percent power, CONDITIONAL on the unmeasured assumption that the between-block difference standard deviation is about sqrt(2) times the within-session standard deviation. That is materially weaker than the ten-pair design it replaces (0.32 s), and it is the price of buying engineering breadth in the same ten hours. The exact paired sign test is weaker still: with six pairs its smallest attainable two-sided p is 0.031, so it reaches alpha 0.05 only when ALL SIX paired differences share a sign. It is therefore reported as supporting evidence beside the primary interval estimate, never as the criterion. A true effect between 0.2 and 0.4 s per lap will most likely produce a preserved INCONCLUSIVE run rather than a result, and that is the honest expectation of a ten-hour hybrid campaign."
+  },
+  "baseline_condition": "coached-delivery-off: an otherwise identical 30-minute Offline Testing recording in which Apex Sim Coach is NOT coaching. Start Coaching is never pressed for that recording, or Stop Coaching is pressed before it begins, so no cue reaches the driver and no coaching session is created for that iRacing session identity.",
+  "intervention_conditions": [
+    "coached-delivery-on: a 30-minute recording in which the coaching host delivers cues under its ordinary policy for that session type, with no experimenter intervention in cue selection, wording, or cadence."
+  ],
+  "randomization_counterbalancing": "Stratum A: exactly balanced counterbalancing with fixed seed 20261005. Three pairs begin coached and three begin uncoached; the seed selects which permutation of that balanced set is used. Free randomization is deliberately not used: with six pairs it can deal five of six the same way round and confound arm with session order, whereas exact balance makes order balance structural. Stratum B is not randomized and is not an arm; it is a fixed, reasoned list of engineering coverage slots. The realized order of all twenty recordings is fixed before collection in schedule corpus-2026-10-schedule-v2 and bound by SHA-256 into the protocol freeze; any departure is a recorded deviation.",
+  "identity_variation_plans": [],
+  "analysis_methods": [
+    "Report the attrition funnel and per-block clean-lap yield before any contrast, per stratum",
+    "PRIMARY (stratum A only): robust paired difference of block-median clean-lap time, coached minus control, with a deterministic cluster percentile bootstrap interval clustered at pair level",
+    "Report the exact paired sign test beside the primary estimate, never in place of it, and state that with six pairs it reaches alpha 0.05 only when all six differences share a sign",
+    "Re-estimate the between-block difference standard deviation from the corpus and compare it against the planning assumption; report the realized minimum detectable effect",
+    "Test the order effect directly: compare position-one against position-two blocks irrespective of arm",
+    "Sensitivity: repeat the primary contrast under a stricter clean-lap rule and a wider observation-window exclusion",
+    "Falsification: zero delivered cues in every control block, and a non-trivial cue count in each coached block",
+    "ENGINEERING (stratum B): descriptive summaries only. Cue cadence and gap distribution by lap profile, objective activation, suppression and turnover counts, active-objective count over time, delivery-decision reason histograms by session type, and pit and session-state behaviour. No hypothesis test, no effect estimate, no pooling with stratum A.",
+    "Report every result at block level; never treat laps or telemetry frames as independent"
+  ],
+  "predeclared_success_criteria": {
+    "state": "declared",
+    "criteria": [
+      "The primary paired difference interval excludes zero and the point estimate favours the coached arm by at least 0.30 s per lap",
+      "At least 5 pairs contribute",
+      "The manipulation check passes: zero delivered cues in every control block, the Apex store confirms each control window was uncoached, and each contributing coached block records at least 10 delivered cues",
+      "The order-effect check shows no position effect larger than the primary effect"
+    ],
+    "falsification_criteria": [
+      "The primary paired difference interval contains zero",
+      "The point estimate favours the control arm",
+      "The realized between-block difference standard deviation exceeds the planning assumption by more than 50 percent, making the corpus underpowered for its own declared effect",
+      "Any control block records a delivered cue, or the Apex store shows coaching during a control window",
+      "Any coached block records fewer than 10 delivered cues",
+      "The position effect is larger in magnitude than the arm effect"
+    ]
+  },
+  "safety_constraints": [
+    "Simulated driving only",
+    "The driver may stop any block at any time for discomfort, equipment problems or fatigue; a stopped block is a recorded deviation, not a failure",
+    "No deliberate incidents, no unsafe behaviour, and no deliberately induced reconnect or hardware failures are required or requested by any slot in either stratum",
+    "At most 4 recordings in any single day, and a minimum 10-minute break between recordings",
+    "The 20 recordings spread across at least 5 separate days so fatigue and day effects are distributed across arms rather than concentrated",
+    "Both recordings of a controlled pair on the same day, back to back with the standard break",
+    "Do not continue a session solely to satisfy a sample target when fatigue compromises collection",
+    "Do not disable simulator safety features or encourage unsafe physical strain"
+  ],
+  "notes": [
+    "OWNER AND ENGINEERING REVIEW AUTHORITY: Blake Bannon. An independent scientific-review role remains unassigned and must be named before any result from this corpus is interpreted. It is deliberately not required before collection: naming a reviewer later cannot weaken collection integrity, because every collection-time rule is enforced by the corpus-admission gate rather than by reviewer judgement.",
+    "ONE CAMPAIGN, TWO STRATA. Stratum A (12 recordings, 6 pairs) is the only source of the primary comparative estimate. Stratum B (8 coached recordings) is engineering evidence across Practice, Qualifying, Race and Offline Testing, four cars, three tracks and two lap profiles (short 2084 m, medium 4286-4567 m). They are one frozen schedule and one freeze; they are never pooled.",
+    "SCOPE OF ANY CAUSAL READING. One participant, one car, one track, one session type, one product build in stratum A. This can support a causal-candidate interpretation FOR THIS DRIVER under review and replication. It supports no population claim and no cross-car or cross-track claim.",
+    "RECORDER GRANULARITY IS A HARD CONSTRAINT. One recording is one block and one arm. A within-session A/B is not executable against the current product and is not attempted.",
+    "THE CONTROL ARM IS VERIFIED, NOT DECLARED. --coaching disabled only stops the recorder importing evidence. The corpus-admission gate therefore reads the Apex coaching store read-only and refuses a control block if any cue was delivered inside that recording's wall-clock window. This is only possible because Milestone 55B put a truthful append-time UTC on every persisted coaching event.",
+    "TIMESTAMP PROVENANCE. Every coaching event in a corpus bundle must carry observed_utc_provenance = recorded_at_append. The gate refuses legacy-timestamped evidence, so no pre-Milestone-55B recording can enter this corpus.",
+    "EVERY TRACK IDENTITY IS RESOLVED AND VERIFIED; NO SENTINELS REMAIN. All three track strings in this schedule were READ from this owner's own Apex stores, and every length was measured from this owner's own lap telemetry: 'nurburgring gpshort' (id 257, TrackConfigName null so layout falls back to the track name, 4567 m, 296 observations), 'oulton international' (id 180, TrackConfigName 'International', 4286 m, 84 observations) and 'tsukuba 2kfull' (id 324, TrackConfigName null, 2084 m, 276 observations). Nothing is derived and nothing is guessed, so all twenty slots are executable as written.",
+    "THE >5 KM LONG-LAP STRATUM IS DEFERRED, NOT DELIVERED, AND THIS IS A DECLARED LIMITATION OF THE CORPUS. Engineering slot 19 was designed as a long-lap slot to probe cue-gap distribution and relative-target window feasibility where the interval between corners is longest. No configuration over 5 km has a verifiable recorder identity in this owner's data: an exhaustive read-only scan of 147,660 string cells across both Apex data roots found only eleven track names ever recorded, the longest measuring 4567 m. Nurburgring Grand Prix Full is installed and was preferred, but it has never been driven, the iRacing install exposes no readable track-name table, and the folder-plus-config derivation that reproduces simple configurations fails on compound ones, so adopting it would mean guessing a recorder slug. Nordschleife (20.8 km) and Combined (25.4 km) are the owner's longest installed layouts and are excluded by design, because roughly one to two timed laps in thirty minutes is not enough repeated clean laps for coaching evidence. Per the owner's fallback rule the slot uses the longest truthfully verified Nurburgring layout already present in the owner's data, 'nurburgring gpshort' at 4567 m, and retains engineering value by varying the CAR: the Cadillac CTS-V Racecar is the fastest car in the corpus, so it compresses the time between corners on a held track and probes the same two questions through speed rather than through lap length. Consequently the corpus contains NO configuration over 5 km, declares two lap profiles rather than three, and no analysis may claim a long-lap finding from it. Restoring the stratum requires one owner action: load Nurburgring Grand Prix Full once with Apex running, read the truthful TrackName and TrackConfigName back out of the store, and regenerate the schedule.",
+    "THE PRACTICE-TO-QUALIFYING ROLLOVER IS DETERMINISTICALLY MAPPED. Engineering blocks E01 and E02 are produced by ONE recorder invocation. When iRacing advances Practice to Qualifying the recorder finalizes E01 and opens E02 by itself; it does not read the next schedule row, it derives the new block id from the outgoing one by the Product rule ResearchRolloverIdentity.NextBlockId(previous, rolloverIndex, measuredSessionType) => '{previous}-r{index}-{slug}', and it carries the operator condition id over verbatim rather than regenerating it. The frozen schedule is therefore written to the identity the recorder will actually produce: E02 block_id 'corpus-2026-10-b-e01-practice-oulton-r1-qualifying' with condition_id 'engineering-practice-oulton', the same condition as E01. No measured session evidence is relabelled, renamed or edited to achieve this; the schedule is written to the measurement, never the measurement to the schedule. Proven by tests/test_corpus_rollover_mapping.py through the real corpus-admission gate, including that a hand-written E02 row refuses the real bundle and that renaming the bundle to fit such a row is still refused.",
+    "THIS PROTOCOL IS NOT FROZEN. Status is draft. It becomes binding only when the owner approves the accompanying candidate freeze and the freeze is written with the reviewed hashes."
+  ],
+  "created_at": "2026-08-24T00:00:00Z",
+  "apex_labs_source_commit": "3a1484acebce463bf707a9c00dc0dbfe69ce7f15"
+}
