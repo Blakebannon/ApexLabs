@@ -327,11 +327,13 @@ class ExploratoryIntakeTests(_Fixture):
         intake on either ground."""
         record = read_json(self.collection)
         record["collection_classification"] = "experimental"
-        # Bound to the recorder's own declared identity, so the pre-existing
-        # collection binding passes and the intake's refusal is what actually fires.
+        # experiment_id is bound to the recorder's own declared protocol identity, so
+        # the pre-existing collection binding passes and the intake's refusal is what
+        # actually fires. freeze_id is the FREEZE artifact identity and is deliberately
+        # a different value: the two are distinct fields carrying distinct identities.
         record["protocol"] = {
-            "freeze_id": "synthetic-protocol-freeze", "freeze_sha256": "0" * 64,
-            "experiment_id": "some-experiment", "experiment_version": "1.0.0",
+            "freeze_id": "synthetic-protocol-freeze.freeze", "freeze_sha256": "0" * 64,
+            "experiment_id": "synthetic-protocol-freeze", "experiment_version": "1.0.0",
             "schedule_id": "some-schedule", "schedule_sha256": "1" * 64,
             "schedule_assignment_id": "assignment-1",
         }

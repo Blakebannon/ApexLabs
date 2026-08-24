@@ -13,6 +13,7 @@ conformance tests fail here rather than during a live rehearsal.
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -97,4 +98,145 @@ def collection_record(bundle: Path, destination: Path) -> Path:
         "confirmation_method": "synthetic recorder conformance fixture",
     }
     destination.write_bytes(canonical_json_bytes(record))
+    return destination
+
+
+def coaching_events(delivered: int, provenance: str = "recorded_at_append") -> list[dict]:
+    """Authorization/receipt pairs plus the authoritative evidence summary.
+
+    A coached recording without the summary is refused by Labs before any rule under
+    test is reached, so a fixture without it would prove nothing.
+    """
+    events: list[dict] = []
+    sequence = 1
+    stamp = 100.0
+    for index in range(delivered):
+        for kind in ("coaching-directive-authorized", "coaching-delivery-receipt"):
+            data: dict = {"directive_ref": f"ref-{index:04d}", "observed_utc_provenance": provenance}
+            if kind == "coaching-delivery-receipt":
+                data["outcome"] = "Delivered"
+            else:
+                data["message_key"] = "objective/brake-earlier-t7/practice"
+            events.append({
+                "schema_version": "apex-research-event/1.0.0",
+                "sequence": sequence,
+                "observed_utc": f"2026-10-05T10:{index // 60:02d}:{index % 60:02d}.0000000Z",
+                "session_time_s": stamp,
+                "kind": kind,
+                "data": data,
+            })
+            sequence += 1
+            stamp += 1.0
+    events.append({
+        "schema_version": "apex-research-event/1.0.0",
+        "sequence": sequence,
+        "observed_utc": "2026-10-05T10:29:59.0000000Z",
+        "session_time_s": stamp,
+        "kind": "coaching-evidence-summary",
+        "data": {
+            "authorization_count": delivered,
+            "decision_count": delivered,
+            "delivery_receipt_count": delivered,
+            "source": "authoritative committed coaching event stream",
+            "source_direct_identifiers_copied": False,
+            "events_with_recorded_utc": delivered * 2,
+            "events_without_recorded_utc": 0,
+            "observed_utc_policy": "coaching-observed-utc/1.1.0",
+            "observed_utc_provenance": provenance,
+        },
+    })
+    return events
+
+
+def build_protocol_block_bundle(
+    destination: Path,
+    *,
+    protocol_identity: str,
+    block_id: str,
+    condition_id: str,
+    participant: str,
+    coaching_state: str = "enabled",
+    measured: str = "practice",
+    measured_raw: str = "Practice",
+    car: str = "toyotagr86",
+    track: str = "oulton international",
+    layout: str = "International",
+    minutes: float = 30.0,
+    delivered: int = 12,
+    classification: str = "private",
+    source_revision: str = "a" * 40,
+    simulator_version: str = "2026.07.17.02 RELEASE",
+    setup_hash: str | None = None,
+) -> Path:
+    """A REAL-classification bundle carrying a prospective protocol block assignment.
+
+    Built from the committed recorder bytes and re-sealed, so a product change to the
+    sample columns or file inventory breaks callers here rather than in a live
+    campaign. The default `classification` is `private`, NOT `synthetic`: a synthetic
+    bundle skips protocol binding entirely during ingestion, which is precisely the
+    path that must not be used to claim the protocol-bound pipeline works.
+    """
+    shutil.copytree(FIXTURE, destination)
+
+    manifest = read_json(destination / "manifest.json")
+    manifest["session"]["participant_pseudonym"] = participant
+    manifest["session"]["car"]["id"] = car
+    manifest["session"]["track"]["id"] = track
+    manifest["session"]["track"]["layout"] = layout
+    manifest["session"]["simulator"]["version"] = simulator_version
+    manifest["session"]["start_utc"] = "2026-10-05T10:00:00.0000000Z"
+    whole = int(minutes)
+    seconds = int(round((minutes - whole) * 60))
+    manifest["session"]["end_utc"] = f"2026-10-05T10:{whole:02d}:{seconds:02d}.0000000Z"
+    manifest["privacy"]["classification"] = classification
+    manifest["collection"]["protocol_identity"] = protocol_identity
+    (destination / "manifest.json").write_bytes(canonical_json_bytes(manifest))
+
+    metadata = read_json(destination / "recorder-metadata.json")
+    metadata["recorder"]["source_revision"] = source_revision
+    metadata["privacy"]["classification"] = classification
+    metadata["collection"] = {
+        "protocol_identity": protocol_identity,
+        "experimental_block_id": block_id,
+        "condition_id": condition_id,
+        "coaching_state": coaching_state,
+        "session_type": measured,
+        "measured_session_type": measured,
+        "measured_session_type_raw": measured_raw,
+        "measured_session_type_policy": "research-measured-session-type/1.0.0",
+        "operator_condition_rewritten": False,
+        "condition_contradicts_measured_session_type": False,
+        "block_contradicts_measured_session_type": False,
+    }
+    (destination / "recorder-metadata.json").write_bytes(canonical_json_bytes(metadata))
+
+    existing = [
+        json.loads(line)
+        for line in (destination / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    events = [existing[0]]
+    events[0]["data"] = {
+        "block_id": block_id,
+        "coaching_state": coaching_state,
+        "condition_id": condition_id,
+        "protocol_identity": protocol_identity,
+    }
+    if coaching_state == "enabled":
+        events += coaching_events(delivered)
+    (destination / "events.jsonl").write_text(
+        "".join(canonical_json_bytes(event).decode("utf-8") for event in events),
+        encoding="utf-8", newline="",
+    )
+
+    metadata = read_json(destination / "recorder-metadata.json")
+    metadata["metrics"]["events_written"] = len(events)
+    (destination / "recorder-metadata.json").write_bytes(canonical_json_bytes(metadata))
+
+    if setup_hash is not None:
+        manifest = read_json(destination / "manifest.json")
+        manifest["collection"]["configuration_setup_hash"] = setup_hash
+        (destination / "manifest.json").write_bytes(canonical_json_bytes(manifest))
+
+    rebind(destination)
     return destination

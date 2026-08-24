@@ -519,6 +519,39 @@ def audit_research_bundle(root: Path) -> ResearchBundleAudit:
     return ResearchBundleAudit(root, manifest, metadata, manifest_hash, samples, events)
 
 
+def _protocol_snapshot_identity(freeze: dict[str, Any]) -> dict[str, Any]:
+    """The six identity fields a collection record must declare, read from the freeze.
+
+    Four of these do not exist at the snapshot's top level and never can:
+    apex-labs.protocol-freeze/v1 sets ``additionalProperties: false`` and permits only
+    freeze_id, freeze_sha256, protocol_id, protocol_version, protocol_sha256,
+    source_commit, code_identity, frozen_at, synthetic, protocol, randomization and
+    amendment_history. The experiment identity lives inside the hash-bound protocol
+    document and the schedule identity inside randomization, so indexing the snapshot
+    by the collection-record field names raised KeyError for every real
+    protocol-governed bundle.
+
+    The experiment identity is read from the protocol document rather than from the
+    top-level protocol_id mirror, because the protocol document is what protocol_sha256
+    binds. The mirror is then required to agree: a snapshot whose own two statements of
+    its identity disagree is refused rather than silently resolved in favour of either.
+    """
+    protocol = freeze["protocol"]
+    experiment_id = protocol["experiment_id"]
+    experiment_version = protocol["version"]
+    if freeze["protocol_id"] != experiment_id or freeze["protocol_version"] != experiment_version:
+        raise IntegrityError(
+            "Protocol snapshot disagrees with its own protocol document about experiment identity")
+    return {
+        "freeze_id": freeze["freeze_id"],
+        "freeze_sha256": freeze["freeze_sha256"],
+        "experiment_id": experiment_id,
+        "experiment_version": experiment_version,
+        "schedule_id": freeze["randomization"]["schedule_id"],
+        "schedule_sha256": freeze["randomization"]["schedule_sha256"],
+    }
+
+
 def _bind_collection(collection: dict[str, Any], audit: ResearchBundleAudit) -> None:
     manifest = audit.manifest
     if collection["source_bundle"] != {
@@ -547,8 +580,17 @@ def _bind_collection(collection: dict[str, Any], audit: ResearchBundleAudit) -> 
     if recorded_collection.get("protocol_identity") != manifest["collection"]["protocol_identity"]:
         raise IntegrityError("Recorder metadata protocol identity does not match its manifest")
     if collection["protocol"] is not None:
-        if collection["protocol"]["freeze_id"] != manifest["collection"]["protocol_identity"]:
-            raise IntegrityError("Collection protocol freeze does not match the recorder protocol identity")
+        # The recorder writes the PROTOCOL EXPERIMENT identity, not the freeze identity.
+        # The collection record carries both, as separate contract fields, and only the
+        # experiment identity is comparable to what the recorder wrote. Comparing the
+        # freeze identity here made a protocol-governed real bundle unable to satisfy
+        # this check and the snapshot equality below at the same time, because
+        # freeze_id is f"{experiment_id}.freeze" and the two can never be equal.
+        # apex-labs.corpus admission binds the same recorder field to the same
+        # experiment identity, so the two gates now agree by construction.
+        if collection["protocol"]["experiment_id"] != manifest["collection"]["protocol_identity"]:
+            raise IntegrityError(
+                "Collection protocol experiment identity does not match the recorder protocol identity")
         matching_blocks = [
             block for block in collection["blocks"]
             if block["block_id"] == recorded_collection.get("experimental_block_id")
@@ -1011,13 +1053,14 @@ def _ingest_research_snapshot(
         protocol_document = validate_protocol_freeze(
             parse_json_bytes(protocol_bytes, source=str(protocol_snapshot_path)))
         declared = collection["protocol"]
-        for field in ("freeze_id", "freeze_sha256", "experiment_id", "experiment_version", "schedule_id", "schedule_sha256"):
-            if protocol_document[field] != declared[field]:
+        snapshot_identity = _protocol_snapshot_identity(protocol_document)
+        for field, value in snapshot_identity.items():
+            if declared[field] != value:
                 raise IntegrityError(f"Protocol snapshot does not match collection field {field}")
         protocol_context = {
             "protocol_snapshot": {
                 "path": "protocol-freeze.json", "file_sha256": sha256_bytes(protocol_bytes),
-                **{field: protocol_document[field] for field in ("freeze_id", "freeze_sha256", "experiment_id", "experiment_version", "schedule_id", "schedule_sha256")},
+                **snapshot_identity,
             },
             "condition_id": audit.metadata["collection"]["condition_id"],
             "block_id": audit.metadata["collection"]["experimental_block_id"],
