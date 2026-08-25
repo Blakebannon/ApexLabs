@@ -35,8 +35,10 @@ rolls over. See §6. Every other slot is one invocation, one bundle.
 
 ## 2. Before the campaign — once
 
-1. **Owner approves the candidate freeze.** See the hash sheet in
-   `F:\ApexResearch\analysis\corpus-readiness-20260824\CANDIDATE-FREEZE-HASHES.txt`.
+1. **Owner approves the candidate freeze.** Use the hash sheet issued with the
+   current freeze. The 2026-08-24 candidate sheet at
+   `F:\ApexResearch\analysis\corpus-readiness-20260824\CANDIDATE-FREEZE-HASHES.txt`
+   is **SUPERSEDED**; its hashes must not be treated as current.
 2. **Track identities are all resolved.** There are no `OWNER-CONFIRM` sentinels
    left; every track string was read from your own Apex stores and every length
    measured from your own laps. Nothing here needs owner input before the freeze.
@@ -50,8 +52,8 @@ rolls over. See §6. Every other slot is one invocation, one bundle.
 
    ```powershell
    apex-labs experiment freeze `
-     "F:\ApexResearch\analysis\corpus-readiness-20260824\protocol\corpus-2026-10-coached-delivery.preregistered.json" `
-     --registry "F:\ApexResearch\corpus-2026-10\frozen" `
+     "<the protocol copy named in the approved hash sheet>" `
+     --registry "<the registry named in the approved hash sheet>" `
      --frozen-at "<owner-approved UTC instant>" `
      --strategy counterbalanced `
      --method "exactly balanced order assignment, seeded permutation" `
@@ -62,7 +64,7 @@ rolls over. See §6. Every other slot is one invocation, one bundle.
 
 4. **Verify the freeze and record its hash.**
    ```powershell
-   apex-labs experiment verify-freeze "F:\ApexResearch\corpus-2026-10\frozen\corpus-2026-10-coached-delivery-v2.0.0\snapshot.json"
+   apex-labs experiment verify-freeze "<the snapshot named in the approved hash sheet>"
    ```
 5. **Confirm the product build.** Record the exact `--source-revision`. It must
    not change for the life of the corpus. A product update ends the corpus.
@@ -103,16 +105,30 @@ The recorder writes the track identity iRacing reports:
 `track.layout` from `WeekendInfo:TrackConfigName`, falling back to `TrackName`
 when the config name is empty.
 
-**Do not pass `--track` or `--layout`.** The 2026-08-23 bundles carry hyphenated
-values because those overrides were used, and an override is an operator claim
-about identity rather than a measurement. The schedule is written against the
-truthful values:
+**Do not pass `--track` or `--layout`.** An override is an operator claim about
+identity rather than a measurement.
 
-| Configuration | id | `track` | `layout` | measured | observations |
+**The recorder normalizes what iRacing reports; the schedule is written to the
+normalized form.** With no override the recorder applies
+`value.Trim().ToLowerInvariant().Replace(' ', '-')` to both WeekendInfo strings,
+so the space-separated form held in the Apex coaching stores is *not* what a
+bundle carries. The schedule declares the right-hand column and nothing else:
+
+| Configuration | id | `WeekendInfo:TrackName` / `TrackConfigName` | recorder writes `track` / `layout` | measured | observations |
 |---|---|---|---|---|---|
-| Nürburgring GP-Short | 257 | `nurburgring gpshort` | `nurburgring gpshort` | 4567 m | 296 |
-| Oulton Park International | 180 | `oulton international` | `International` | 4286 m | 84 |
-| Tsukuba 2000 Full | 324 | `tsukuba 2kfull` | `tsukuba 2kfull` | 2084 m | 276 |
+| Nürburgring GP-Short | 257 | `nurburgring gpshort` / `nurburgring gpshort` | `nurburgring-gpshort` / `nurburgring-gpshort` | 4567 m | 296 |
+| Oulton Park International | 180 | `oulton international` / `International` | `oulton-international` / `international` | 4286 m | 84 |
+| Tsukuba 2000 Full | 324 | `tsukuba 2kfull` / `tsukuba 2kfull` | `tsukuba-2kfull` / `tsukuba-2kfull` | 2084 m | 276 |
+
+An earlier revision of this runbook attributed the hyphens in the 2026-08-23
+bundles to `--track`/`--layout` overrides. That was wrong: hyphenation is what
+the **no-override** path produces, and those bundles are consistent with no
+override having been passed. The 2026-10 schedule was originally built from the
+Apex-store form and would have been refused `track-mismatch` and
+`layout-mismatch` on every block. `tests/test_recorder_identity_normalization.py`
+now requires every scheduled identity to be a fixed point of that normalization,
+so a schedule declaring a form the recorder cannot produce fails in the test
+suite rather than after a recording is driven.
 
 **Declared limitation — no long-lap stratum.** Slot 19 was designed as a >5 km
 long-lap slot. No such configuration has a verifiable recorder identity in your
@@ -124,7 +140,7 @@ derivation fails on compound configurations — so adopting it would be guessing
 slug. Nordschleife (20.8 km) and Combined (25.4 km) are your longest installed
 layouts and are excluded by design: one to two timed laps in thirty minutes is not
 enough repeated clean laps. Slot 19 therefore uses the longest **verified**
-layout, `nurburgring gpshort`, and keeps its engineering value by varying the car
+layout, `nurburgring-gpshort`, and keeps its engineering value by varying the car
 — the Cadillac CTS-V Racecar is the fastest in the corpus, so it probes cue-gap
 distribution through speed rather than distance. **The long-lap question is
 deferred, not answered.** To restore it: load Nürburgring Grand Prix Full once
