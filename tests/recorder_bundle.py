@@ -30,6 +30,9 @@ FIXTURE_COLLECTION = FIXTURE_ROOT / "collection-record.json"
 # restated here, so this list cannot drift away from what the recorder actually writes.
 RECORDER_COLUMNS = (FIXTURE / "samples.csv").read_text(encoding="utf-8").splitlines()[0].split(",")
 
+#: The event kind Labs requires a disabled/control bundle to carry explicitly.
+DISABLED_CONTROL_KIND = "coaching-disabled-control"
+
 
 def _sha(content: bytes) -> str:
     return sha256_bytes(content)
@@ -221,15 +224,35 @@ def build_protocol_block_bundle(
         for line in (destination / "events.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    events = [existing[0]]
-    events[0]["data"] = {
+    marker = existing[0]
+    marker["data"] = {
         "block_id": block_id,
         "coaching_state": coaching_state,
         "condition_id": condition_id,
         "protocol_identity": protocol_identity,
     }
     if coaching_state == "enabled":
-        events += coaching_events(delivered)
+        events = [marker] + coaching_events(delivered)
+    else:
+        # A control arm MUST keep the fixture's own `coaching-disabled-control`
+        # event. Labs refuses a disabled bundle without it ("disabled control
+        # condition is not explicit"), so dropping it here produced a bundle that
+        # failed validation as `bundle-invalid` before any rule under test could be
+        # reached — a control block silently untestable through this helper.
+        control = next(
+            (event for event in existing[1:] if event["kind"] == DISABLED_CONTROL_KIND),
+            None,
+        )
+        if control is None:
+            raise AssertionError(
+                f"The recorder fixture no longer carries a {DISABLED_CONTROL_KIND!r} event; "
+                "a control bundle cannot be built from it."
+            )
+        events = [marker, control]
+
+    # events.jsonl sequence numbers are contract-checked as 0..n-1 and contiguous.
+    for index, event in enumerate(events):
+        event["sequence"] = index
     (destination / "events.jsonl").write_text(
         "".join(canonical_json_bytes(event).decode("utf-8") for event in events),
         encoding="utf-8", newline="",
