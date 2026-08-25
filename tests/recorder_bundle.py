@@ -159,8 +159,14 @@ def build_protocol_block_bundle(
     measured: str = "practice",
     measured_raw: str = "Practice",
     car: str = "toyotagr86",
-    track: str = "oulton international",
-    layout: str = "International",
+    # Recorder-produced identities, NOT schedule values. The recorder normalizes
+    # WeekendInfo:TrackName / TrackConfigName with
+    #     value.Trim().ToLowerInvariant().Replace(' ', '-')
+    # whenever no --track / --layout override is passed, which is the only form a
+    # truthful capture can carry. Defaulting to a schedule's own strings is what let
+    # a schedule declaring "oulton international" appear to pass its own gate.
+    track: str = "oulton-international",
+    layout: str = "international",
     minutes: float = 30.0,
     delivered: int = 12,
     classification: str = "private",

@@ -132,7 +132,11 @@ def _protocol(experiment_id: str = EXPERIMENT_ID) -> dict:
     }
 
 
-def _schedule(block_id: str = BLOCK_ID) -> list[dict]:
+def _schedule(
+    block_id: str = BLOCK_ID,
+    track: str = "oulton-international",
+    layout: str = "international",
+) -> list[dict]:
     return [{
         "recording_ordinal": 1,
         "arm_id": "coached-delivery-on",
@@ -140,8 +144,8 @@ def _schedule(block_id: str = BLOCK_ID) -> list[dict]:
         "block_id": block_id,
         "condition_id": CONDITION_ID,
         "car": "toyotagr86",
-        "track": "oulton international",
-        "layout": "International",
+        "track": track,
+        "layout": layout,
         "measured_session_type_required": "practice",
         "planned_minutes": 30,
     }]
